@@ -3,7 +3,6 @@ using HarmonyLib;
 using Il2CppInterop.Runtime;
 using ProjectM;
 using ProjectM.Network;
-using ProjectM.Shared.Systems;
 using ProjectM.UI;
 using Unity.Collections;
 using Unity.Entities;
@@ -17,15 +16,6 @@ internal static class InitializationPatches
 
     static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies; // will use operators with other bools as options are added in the future
     static bool SetCanvas = false;
-    //static bool SetPlayer = false;
-    static bool OptedIn = false;
-
-    static readonly ComponentType[] NetworkComponents =
-    [
-        ComponentType.ReadOnly(Il2CppType.Of<NetworkEventType>()),
-        ComponentType.ReadOnly(Il2CppType.Of<SendNetworkEventTag>()),
-        ComponentType.ReadOnly(Il2CppType.Of<ChatMessageEvent>())
-    ];
 
     [HarmonyPatch(typeof(GameDataManager), nameof(GameDataManager.OnUpdate))]
     [HarmonyPostfix]
@@ -60,71 +50,40 @@ internal static class InitializationPatches
             Plugin.Harmony.Unpatch(typeof(UICanvasSystem).GetMethod("UpdateHideIfDisabled"), typeof(InitializationPatches).GetMethod("OnUpdatePostfix"));
         }
     }
-
-    /*
-    [HarmonyPatch(typeof(GetCharacterHUDSystem), nameof(GetCharacterHUDSystem.OnUpdate))]
+    
+    [HarmonyPatch(typeof(CommonClientDataSystem), nameof(CommonClientDataSystem.OnUpdate))]
     [HarmonyPostfix]
-    static void OnUpdatePostfix(GetCharacterHUDSystem __instance)
+    static void OnUpdatePostfix(CommonClientDataSystem __instance)
     {
-        if (ShouldInitialize && !SetPlayer && Core.hasInitialized)
+        if (ShouldInitialize && Core.hasInitialized)
         {
-            NativeArray<Entity> players = __instance.__query_1404660282_0.ToEntityArray(Allocator.Temp);
+            NativeArray<Entity> entities = __instance.__query_1840110765_0.ToEntityArray(Allocator.Temp);
             try
             {
-                foreach (Entity player in players)
+                foreach (Entity entity in entities)
                 {
-                    SetPlayer = true;
-                    CanvasService.LocalCharacter = player;
+                    if (entity.Has<LocalUser>()) ClientChatSystemPatch.localUser = entity;
                     break;
                 }
             }
             finally
             {
-                players.Dispose();
-                Plugin.Harmony.Unpatch(typeof(GetCharacterHUDSystem).GetMethod("OnUpdate"), typeof(InitializationPatches).GetMethod("OnUpdatePostfix"));
+                entities.Dispose();
             }
-        }
-    }
-    */
 
-    [HarmonyPatch(typeof(ClientChatSystem), nameof(ClientChatSystem.OnUpdate))]
-    [HarmonyPrefix]
-    static void OnUpdatePrefix(ClientChatSystem __instance)
-    {
-        if (!Core.hasInitialized) return;
-        if (!OptedIn)
-        {
-            OptedIn = true;
-            ClientSystemChatUtils.AddLocalMessage(__instance.EntityManager, "Eclipse client message...", ServerChatMessageType.Local);
-        }
-        NativeArray<Entity> messages = __instance.__query_172511197_1.ToEntityArray(Allocator.Temp);
-        try
-        {
-            foreach (Entity message in messages)
+            entities = __instance.__query_1840110765_1.ToEntityArray(Allocator.Temp);
+            try
             {
-                Core.Log.LogInfo($"Handling message...");
-                if (message.Has<ChatMessageServerEvent>())
+                foreach (Entity entity in entities)
                 {
-                    ChatMessageServerEvent chatMessage = message.Read<ChatMessageServerEvent>();
-                    if (chatMessage.MessageText.IsEmpty) continue;
-                    string messageText = chatMessage.MessageText.Value;
-                    if (messageText.StartsWith("+") && messageText.Length == 15)
-                    {
-                        Core.Log.LogInfo($"Received progress: {messageText}");
-                        CanvasService.PlayerData = CanvasService.ParseString(messageText[1..]);
-                        EntityManager.DestroyEntity(message);
-                        if (!CanvasService.Active) Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
-                    }
-                    else
-                    {
-                        Core.Log.LogInfo($"Received message: {messageText} | {messageText.Length}");
-                    }
+                    if (entity.Has<LocalCharacter>()) ClientChatSystemPatch.localCharacter = entity;
+                    break;
                 }
             }
+            finally
+            {
+                entities.Dispose();
+            }
         }
-        finally
-        {
-            messages.Dispose();
-        }   
     }
 }
