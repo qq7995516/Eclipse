@@ -136,7 +136,7 @@ internal class CanvasService
         }
         return configString.Split(',').Select(int.Parse).ToList();
     }
-    public static IEnumerator CanvasUpdateLoop() // need to find another component, can abstract data to whatever just need something relatively unused
+    public static IEnumerator CanvasUpdateLoop() // need to find another component, can abstract data to whatever just need something relatively unused that syncs. Check SyncingComponents or w/e that was called
     {
         while (true)
         {
