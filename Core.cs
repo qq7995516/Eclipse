@@ -2,7 +2,9 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
 using Eclipse.Services;
 using ProjectM;
+using ProjectM.Network;
 using ProjectM.Physics;
+using ProjectM.Scripting;
 using ProjectM.UI;
 using System.Collections;
 using Unity.Entities;
@@ -13,6 +15,7 @@ internal class Core
 {
     static World Client;
     public static EntityManager EntityManager => Client.EntityManager;
+    public static EntityCommandBufferSystem EntityCommandBufferSystem { get; internal set; }
     public static PrefabCollectionSystem PrefabCollectionSystem { get; internal set;}
     public static CanvasService CanvasService { get; internal set; }
 
@@ -25,8 +28,7 @@ internal class Core
     public static UICanvasSystem UICanvasSystem { get; internal set;}
     public static ScrollingCombatTextParentMapper ScrollingCombatTextParentMapper { get; internal set; }
     */
-
-    public static readonly ManualLogSource Log = Plugin.LogInstance;
+    public static ManualLogSource Log => Plugin.LogInstance;
 
     static MonoBehaviour monoBehaviour;
 
@@ -38,6 +40,7 @@ internal class Core
         Client = __instance.World;
 
         PrefabCollectionSystem = Client.GetExistingSystemManaged<PrefabCollectionSystem>();
+        EntityCommandBufferSystem = Client.GetExistingSystemManaged<EntityCommandBufferSystem>();
         /*
         ClientScriptMapper = Client.GetExistingSystemManaged<ClientScriptMapper>();
         GameDataManager = Client.GetExistingSystemManaged<GameDataManager>();

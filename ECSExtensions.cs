@@ -99,4 +99,8 @@ internal static class ECSExtensions
         }
         Core.Log.LogInfo("===");
     }
+    public static bool Exists(this Entity entity)
+    {
+        return EntityManager.Exists(entity);
+    }
 }

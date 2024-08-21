@@ -1,6 +1,9 @@
 using Eclipse.Services;
 using HarmonyLib;
+using Il2CppInterop.Runtime;
 using ProjectM;
+using ProjectM.Network;
+using ProjectM.Shared.Systems;
 using ProjectM.UI;
 using Unity.Collections;
 using Unity.Entities;
@@ -10,9 +13,19 @@ namespace Eclipse.Patches;
 [HarmonyPatch]
 internal static class InitializationPatches
 {
-    static readonly bool ShouldInitialize = Plugin.Leveling; // will use operators with other bools as options are added in the future
+    static EntityManager EntityManager => Core.EntityManager;
+
+    static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies; // will use operators with other bools as options are added in the future
     static bool SetCanvas = false;
-    static bool SetPlayer = false;
+    //static bool SetPlayer = false;
+    static bool OptedIn = false;
+
+    static readonly ComponentType[] NetworkComponents =
+    [
+        ComponentType.ReadOnly(Il2CppType.Of<NetworkEventType>()),
+        ComponentType.ReadOnly(Il2CppType.Of<SendNetworkEventTag>()),
+        ComponentType.ReadOnly(Il2CppType.Of<ChatMessageEvent>())
+    ];
 
     [HarmonyPatch(typeof(GameDataManager), nameof(GameDataManager.OnUpdate))]
     [HarmonyPostfix]
@@ -48,6 +61,7 @@ internal static class InitializationPatches
         }
     }
 
+    /*
     [HarmonyPatch(typeof(GetCharacterHUDSystem), nameof(GetCharacterHUDSystem.OnUpdate))]
     [HarmonyPostfix]
     static void OnUpdatePostfix(GetCharacterHUDSystem __instance)
@@ -61,7 +75,6 @@ internal static class InitializationPatches
                 {
                     SetPlayer = true;
                     CanvasService.LocalCharacter = player;
-                    Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
                     break;
                 }
             }
@@ -71,5 +84,47 @@ internal static class InitializationPatches
                 Plugin.Harmony.Unpatch(typeof(GetCharacterHUDSystem).GetMethod("OnUpdate"), typeof(InitializationPatches).GetMethod("OnUpdatePostfix"));
             }
         }
+    }
+    */
+
+    [HarmonyPatch(typeof(ClientChatSystem), nameof(ClientChatSystem.OnUpdate))]
+    [HarmonyPrefix]
+    static void OnUpdatePrefix(ClientChatSystem __instance)
+    {
+        if (!Core.hasInitialized) return;
+        if (!OptedIn)
+        {
+            OptedIn = true;
+            ClientSystemChatUtils.AddLocalMessage(__instance.EntityManager, "Eclipse client message...", ServerChatMessageType.Local);
+        }
+        NativeArray<Entity> messages = __instance.__query_172511197_1.ToEntityArray(Allocator.Temp);
+        try
+        {
+            foreach (Entity message in messages)
+            {
+                Core.Log.LogInfo($"Handling message...");
+                if (message.Has<ChatMessageServerEvent>())
+                {
+                    ChatMessageServerEvent chatMessage = message.Read<ChatMessageServerEvent>();
+                    if (chatMessage.MessageText.IsEmpty) continue;
+                    string messageText = chatMessage.MessageText.Value;
+                    if (messageText.StartsWith("+") && messageText.Length == 15)
+                    {
+                        Core.Log.LogInfo($"Received progress: {messageText}");
+                        CanvasService.PlayerData = CanvasService.ParseString(messageText[1..]);
+                        EntityManager.DestroyEntity(message);
+                        if (!CanvasService.Active) Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
+                    }
+                    else
+                    {
+                        Core.Log.LogInfo($"Received message: {messageText} | {messageText.Length}");
+                    }
+                }
+            }
+        }
+        finally
+        {
+            messages.Dispose();
+        }   
     }
 }
