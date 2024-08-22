@@ -1,14 +1,21 @@
-﻿using Il2CppInterop.Runtime;
+﻿using Eclipse.Patches;
+using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using ProjectM;
+using ProjectM.Network;
 using ProjectM.UI;
 using Stunlock.Core;
 using Stunlock.Localization;
 using System.Collections;
+using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 using static Eclipse.Services.CanvasService.UIObjectUtils;
+using Image = UnityEngine.UI.Image;
 using StringComparison = System.StringComparison;
 
 // UI ideas
@@ -24,28 +31,46 @@ internal class CanvasService
     static readonly bool LegacyBar = Plugin.Legacies;
     static readonly bool ExpertiseBar = Plugin.Expertise;
 
-    static readonly WaitForSeconds Delay = new(1);
+    static readonly WaitForSeconds Delay = new(2.5f);
 
     static UICanvasBase UICanvasBase;
     static Canvas Canvas;
     public static List<int> PlayerData;
 
     static GameObject ExperienceBarGameObject;
-    static Image ExperienceFill;
+    static LocalizedText ExperienceHeader;
+    static LocalizedText ExperienceText;
     static Image ExperienceIcon;
+    static Image ExperienceFill;
     static float ExperienceProgress = 0f;
+    static int ExperienceLevel = 0;
+    static int ExperiencePrestige = 0;
 
     static GameObject LegacyBarGameObject;
-    static Image LegacyFill;
+    static LocalizedText LegacyHeader;
     static LocalizedText LegacyText;
     static Image LegacyIcon;
+    static Image LegacyFill;
     static float LegacyProgress = 0f;
+    static int LegacyLevel = 0;
+    static int LegacyPrestige = 0;
 
     static GameObject ExpertiseBarGameObject;
-    static Image ExpertiseFill;
+    static LocalizedText ExpertiseHeader;
     static LocalizedText ExpertiseText;
     static Image ExpertiseIcon;
+    static Image ExpertiseFill;
     static float ExpertiseProgress = 0f;
+    static int ExpertiseLevel = 0;
+    static int ExpertisePrestige = 0;
+
+    static GameObject QuestObject;
+    static int DailyProgress = 0;
+    static int DailyGoal = 0;
+    static int DailyTarget = 0;
+    static int WeeklyProgress = 0;
+    static int WeeklyGoal = 0;
+    static int WeeklyTarget = 0;
     public enum BloodType
     {
         Worker,
@@ -80,18 +105,16 @@ internal class CanvasService
 
     static readonly Dictionary<BloodType, string> BloodIcons = new()
     {
-        { BloodType.Worker, "BloodType_Worker_Small" },
-        { BloodType.Warrior, "BloodType_Warrior_Small" },
-        { BloodType.Scholar, "BloodType_Scholar_Small" },
+        { BloodType.Worker, "BloodIcon_Small_Worker" },
+        { BloodType.Warrior, "BloodIcon_Small_Warrior" },
+        { BloodType.Scholar, "BloodIcon_Small_Scholar" },
         { BloodType.Rogue, "BloodType_Rogue_Small" },
-        { BloodType.Mutant, "BloodType_Mutant_Small" },
+        { BloodType.Mutant, "BloodType_Putrid_Small" },
         { BloodType.Draculin, "BloodType_Draculin_Small" },
-        { BloodType.Immortal, "BloodType_Immortal_Small" },
-        { BloodType.Creature, "BloodType_Creature_Small" },
-        { BloodType.Brute, "BloodType_Brute_Small" }
+        { BloodType.Immortal, "BloodType_Dracula_Small" },
+        { BloodType.Creature, "BloodType_Beast_Small" },
+        { BloodType.Brute, "BloodIcon_Small_Brute" }
     };
-
-    static Sprite simpleFill;
 
     static readonly Dictionary<BloodType, Sprite> BloodSprites = [];
     static void InitializeSprites()
@@ -99,7 +122,13 @@ internal class CanvasService
         List<string> spriteNames = [..BloodIcons.Values];
         Il2CppArrayBase<Sprite> allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
 
-        simpleFill = allSprites.First(sprite => sprite.name == "SimpleProgressBar_Fill");
+        if (!File.Exists(Plugin.FilePaths[1])) File.Create(Plugin.FilePaths[1]).Dispose();
+
+        using StreamWriter writer = new(Plugin.FilePaths[1], false);
+        foreach (Sprite sprite in allSprites)
+        {
+            writer.WriteLine(sprite.name);
+        }
 
         var matchedSprites = allSprites
             .Where(sprite => spriteNames.Contains(sprite.name))
@@ -107,12 +136,11 @@ internal class CanvasService
 
         foreach (var pair in matchedSprites)
         {
-            Core.Log.LogInfo($"BloodType: {pair.Key} | Sprite: {pair.Value.name}");
+            //Core.Log.LogInfo($"BloodType: {pair.Key} | Sprite: {pair.Value.name}");
             BloodSprites[pair.Key] = pair.Value;
         }
     }
 
-    public static Entity LocalCharacter;
     public static bool Active = false;
     public CanvasService(UICanvasBase canvas)
     {
@@ -121,7 +149,8 @@ internal class CanvasService
         InitializeBars(canvas);
         try
         {
-            InitializeSprites();
+            //InitializeSprites();
+            //FindGameObjects(canvas.transform, Plugin.FilePaths[0], true);
         }
         catch (Exception ex)
         {
@@ -143,30 +172,47 @@ internal class CanvasService
             if (!Active) Active = true;
 
             ExperienceProgress = PlayerData[0] / 100f;
-            LegacyProgress = PlayerData[1] / 100f;
-            int legacyType = PlayerData[2];
-            ExpertiseProgress = PlayerData[3] / 100f;
-            int expertiseType = PlayerData[4];
+            ExperienceLevel = PlayerData[1];
+            ExperiencePrestige = PlayerData[2];
+            LegacyProgress = PlayerData[3] / 100f;
+            LegacyLevel = PlayerData[4];
+            LegacyPrestige = PlayerData[5];
+            int legacyType = PlayerData[6];
+            ExpertiseProgress = PlayerData[7] / 100f;
+            ExpertiseLevel = PlayerData[8];
+            ExpertisePrestige = PlayerData[9];
+            int expertiseType = PlayerData[10];
+            DailyProgress = PlayerData[11];
+            DailyGoal = PlayerData[12];
+            DailyTarget = PlayerData[13];
+            WeeklyProgress = PlayerData[14];
+            WeeklyGoal = PlayerData[15];
+            WeeklyTarget = PlayerData[16];
 
-            Core.Log.LogInfo($"Experience: {ExperienceProgress} | Legacy: {LegacyProgress} {legacyType} | Expertise: {ExpertiseProgress} {expertiseType}");
+            //Core.Log.LogInfo($"Experience: {ExperienceProgress}/{ExperienceLevel}/{ExperiencePrestige} | Legacy: {LegacyProgress}/{LegacyLevel}/{LegacyPrestige} {legacyType} | Expertise: {ExpertiseProgress}/{ExpertiseLevel}/{ExpertisePrestige} {expertiseType} | Daily: {DailyProgress}/{DailyGoal}/{DailyTarget} | Weekly: {WeeklyProgress}/{WeeklyGoal}/{WeeklyTarget}");
 
             if (ExperienceProgress != ExperienceFill.fillAmount && ExperienceProgress != 0f)
             {
                 ExperienceFill.fillAmount = ExperienceProgress;
+
+                if (ExperienceText.GetText() != ExperienceLevel.ToString())
+                {
+                    ExperienceText.ForceSet(ExperienceLevel.ToString());
+                }
             }
 
             if (LegacyProgress != LegacyFill.fillAmount && LegacyProgress != 0f)
             {
                 LegacyFill.fillAmount = LegacyProgress;
                 string bloodType = Enum.GetName(typeof(BloodType), legacyType);
-                if (LegacyText.GetText() != bloodType)
+                if (LegacyHeader.GetText() != bloodType)
                 {
-                    LegacyText.ForceSet(bloodType);
-                    if (BloodSprites.TryGetValue((BloodType)legacyType, out Sprite sprite))
-                    {
-                        LegacyIcon.sprite = sprite;
-                        if (!LegacyIcon.enabled) LegacyIcon.enabled = true;
-                    }
+                    LegacyHeader.ForceSet(bloodType);
+                }
+
+                if (LegacyText.GetText() != LegacyLevel.ToString())
+                {
+                    LegacyText.ForceSet(LegacyLevel.ToString());
                 }
             }
 
@@ -174,11 +220,44 @@ internal class CanvasService
             {
                 ExpertiseFill.fillAmount = ExpertiseProgress;
                 string weaponType = Enum.GetName(typeof(WeaponType), expertiseType);
-                if (ExpertiseText.GetText() != weaponType)
+                if (ExpertiseHeader.GetText() != weaponType)
                 {
-                    ExpertiseText.ForceSet(weaponType);
+                    ExpertiseHeader.ForceSet(weaponType);
+                }
+
+                if (ExpertiseText.GetText() != ExpertiseLevel.ToString())
+                {
+                    ExpertiseText.ForceSet(ExpertiseLevel.ToString());
                 }
             }
+
+            /*
+            Entity localCharacter = ClientChatSystemPatch.localCharacter;
+            Entity localUser = ClientChatSystemPatch.localUser;
+            if (localCharacter.Exists() && localUser.Exists() && localCharacter.Has<FollowerBuffer>())
+            {
+                var buffer = localCharacter.ReadBuffer<FollowerBuffer>();
+                foreach (FollowerBuffer followerBuffer in buffer)
+                {
+                    Entity following = followerBuffer.Entity.GetEntityOnServer();
+                    if (following.Exists() && following.Has<FactionReference>())
+                    {
+                        Core.Log.LogInfo("Following exists...");
+                        if (!following.Read<FactionReference>().FactionGuid.Equals(PlayerFaction)) continue;
+                        Core.Log.LogInfo("Following is player faction...");
+                        following.With((ref CharacterHUD characterHUD) =>
+                        {
+                            if (characterHUD.Name.IsEmpty)
+                            {
+                                characterHUD.Name = new FixedString64Bytes($"{localUser.Read<User>().CharacterName.Value}'s Familiar");
+                                Core.Log.LogInfo($"Set familiar name...");
+                            }
+                        });
+                        break;
+                    }
+                }
+            }
+            */
 
             yield return Delay;
         }
@@ -186,19 +265,36 @@ internal class CanvasService
     static void InitializeBars(UICanvasBase canvas)
     {
         GameObject CanvasObject = FindTargetUIObject(canvas.transform.root, "BottomBarCanvas");
+        GameObject TargetInfoObject = FindTargetUIObject(canvas.transform.root, "TargetInfoPanelCanvas");
         Canvas bottomBarCanvas = CanvasObject.GetComponent<Canvas>();
+        //Canvas targetInfoCanvas = TargetInfoObject.GetComponent<Canvas>();
+
         Canvas = bottomBarCanvas;
-        GameObject objectPrefab = canvas.ProximityPlayerListOverlay.PlayerEntryPrefab.gameObject;
+        //GameObject objectPrefab = canvas.ProximityPlayerListOverlay.PlayerEntryPrefab.gameObject;
+        GameObject objectPrefab = canvas.TargetInfoParent.gameObject;
+        GameObject iconContainerPrefab = FindTargetUIObject(canvas.transform.root, "Icon_container");
+        //GameObject tutorialWindowPrefab = canvas.AchievementsParent.gameObject;
+        //GameObject bloodOrbPrefab = canvas.BottomBarParentPrefab.BloodOrb.gameObject;
+        //GameObject bloodOrbPrefab = FindTargetUIObject(canvas.transform.root, "BloodOrbParent");
 
         // Instantiate all bars
         GameObject ExperienceBarObject = GameObject.Instantiate(objectPrefab);
         GameObject LegacyBarObject = GameObject.Instantiate(objectPrefab);
         GameObject ExpertiseBarObject = GameObject.Instantiate(objectPrefab);
+        GameObject IconContainerObject = GameObject.Instantiate(iconContainerPrefab);
+        //GameObject QuestObject = GameObject.Instantiate(tutorialWindowPrefab);
+        //GameObject BloodOrbObject = GameObject.Instantiate(bloodOrbPrefab);
+
+        // Assign GameObjects to respective fields
+        ExperienceBarGameObject = ExperienceBarObject;
+        LegacyBarGameObject = LegacyBarObject;
+        ExpertiseBarGameObject = ExpertiseBarObject;
 
         // Mark for DontDestroyOnLoad and move to VRisingWorld scene
         RectTransform ExperienceBarRectTransform = ExperienceBarObject.GetComponent<RectTransform>();
         RectTransform LegacyBarRectTransform = LegacyBarObject.GetComponent<RectTransform>();
         RectTransform ExpertiseBarRectTransform = ExpertiseBarObject.GetComponent<RectTransform>();
+        RectTransform IconContainerRectTransform = IconContainerObject.GetComponent<RectTransform>();
 
         GameObject.DontDestroyOnLoad(ExperienceBarObject);
         GameObject.DontDestroyOnLoad(LegacyBarObject);
@@ -211,31 +307,90 @@ internal class CanvasService
         // Set BottomBarCanvas as the parent for all bars
         ExperienceBarRectTransform.SetParent(bottomBarCanvas.transform, false);
         LegacyBarRectTransform.SetParent(bottomBarCanvas.transform, false);
-        ExpertiseBarRectTransform.SetParent(bottomBarCanvas.transform, false);
+        ExpertiseBarRectTransform.SetParent(bottomBarCanvas.transform, false); // not needed for the health bars to show up?
+        IconContainerRectTransform.SetParent(bottomBarCanvas.transform, false);
 
         // Get MiniMap south icon on the compass to set location for now
         GameObject MiniMapSouthObject = FindTargetUIObject(canvas.transform.root, "S");
         RectTransform MiniMapSouthRectTransform = MiniMapSouthObject.GetComponent<RectTransform>();
 
-        // Configure ExperienceBar
-        ConfigureBar(ExperienceBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, CanvasObject.layer, 1.5f, "Experience", Color.green, 1);
+        /*
+        if (BloodOrbObject == null)
+        {
+            Core.Log.LogError("BloodOrbObject is null...");
+        }
+        else
+        {
+            RectTransform BloodOrbRectTransform = BloodOrbObject.GetComponent<RectTransform>();
+            GameObject.DontDestroyOnLoad(BloodOrbObject);
+            SceneManager.MoveGameObjectToScene(BloodOrbObject, SceneManager.GetSceneByName("VRisingWorld"));
+            BloodOrbRectTransform.SetParent(bottomBarCanvas.transform, false);
+            //CanvasObject.GetComponent<RectTransform>().rect.height * 0.2f
+            BloodOrbRectTransform.position = new Vector3(MiniMapSouthRectTransform.position.x, MiniMapSouthRectTransform.position.y / 4, MiniMapSouthRectTransform.position.z);
+            BloodOrbObject.layer = CanvasObject.layer;
+            GameObject BloodFill = FindTargetUIObject(BloodOrbRectTransform.transform, "BloodFill");
+            Image BloodFillImage = BloodFill.GetComponent<Image>();
+            BloodFillImage.fillAmount = 0.25f;
+            BloodFillImage.color = Color.green;
+            GameObject Blood = FindTargetUIObject(BloodOrbRectTransform.transform, "Blood");
+            //EventTrigger eventTrigger = Blood.GetComponent<EventTrigger>();
+            Image BloodImage = Blood.GetComponent<Image>();
+            BloodImage.color = Color.green;
+            BloodImage.fillAmount = 0.50f;
+            GameObject BloodType = FindTargetUIObject(BloodOrbRectTransform.transform, "BloodType");
+            Image BloodTypeImage = BloodType.GetComponent<Image>();
+            Animator FillAnimation = BloodFill.GetComponent<Animator>();
+            BloodTypeImage.fillAmount = 0.1f;
+            BloodTypeImage.color = Color.green;
+            BloodOrbObject.SetActive(true);
+            //Blood.active = false; main blood thing
 
-        // Configure LegacyBar
-        ConfigureBar(LegacyBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, CanvasObject.layer, 1.5f, "Legacy", new Color(1, 0, 0, 1), 2);
+        }
 
-        // Configure ExpertiseBar
-        ConfigureBar(ExpertiseBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, CanvasObject.layer, 1.5f, "Expertise", new Color(0.5f, 0.5f, 0.5f, 1), 3);
-
-        // Assign GameObjects to respective fields
-        ExperienceBarGameObject = ExperienceBarObject;
-        LegacyBarGameObject = LegacyBarObject;
-        ExpertiseBarGameObject = ExpertiseBarObject;
+        
+        if (QuestObject == null)
+        {
+            Core.Log.LogError("QuestObject is null...");
+        }
+        else
+        {
+            RectTransform QuestRectTransform = QuestObject.GetComponent<RectTransform>();
+            GameObject.DontDestroyOnLoad(QuestObject);
+            SceneManager.MoveGameObjectToScene(QuestObject, SceneManager.GetSceneByName("VRisingWorld"));
+            QuestRectTransform.SetParent(bottomBarCanvas.transform, false);
+            QuestRectTransform.position = new Vector3(MiniMapSouthRectTransform.position.x / 2, MiniMapSouthRectTransform.position.y / 2, MiniMapSouthRectTransform.position.z);
+            QuestObject.layer = CanvasObject.layer;
+            QuestObject.SetActive(true);
+            FindGameObjectComponents(QuestObject);
+        }
+        Core.Log.LogInfo("check6");
+        */
 
         // Assign Fill Images
         ExperienceFill = FindTargetUIObject(ExperienceBarRectTransform.transform, "Fill").GetComponent<Image>();
         LegacyFill = FindTargetUIObject(LegacyBarRectTransform.transform, "Fill").GetComponent<Image>();
         ExpertiseFill = FindTargetUIObject(ExpertiseBarRectTransform.transform, "Fill").GetComponent<Image>();
 
+        // Assign LocalizedText for headers
+        ExperienceHeader = FindTargetUIObject(ExperienceBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
+        LegacyHeader = FindTargetUIObject(LegacyBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
+        ExpertiseHeader = FindTargetUIObject(ExpertiseBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
+
+        // Assign LocalizedText for Level
+        ExperienceText = FindTargetUIObject(ExperienceBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
+        LegacyText = FindTargetUIObject(LegacyBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
+        ExpertiseText = FindTargetUIObject(ExpertiseBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
+
+        // Configure ExperienceBar
+        ConfigureBar(ExperienceBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExperienceHeader, ExperienceText, ExperienceFill, CanvasObject.layer, 1f, "Experience", Color.green, 1);
+
+        // Configure LegacyBar
+        ConfigureBar(LegacyBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, LegacyHeader, LegacyText, LegacyFill, CanvasObject.layer, 1f, "Legacy", Color.red, 2);
+
+        // Configure ExpertiseBar
+        ConfigureBar(ExpertiseBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExpertiseHeader, ExpertiseText, ExpertiseFill, CanvasObject.layer, 1f, "Expertise", Color.grey, 3);
+
+        /*
         // Assign Icon Images
         ExperienceIcon = FindTargetUIObject(ExperienceBarRectTransform.transform, "Icon_VoiceChatStatus").GetComponent<Image>();
         LegacyIcon = FindTargetUIObject(LegacyBarRectTransform.transform, "Icon_VoiceChatStatus").GetComponent<Image>();
@@ -247,45 +402,59 @@ internal class CanvasService
         ExpertiseIcon.enabled = false;
 
         // Assign Text Headers
-        LocalizedText ExperienceTextHeader = FindTargetUIObject(ExperienceBarRectTransform.transform, "Text_Player_VampireName").GetComponent<LocalizedText>();
+        LocalizedText ExperienceTextHeader = FindTargetUIObject(ExperienceBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
         ExperienceTextHeader.ForceSet("Experience");
 
-        LegacyText = FindTargetUIObject(LegacyBarRectTransform.transform, "Text_Player_VampireName").GetComponent<LocalizedText>();
+        LegacyText = FindTargetUIObject(LegacyBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
         LegacyText.ForceSet("Legacy");
 
-        ExpertiseText = FindTargetUIObject(ExpertiseBarRectTransform.transform, "Text_Player_VampireName").GetComponent<LocalizedText>();
+        ExpertiseText = FindTargetUIObject(ExpertiseBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
         ExpertiseText.ForceSet("Expertise");
+        */
+
+        // Activate all bars
+        if (ExperienceBar) ExperienceBarObject.SetActive(true);
+        if (LegacyBar)
+        {
+            LegacyBarObject.SetActive(true);
+            IconContainerRectTransform.position = new Vector3(LegacyBarRectTransform.rect.xMax, LegacyBarRectTransform.position.y, LegacyBarRectTransform.position.z);
+            IconContainerRectTransform.gameObject.layer = CanvasObject.layer;
+            //IconContainerObject.SetActive(true);
+            LegacyIcon = FindTargetUIObject(IconContainerRectTransform.transform, "Icon_VoiceChatStatus").GetComponent<Image>();
+            LegacyIcon.enabled = false;
+        }
+        if (ExpertiseBar) ExpertiseBarObject.SetActive(true);
 
         // Deactivate unwanted objects in all bars
         DeactivateUnwantedObjects(ExperienceBarRectTransform);
         DeactivateUnwantedObjects(LegacyBarRectTransform);
         DeactivateUnwantedObjects(ExpertiseBarRectTransform);
-
-        // Activate all bars
-        if (ExperienceBar) ExperienceBarObject.SetActive(true);
-        if (LegacyBar) LegacyBarObject.SetActive(true);
-        if (ExpertiseBar) ExpertiseBarObject.SetActive(true);
     }
-    static void ConfigureBar(RectTransform barRectTransform, GameObject referenceObject, RectTransform referenceRectTransform, int layer, float sizeMultiplier, string barHeaderText, Color fillColor, int barNumber)
+    static void ConfigureBar(RectTransform barRectTransform, GameObject referenceObject, RectTransform referenceRectTransform, LocalizedText textHeader, LocalizedText levelText, Image fillImage, int layer, float sizeMultiplier, string barHeaderText, Color fillColor, int barNumber)
     {
+        //GameObject WorldEventObject = FindTargetUIObject(canvas.transform.root, "HUDAlert_WorldEvent"); use for y
+        //RectTransform WorldEventRectTransform = WorldEventObject.GetComponent<RectTransform>();
+
         float rectWidth = barRectTransform.rect.width;
         float sizeOffsetX = ((rectWidth * sizeMultiplier) - rectWidth) * (1 - barRectTransform.pivot.x);
-        barRectTransform.localScale *= sizeMultiplier;
-        barRectTransform.position = new Vector3(referenceObject.transform.position.x - sizeOffsetX, referenceObject.transform.position.y - (referenceRectTransform.rect.height * sizeMultiplier * barNumber), referenceObject.transform.position.z);
+        barRectTransform.localScale *= 0.75f;
+        barRectTransform.position = new Vector3(referenceObject.transform.position.x - sizeOffsetX * 2, (referenceObject.transform.position.y * 0.9f) - (referenceRectTransform.rect.height * 1.75f * barNumber), referenceObject.transform.position.z);
         barRectTransform.gameObject.layer = layer;
 
-        Image fillImage = FindTargetUIObject(barRectTransform.transform, "Fill").GetComponent<Image>();
         fillImage.fillAmount = 0f;
-        if (simpleFill != null && simpleFill.name == "SimpleProgressBar_Fill") fillImage.sprite = simpleFill;
         fillImage.color = fillColor;
 
-        LocalizedText textHeader = FindTargetUIObject(barRectTransform.transform, "Text_Player_VampireName").GetComponent<LocalizedText>();
+        levelText.ForceSet("0");
         textHeader.ForceSet(barHeaderText);
+        textHeader.Text.fontSize *= 1.5f;
     }
     static void DeactivateUnwantedObjects(RectTransform barRectTransform)
     {
         //FindTargetUIObject(barRectTransform.transform, "Icon_container").SetActive(false);
-        FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").SetActive(false);
+        FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
+        FindTargetUIObject(barRectTransform.transform, "Skull").SetActive(false);
+        FindTargetUIObject(barRectTransform.transform, "InformationPanel").SetActive(false);
+        FindTargetUIObject(barRectTransform.transform, "AbsorbFill").SetActive(false);
     }
     public static class UIObjectUtils
     {
@@ -392,7 +561,7 @@ internal class CanvasService
 
             return sprite;
         }
-        public static void FindGameObjects(Transform root, bool includeInactive = false)
+        public static void FindGameObjects(Transform root, string filePath = "", bool includeInactive = false)
         {
             // Stack to hold the transforms to be processed
             Stack<(Transform transform, int indentLevel)> transformStack = new();
@@ -402,8 +571,42 @@ internal class CanvasService
             HashSet<Transform> visited = [];
 
             Il2CppArrayBase<Transform> children = root.GetComponentsInChildren<Transform>(includeInactive);
-            List<Transform> transforms = [.. children];
+            List<Transform> transforms = [..children];
 
+            if (string.IsNullOrEmpty(filePath))
+            {
+                while (transformStack.Count > 0)
+                {
+                    var (current, indentLevel) = transformStack.Pop();
+
+                    if (!visited.Add(current))
+                    {
+                        // If we have already visited this transform, skip it
+                        continue;
+                    }
+
+                    List<string> objectComponents = FindGameObjectComponents(current.gameObject);
+
+                    // Create an indentation string based on the indent level
+                    string indent = new('|', indentLevel);
+
+                    // Write the current GameObject's name and some basic info to the file
+
+                    // Add all children to the stack
+                    foreach (Transform child in transforms)
+                    {
+                        if (child.parent == current)
+                        {
+                            transformStack.Push((child, indentLevel + 1));
+                        }
+                    }
+                }
+                return;
+            }
+
+            if (!File.Exists(filePath)) File.Create(filePath).Dispose();
+
+            using StreamWriter writer = new(filePath, false);
             while (transformStack.Count > 0)
             {
                 var (current, indentLevel) = transformStack.Pop();
@@ -414,12 +617,13 @@ internal class CanvasService
                     continue;
                 }
 
-                FindGameObjectComponents(current.gameObject);
+                List<string> objectComponents = FindGameObjectComponents(current.gameObject);
+
                 // Create an indentation string based on the indent level
                 string indent = new('|', indentLevel);
 
-                // Print the current GameObject's name and some basic info
-                Core.Log.LogInfo($"{indent}{current.gameObject.name} ({current.gameObject.scene.name})");
+                // Write the current GameObject's name and some basic info to the file
+                writer.WriteLine($"{indent}{current.gameObject.name} | {string.Join(",", objectComponents)} | [{current.gameObject.scene.name}]");
 
                 // Add all children to the stack
                 foreach (Transform child in transforms)
@@ -431,14 +635,17 @@ internal class CanvasService
                 }
             }
         }
-        public static void FindGameObjectComponents(GameObject parentObject)
+        public static List<string> FindGameObjectComponents(GameObject parentObject)
         {
-            //GameObject childObject = FindTargetUIObject(parentObject.transform, childName);
+            List<string> components = [];
+
             int componentCount = parentObject.GetComponentCount();
             for (int i = 0; i < componentCount; i++)
             {
-                Core.Log.LogInfo($"{parentObject.name} Component {i}: {parentObject.GetComponentAtIndex(i).name} | {parentObject.GetComponentAtIndex(i).GetIl2CppType().FullName}");
+                components.Add($"{parentObject.GetComponentAtIndex(i).GetIl2CppType().FullName}({i})");
             }
+
+            return components;
         }
         public static void GatherInfo(GameObject gameObject)
         {
@@ -467,7 +674,6 @@ internal class CanvasService
             */
         }
     }
-
     // BloodOrbComponent stuff, colored orbs instead of bars would be amazing but can't just grab the BloodOrbComponent like everything else and was taking too much time
     /*
             // Instantiate the ExperienceBar from the PlayerEntryPrefab

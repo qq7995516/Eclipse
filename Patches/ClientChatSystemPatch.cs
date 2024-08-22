@@ -3,9 +3,12 @@ using HarmonyLib;
 using Il2CppInterop.Runtime;
 using ProjectM.Network;
 using ProjectM.UI;
+using System.Text;
 using System.Text.RegularExpressions;
 using Unity.Collections;
 using Unity.Entities;
+using CryptographicOperations = System.Security.Cryptography.CryptographicOperations;
+using HMACSHA256 = System.Security.Cryptography.HMACSHA256;
 
 namespace Eclipse.Patches;
 
@@ -14,11 +17,13 @@ internal static class ClientChatSystemPatch
 {
     static EntityManager EntityManager => Core.EntityManager;
 
-    static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies;
+    static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests;
     static bool UserRegistered = false;
 
-    static readonly Regex regexMatch = new(@"^\[\d+\]:");
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
+    static readonly Regex regexMAC = new(@";mac([^;]+)$");
+
+    static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZQ==");
 
     static readonly ComponentType[] NetworkEventComponents =
     [
@@ -40,7 +45,7 @@ internal static class ClientChatSystemPatch
     public enum NetworkEventSubType
     {
         RegisterUser,
-        ProgressToClient,
+        ProgressToClient
     }
 
     [HarmonyPatch(typeof(ClientChatSystem), nameof(ClientChatSystem.OnUpdate))]
@@ -72,14 +77,13 @@ internal static class ClientChatSystemPatch
                 {
                     ChatMessageServerEvent chatMessage = entity.Read<ChatMessageServerEvent>();
                     string message = chatMessage.MessageText.Value;
+                    //Core.Log.LogInfo($"Received message: {message}");
 
-                    if (regexMatch.IsMatch(message))
+                    if (VerifyMAC(message, out string originalMessage))
                     {
-                        HandleServerMessage(message);
-                        Core.Log.LogInfo($"Received progress: {message}");
-                        CanvasService.PlayerData = CanvasService.ParseString(message[1..]);
+                        //Core.Log.LogInfo($"Verified message, handling...");
+                        HandleServerMessage(originalMessage);
                         EntityManager.DestroyEntity(entity);
-                        if (!CanvasService.Active) Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
                     }
                 }
             }
@@ -91,9 +95,12 @@ internal static class ClientChatSystemPatch
     }
     static void SendMessage(NetworkEventSubType subType, string message)
     {
+        string intermediateMessage = $"[{(int)subType}]:{message}";
+        string messageWithMAC = $"{intermediateMessage};mac{GenerateMAC(intermediateMessage)}";
+
         ChatMessageEvent chatMessageEvent = new()
         {
-            MessageText = new FixedString512Bytes($"[{(int)subType}]:{message}"),
+            MessageText = new FixedString512Bytes(messageWithMAC),
             MessageType = ChatMessageType.Local,
             ReceiverEntity = localUser.Read<NetworkId>()
         };
@@ -114,4 +121,32 @@ internal static class ClientChatSystemPatch
                 break;
         }
     }
+    public static bool VerifyMAC(string receivedMessage, out string originalMessage)
+    {
+        // Separate the original message and the MAC
+        Match match = regexMAC.Match(receivedMessage);
+        originalMessage = "";
+
+        if (match.Success)
+        {
+            string receivedMAC = match.Groups[1].Value;
+            string intermediateMessage = regexMAC.Replace(receivedMessage, "");
+            string recalculatedMAC = GenerateMAC(intermediateMessage);
+
+            // Compare the MACs
+            if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(recalculatedMAC), Encoding.UTF8.GetBytes(receivedMAC)))
+            {
+                originalMessage = intermediateMessage;
+                return true;
+            }
+        }
+        return false;
+    }
+    public static string GenerateMAC(string message)
+    {
+        using var hmac = new HMACSHA256(sharedKey);
+        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+        byte[] hashBytes = hmac.ComputeHash(messageBytes);
+        return Convert.ToBase64String(hashBytes);
+    } 
 }

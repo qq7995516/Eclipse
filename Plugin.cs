@@ -15,17 +15,27 @@ internal class Plugin : BasePlugin
     public static Harmony Harmony => Instance._harmony;
     public static ManualLogSource LogInstance => Instance.Log;
 
-    //static readonly string ConfigFiles = Path.Combine(Paths.ConfigPath, MyPluginInfo.PLUGIN_NAME); // Eclipse folder if needed
+    public static readonly List<string> DirectoryPaths =
+    [
+        Path.Combine(Paths.ConfigPath, MyPluginInfo.PLUGIN_NAME) // 0
+    ];
+
+    public static readonly List<string> FilePaths =
+    [
+        Path.Combine(DirectoryPaths[0], "game_objects.json"), // 0
+        Path.Combine(DirectoryPaths[0], "sprites.json"), // 1
+    ];
 
     static ConfigEntry<bool> leveling;
     static ConfigEntry<bool> prestige;
     static ConfigEntry<bool> legacies;
     static ConfigEntry<bool> expertise;
+    static ConfigEntry<bool> quests;
     public static bool Leveling => leveling.Value;
     public static bool Prestige => prestige.Value;
     public static bool Legacies => legacies.Value;
     public static bool Expertise => expertise.Value;
-
+    public static bool Quests => quests.Value;
     public override void Load()
     {
         Instance = this;
@@ -35,11 +45,16 @@ internal class Plugin : BasePlugin
     }
     static void InitConfig()
     {
-        //CreateDirectory(ConfigFiles);
+        foreach (string path in DirectoryPaths)
+        {
+            CreateDirectory(path);
+        }
+
         leveling = InitConfigEntry("UIOptions", "ExperienceBar", false, "Enable/Disable the experience bar, requires both ClientCompanion/LevelingSystem to be enabled in Bloodcraft.");
         prestige = InitConfigEntry("UIOptions", "ShowPrestige", false, "Enable/Disable showing prestige level in front of experience bar, requires both ClientCompanion/PrestigeSystem to be enabled in Bloodcraft .");
         legacies = InitConfigEntry("UIOptions", "LegacyBar", false, "Enable/Disable the legacy bar, requires both ClientCompanion/LegacySystem to be enabled in Bloodcraft.");
         expertise = InitConfigEntry("UIOptions", "ExpertiseBar", false, "Enable/Disable the expertise bar, requires both ClientCompanion/ExpertiseSystem to be enabled in Bloodcraft.");
+        quests = InitConfigEntry("UIOptions", "QuestTracker", false, "Enable/Disable the quest tracker, requires both ClientCompanion/QuestSystem to be enabled in Bloodcraft.");
     }
     static ConfigEntry<T> InitConfigEntry<T>(string section, string key, T defaultValue, string description)
     {
@@ -65,5 +80,12 @@ internal class Plugin : BasePlugin
         Config.Clear();
         _harmony.UnpatchSelf();
         return true;
+    }
+    static void CreateDirectory(string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
     }
 }

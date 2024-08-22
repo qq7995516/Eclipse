@@ -1,6 +1,4 @@
-using Eclipse.Services;
 using HarmonyLib;
-using Il2CppInterop.Runtime;
 using ProjectM;
 using ProjectM.Network;
 using ProjectM.UI;
@@ -14,7 +12,7 @@ internal static class InitializationPatches
 {
     static EntityManager EntityManager => Core.EntityManager;
 
-    static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies; // will use operators with other bools as options are added in the future
+    static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests; // will use operators with other bools as options are added in the future
     static bool SetCanvas = false;
 
     [HarmonyPatch(typeof(GameDataManager), nameof(GameDataManager.OnUpdate))]

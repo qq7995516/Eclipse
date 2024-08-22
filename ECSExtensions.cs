@@ -11,6 +11,20 @@ internal static class ECSExtensions
     static EntityManager EntityManager => Core.EntityManager;
     static PrefabCollectionSystem PrefabCollectionSystem => Core.PrefabCollectionSystem;
 
+    public delegate void ActionRef<T>(ref T item);
+    public static void With<T>(this Entity entity, ActionRef<T> action) where T : struct
+    {
+        T item = entity.ReadRW<T>();
+        action(ref item);
+        EntityManager.SetComponentData(entity, item);
+    }
+    public unsafe static T ReadRW<T>(this Entity entity) where T : struct
+    {
+        var ct = new ComponentType(Il2CppType.Of<T>());
+        void* componentDataRawRW = EntityManager.GetComponentDataRawRW(entity, ct.TypeIndex);
+        T componentData = Marshal.PtrToStructure<T>(new IntPtr(componentDataRawRW));
+        return componentData;
+    }
     public static unsafe void Write<T>(this Entity entity, T componentData) where T : struct
     {
         // Get the ComponentType for T
@@ -54,11 +68,6 @@ internal static class ECSExtensions
 
         return componentData;
     }
-    public static string LookupName(this PrefabGUID prefabGUID)
-    {
-        return (PrefabCollectionSystem.PrefabGuidToNameDictionary.ContainsKey(prefabGUID)
-            ? PrefabCollectionSystem.PrefabGuidToNameDictionary[prefabGUID] + " " + prefabGUID : "Guid Not Found").ToString();
-    }
     public static DynamicBuffer<T> ReadBuffer<T>(this Entity entity) where T : struct
     {
         return EntityManager.GetBuffer<T>(entity);
@@ -87,6 +96,11 @@ internal static class ECSExtensions
     {
         var ct = new ComponentType(Il2CppType.Of<T>());
         EntityManager.RemoveComponent(entity, ct);
+    }
+    public static string LookupName(this PrefabGUID prefabGUID)
+    {
+        return (PrefabCollectionSystem.PrefabGuidToNameDictionary.ContainsKey(prefabGUID)
+            ? PrefabCollectionSystem.PrefabGuidToNameDictionary[prefabGUID] + " " + prefabGUID : "Guid Not Found").ToString();
     }
     public static void LogComponentTypes(this Entity entity)
     {
