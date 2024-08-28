@@ -232,6 +232,11 @@ internal class CanvasService
                     if (!ExperienceClassText.enabled) ExperienceClassText.enabled = true;
                     ExperienceClassText.ForceSet(ClassType.ToString());
                 }
+                else
+                {
+                    ExperienceClassText.ForceSet("");
+                    ExperienceClassText.enabled = false;
+                }
             }
 
             if (LegacyBar)
@@ -261,6 +266,7 @@ internal class CanvasService
                 }
                 else if (LegacyBonusStats[0] == "None" && FirstLegacyStat.enabled)
                 {
+                    FirstLegacyStat.ForceSet("");
                     FirstLegacyStat.enabled = false;
                 }
 
@@ -272,6 +278,7 @@ internal class CanvasService
                 }
                 else if (LegacyBonusStats[1] == "None" && SecondLegacyStat.enabled)
                 {
+                    SecondLegacyStat.ForceSet("");
                     SecondLegacyStat.enabled = false;
                 }
 
@@ -283,6 +290,7 @@ internal class CanvasService
                 }
                 else if (LegacyBonusStats[2] == "None" && ThirdLegacyStat.enabled)
                 {
+                    ThirdLegacyStat.ForceSet("");
                     ThirdLegacyStat.enabled = false;
                 }
             }
@@ -314,6 +322,7 @@ internal class CanvasService
                 }
                 else if (ExpertiseBonusStats[0] == "None" && FirstExpertiseStat.enabled)
                 {
+                    FirstExpertiseStat.ForceSet("");
                     FirstExpertiseStat.enabled = false;
                 }
 
@@ -325,6 +334,7 @@ internal class CanvasService
                 }
                 else if (ExpertiseBonusStats[1] == "None" && SecondExpertiseStat.enabled)
                 {
+                    SecondExpertiseStat.ForceSet("");
                     SecondExpertiseStat.enabled = false;
                 }
 
@@ -336,6 +346,7 @@ internal class CanvasService
                 }
                 else if (ExpertiseBonusStats[2] == "None" && ThirdExpertiseStat.enabled)
                 {
+                    ThirdExpertiseStat.ForceSet("");
                     ThirdExpertiseStat.enabled = false;
                 }
             }
