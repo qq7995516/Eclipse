@@ -169,7 +169,7 @@ internal static class DataService
 
         public ConfigData(string prestigeMultiplier, string statSynergyMultiplier, string weaponStatValues, string bloodStatValues, string classStatSynergies)
         {
-            Core.Log.LogInfo($"ConfigData: {prestigeMultiplier}, {statSynergyMultiplier}, {weaponStatValues}, {bloodStatValues}, {classStatSynergies}");
+            //Core.Log.LogInfo($"ConfigData: {prestigeMultiplier}, {statSynergyMultiplier}, {weaponStatValues}, {bloodStatValues}, {classStatSynergies}");
 
             PrestigeStatMultiplier = float.Parse(prestigeMultiplier);
             ClassStatMultiplier = float.Parse(statSynergyMultiplier);

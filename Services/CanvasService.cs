@@ -32,7 +32,6 @@ internal class CanvasService
 
     static UICanvasBase UICanvasBase;
     static Canvas Canvas;
-    //public static List<int> PlayerData;
 
     static GameObject ExperienceBarGameObject;
     static GameObject ExperienceInformationPanel;
@@ -89,8 +88,6 @@ internal class CanvasService
     static int WeeklyProgress = 0;
     static int WeeklyGoal = 0;
     static string WeeklyTarget = "";
-
-    static string NumeralColorHex;
 
     public static bool UIActive = true;
     public static readonly List<GameObject> ActiveObjects = [];
@@ -157,18 +154,14 @@ internal class CanvasService
         ClassStatMultiplier = parsedConfigData.ClassStatMultiplier;
 
         WeaponStatValues = parsedConfigData.WeaponStatValues;
-        Core.Log.LogInfo($"WeaponStatValues: {string.Join(", ", WeaponStatValues.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
 
         BloodStatValues = parsedConfigData.BloodStatValues;
-        Core.Log.LogInfo($"BloodStatValues: {string.Join(", ", BloodStatValues.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
 
         ClassStatSynergies = parsedConfigData.ClassStatSynergies;
     }
     public static void ParsePlayerData(List<string> playerData) // want to do stat bonuses as well if chosen for expertise/legacy
     {
         int index = 0;
-
-        //Core.Log.LogInfo($"PlayerData: {string.Join(",", playerData)}");
 
         ExperienceData experienceData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         LegacyData legacyData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
@@ -186,15 +179,12 @@ internal class CanvasService
         LegacyPrestige = legacyData.Prestige;
         LegacyType = legacyData.LegacyType;
         LegacyBonusStats = legacyData.BonusStats;
-        //Core.Log.LogInfo($"LegacyBonusStats: {string.Join(",", LegacyBonusStats)}");
 
         ExpertiseProgress = expertiseData.Progress;
         ExpertiseLevel = expertiseData.Level;
         ExpertisePrestige = expertiseData.Prestige;
         ExpertiseType = expertiseData.ExpertiseType;
         ExpertiseBonusStats = expertiseData.BonusStats;
-        //Core.Log.LogInfo($"Progress: {ExperienceProgress} | {LegacyProgress} | {ExpertiseProgress}");
-        //Core.Log.LogInfo($"ExpertiseBonusStats: {string.Join(",", ExpertiseBonusStats)}");
 
         DailyProgress = dailyQuestData.Progress;
         DailyGoal = dailyQuestData.Goal;
@@ -215,8 +205,6 @@ internal class CanvasService
                 yield return Delay;
                 continue;
             }
-
-            //Core.Log.LogInfo($"Experience: {ExperienceProgress}/{ExperienceLevel}/{ExperiencePrestige} | Legacy: {LegacyProgress}/{LegacyLevel}/{LegacyPrestige} {LegacyType} | Expertise: {ExpertiseProgress}/{ExpertiseLevel}/{ExpertisePrestige} {ExpertiseType} | Daily: {DailyProgress}/{DailyGoal}/{DailyTarget} | Weekly: {WeeklyProgress}/{WeeklyGoal}/{WeeklyTarget}");
 
             if (ExperienceBar)
             {
@@ -245,6 +233,11 @@ internal class CanvasService
 
                 if (LegacyHeader.GetText() != LegacyType)
                 {
+                    if (ShowPrestige && LegacyPrestige != 0)
+                    {
+                        LegacyType = $"{LegacyType} {IntegerToRoman(LegacyPrestige)}";
+                    }
+
                     LegacyHeader.ForceSet(LegacyType);
                 }
 
@@ -285,11 +278,6 @@ internal class CanvasService
                 {
                     ThirdLegacyStat.enabled = false;
                 }
-
-                if (ShowPrestige && LegacyPrestige != 0)
-                {
-                    LegacyHeader.ForceSet($"Legacy {IntegerToRoman(LegacyPrestige)}");
-                }
             }
 
             if (ExpertiseBar)
@@ -298,6 +286,11 @@ internal class CanvasService
 
                 if (ExpertiseHeader.GetText() != ExpertiseType)
                 {
+                    if (ShowPrestige && ExpertisePrestige != 0)
+                    {
+                        ExpertiseType = $"{ExpertiseType} {IntegerToRoman(ExpertisePrestige)}";
+                    }
+
                     ExpertiseHeader.ForceSet(ExpertiseType);
                 }
 
@@ -337,11 +330,6 @@ internal class CanvasService
                 else if (ExpertiseBonusStats[2] == "None" && ThirdExpertiseStat.enabled)
                 {
                     ThirdExpertiseStat.enabled = false;
-                }
-
-                if (ShowPrestige && ExpertisePrestige != 0)
-                {
-                    ExpertiseHeader.ForceSet($"Expertise {IntegerToRoman(ExpertisePrestige)}");
                 }
             }
 
@@ -597,7 +585,7 @@ internal class CanvasService
             GameObject DailyQuestSubHeaderObject = FindTargetUIObject(DailyIconNameObject.transform, "TooltipSubHeader");
             GameObject WeeklyQuestSubHeaderObject = FindTargetUIObject(WeeklyIconNameObject.transform, "TooltipSubHeader");
             DailyQuestHeader = FindTargetUIObject(DailyIconNameObject.transform, "TooltipHeader").GetComponent<LocalizedText>();
-            DailyQuestHeader.Text.fontSize *= 1.5f;
+            DailyQuestHeader.Text.fontSize *= 2f;
             DailyQuestSubHeader = DailyQuestSubHeaderObject.GetComponent<LocalizedText>();
             DailyQuestSubHeader.Text.enableAutoSizing = false;
             DailyQuestSubHeader.Text.autoSizeTextContainer = false;
@@ -606,7 +594,7 @@ internal class CanvasService
             DailyQuestFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             DailyQuestFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
             WeeklyQuestHeader = FindTargetUIObject(WeeklyIconNameObject.transform, "TooltipHeader").GetComponent<LocalizedText>();
-            WeeklyQuestHeader.Text.fontSize *= 1.5f;
+            WeeklyQuestHeader.Text.fontSize *= 2f;
             WeeklyQuestSubHeader = WeeklyQuestSubHeaderObject.GetComponent<LocalizedText>();
             WeeklyQuestSubHeader.Text.enableAutoSizing = false;
             WeeklyQuestSubHeader.Text.autoSizeTextContainer = false;
