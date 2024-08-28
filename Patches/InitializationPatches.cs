@@ -28,7 +28,6 @@ internal static class InitializationPatches
                 if (Core.hasInitialized)
                 {
                     Core.Log.LogInfo($"|{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] initialized on client|");
-                    Plugin.Harmony.Unpatch(typeof(GameDataManager).GetMethod("OnUpdate"), typeof(InitializationPatches).GetMethod("OnUpdatePostfix"));
                 }
             }
         }
@@ -46,7 +45,6 @@ internal static class InitializationPatches
         {
             SetCanvas = true;
             Core.SetCanvas(canvas);
-            Plugin.Harmony.Unpatch(typeof(UICanvasSystem).GetMethod("UpdateHideIfDisabled"), typeof(InitializationPatches).GetMethod("OnUpdatePostfix"));
         }
     }
     
@@ -92,8 +90,11 @@ internal static class InitializationPatches
     static void OnUpdatePrefix(ClientBootstrapSystem __instance)
     {
         CanvasService.KillSwitch = true;
+        CanvasService.Active = false;
         SetCanvas = false;
         Core.hasInitialized = false;
         ClientChatSystemPatch.UserRegistered = false;
+        ClientChatSystemPatch.localCharacter = Entity.Null;
+        ClientChatSystemPatch.localUser = Entity.Null;
     }
 }

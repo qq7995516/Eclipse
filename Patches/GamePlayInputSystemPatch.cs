@@ -1,10 +1,7 @@
 ﻿using Eclipse.Services;
 using HarmonyLib;
 using ProjectM;
-using ProjectM.UI;
-using System.Reflection;
 using UnityEngine;
-using Random = System.Random;
 
 namespace Eclipse.Patches;
 

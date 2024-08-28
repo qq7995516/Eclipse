@@ -119,7 +119,11 @@ internal static class ClientChatSystemPatch
             case (int)NetworkEventSubType.ProgressToClient:
                 List<string> playerData = CanvasService.ParseMessageString(regexExtract.Replace(message, ""));
                 CanvasService.ParsePlayerData(playerData);
-                if (!CanvasService.Active) Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
+                if (!CanvasService.Active)
+                {
+                    if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
+                    Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
+                }
                 break;
             case (int)NetworkEventSubType.ConfigsToClient:
                 List<string> configData = CanvasService.ParseMessageString(regexExtract.Replace(message, ""));
