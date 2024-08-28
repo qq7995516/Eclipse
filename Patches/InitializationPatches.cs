@@ -94,5 +94,6 @@ internal static class InitializationPatches
         CanvasService.KillSwitch = true;
         SetCanvas = false;
         Core.hasInitialized = false;
+        ClientChatSystemPatch.UserRegistered = false;
     }
 }

@@ -18,7 +18,7 @@ internal static class ClientChatSystemPatch
     static EntityManager EntityManager => Core.EntityManager;
 
     static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests;
-    static bool UserRegistered = false;
+    public static bool UserRegistered = false;
 
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex regexMAC = new(@";mac([^;]+)$");
