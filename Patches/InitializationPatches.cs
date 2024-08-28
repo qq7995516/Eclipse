@@ -1,3 +1,4 @@
+using Eclipse.Services;
 using HarmonyLib;
 using ProjectM;
 using ProjectM.Network;
@@ -41,7 +42,7 @@ internal static class InitializationPatches
     [HarmonyPostfix]
     static void OnUpdatePostfix(UICanvasBase canvas)
     {
-        if (ShouldInitialize && !SetCanvas && Core.hasInitialized)
+        if (!SetCanvas && Core.hasInitialized)
         {
             SetCanvas = true;
             Core.SetCanvas(canvas);
@@ -53,7 +54,7 @@ internal static class InitializationPatches
     [HarmonyPostfix]
     static void OnUpdatePostfix(CommonClientDataSystem __instance)
     {
-        if (ShouldInitialize && Core.hasInitialized)
+        if (Core.hasInitialized)
         {
             NativeArray<Entity> entities = __instance.__query_1840110765_0.ToEntityArray(Allocator.Temp);
             try
@@ -70,6 +71,7 @@ internal static class InitializationPatches
             }
 
             entities = __instance.__query_1840110765_1.ToEntityArray(Allocator.Temp);
+
             try
             {
                 foreach (Entity entity in entities)
@@ -83,5 +85,14 @@ internal static class InitializationPatches
                 entities.Dispose();
             }
         }
+    }
+
+    [HarmonyPatch(typeof(ClientBootstrapSystem), nameof(ClientBootstrapSystem.OnDestroy))]
+    [HarmonyPrefix]
+    static void OnUpdatePrefix(ClientBootstrapSystem __instance)
+    {
+        CanvasService.KillSwitch = true;
+        SetCanvas = false;
+        Core.hasInitialized = false;
     }
 }

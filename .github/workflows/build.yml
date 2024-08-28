@@ -1,0 +1,86 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+      
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: List Localization Directory
+        run: ls -R Localization
+        
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Install xmllint
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+      - name: Extract Version from .csproj
+        id: extract_version
+        run: |
+          version=$(xmllint --xpath "string(//Project/PropertyGroup/Version)" Eclipse.csproj)
+          echo "version=$version" >> $GITHUB_ENV
+          
+      - name: Update manifest.json
+        run: |
+          version=${{ env.version }}
+          jq --arg version "$version" '.version_number = $version' manifest.json > temp.json && mv temp.json manifest.json     
+      
+      - name: Build (Release)
+        run: dotnet build . --configuration Release -p:Version=${{ env.version }}
+
+      - name: Publish (Release)
+        run: dotnet publish . --configuration Release --output ./output /p:GenerateRuntimeConfigurationFiles=true
+
+      - name: Inspect Embedded Resources
+        shell: pwsh
+        run: |
+          $assemblyPath = "./output/Sanguis.dll"
+          $assembly = [System.Reflection.Assembly]::LoadFrom($assemblyPath)
+          $resources = $assembly.GetManifestResourceNames()
+          foreach ($resource in $resources) {
+            Write-Host "Embedded Resource: $resource"
+          }
+          
+      - name: Copy build artifacts
+        run: |
+          mkdir -p release_artifacts
+          cp ./output/Eclipse.dll release_artifacts/
+          cp manifest.json release_artifacts/
+          cp CHANGELOG.md release_artifacts/
+          cp README.md release_artifacts/
+          cp icon.png release_artifacts/
+          
+      - name: GH Release
+        uses: softprops/action-gh-release@v1
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          body: Manual pre-release of ${{ env.version }}
+          name: v${{ env.version }}
+          fail_on_unmatched_files: true
+          prerelease: true
+          tag_name: v${{ env.version }}
+          files: |
+            release_artifacts/Eclipse.dll
+            release_artifacts/manifest.json
+            release_artifacts/CHANGELOG.md
+            release_artifacts/README.md
+            release_artifacts/icon.png
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

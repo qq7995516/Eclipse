@@ -93,6 +93,7 @@ internal class CanvasService
     public static readonly List<GameObject> ActiveObjects = [];
 
     public static bool Active = false;
+    public static bool KillSwitch = false;
     public CanvasService(UICanvasBase canvas)
     {
         // Instantiate the ExperienceBar from the PlayerEntryPrefab and find the BotomBarCanvas
@@ -198,6 +199,12 @@ internal class CanvasService
     {
         while (true)
         {
+            if (KillSwitch)
+            {
+                Active = false;
+                break;
+            }
+
             if (!Active) Active = true;
 
             if (!UIActive) // don't update if not active
