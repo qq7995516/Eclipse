@@ -695,7 +695,7 @@ internal class CanvasService
         // ProffesionInfo 2
         // PlatformUserName (can use this but need to be short so doesn't go offscreen) 3
         // could use these spots for text, small icons, hmmm...
-        // also best UI element for switching fam boxes? and something similar for fam 1-10 to bind
+        // also best UI element for switching fam boxes? and something similar for fam 1-10 to bind, and for settings/toggles
 
         barNumber++;
     }
