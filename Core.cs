@@ -4,6 +4,7 @@ using Eclipse.Services;
 using ProjectM;
 using ProjectM.Physics;
 using ProjectM.UI;
+using Stunlock.Localization;
 using System.Collections;
 using Unity.Entities;
 using UnityEngine;

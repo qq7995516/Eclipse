@@ -45,7 +45,8 @@ internal static class ClientChatSystemPatch
     public enum NetworkEventSubType
     {
         RegisterUser,
-        ProgressToClient
+        ProgressToClient,
+        ConfigsToClient
     }
 
     [HarmonyPatch(typeof(ClientChatSystem), nameof(ClientChatSystem.OnUpdate))]
@@ -116,8 +117,14 @@ internal static class ClientChatSystemPatch
         switch (eventType)
         {
             case (int)NetworkEventSubType.ProgressToClient:
-                CanvasService.PlayerData = CanvasService.ParseString(regexExtract.Replace(message, ""));
+                List<string> playerData = CanvasService.ParseMessageString(regexExtract.Replace(message, ""));
+                CanvasService.ParsePlayerData(playerData);
                 if (!CanvasService.Active) Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
+                break;
+            case (int)NetworkEventSubType.ConfigsToClient:
+                List<string> configData = CanvasService.ParseMessageString(regexExtract.Replace(message, ""));
+                CanvasService.ParseConfigData(configData);
+                //if (!CanvasService.Active) Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
                 break;
         }
     }

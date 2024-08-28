@@ -6,7 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 
 namespace Eclipse;
-internal static class ECSExtensions
+internal static class Extensions
 {
     static EntityManager EntityManager => Core.EntityManager;
     static PrefabCollectionSystem PrefabCollectionSystem => Core.PrefabCollectionSystem;
