@@ -1,3 +1,6 @@
+`0.1.1`
+- fixed extra bar at top of screen if only experience is enabled
+
 `0.1.0`
 - initial test release
 - config values for experience, prestige, legacy, expertise, and quests (should be okay to mix and match but probably works best with all atm)
