@@ -435,130 +435,136 @@ internal class CanvasService
             GameplayInputSystemPatch.topRight = worldCorners[2];
         }
 
-        // Instantiate all bars
-        GameObject ExperienceBarObject = GameObject.Instantiate(objectPrefab);
-        GameObject LegacyBarObject = GameObject.Instantiate(objectPrefab);
-        GameObject ExpertiseBarObject = GameObject.Instantiate(objectPrefab);
-
-        // Instantiate quest tooltip
-        GameObject DailyQuestTooltipObject = GameObject.Instantiate(tooltipPrefab);
-        GameObject WeeklyQuestTooltipObject = GameObject.Instantiate(tooltipPrefab);
-
-        // Assign GameObjects to respective fields
-        ExperienceBarGameObject = ExperienceBarObject;
-        LegacyBarGameObject = LegacyBarObject;
-        ExpertiseBarGameObject = ExpertiseBarObject;
-        DailyQuestObject = DailyQuestTooltipObject;
-        WeeklyQuestObject = WeeklyQuestTooltipObject;
-
-        // Assign RectTransforms to respective fields
-        RectTransform ExperienceBarRectTransform = ExperienceBarObject.GetComponent<RectTransform>();
-        RectTransform LegacyBarRectTransform = LegacyBarObject.GetComponent<RectTransform>();
-        RectTransform ExpertiseBarRectTransform = ExpertiseBarObject.GetComponent<RectTransform>();
-        RectTransform DailyQuestTransform = DailyQuestTooltipObject.GetComponent<RectTransform>();
-        RectTransform WeeklyQuestTransform = WeeklyQuestTooltipObject.GetComponent<RectTransform>();
-
-        // Mark all objects as DontDestroyOnLoad
-        GameObject.DontDestroyOnLoad(ExperienceBarObject);
-        GameObject.DontDestroyOnLoad(LegacyBarObject);
-        GameObject.DontDestroyOnLoad(ExpertiseBarObject);
-        GameObject.DontDestroyOnLoad(DailyQuestTooltipObject);
-        GameObject.DontDestroyOnLoad(WeeklyQuestTooltipObject);
-
-        // Move all objects to the VRisingWorld scene
-        SceneManager.MoveGameObjectToScene(ExperienceBarObject, SceneManager.GetSceneByName("VRisingWorld"));
-        SceneManager.MoveGameObjectToScene(LegacyBarObject, SceneManager.GetSceneByName("VRisingWorld"));
-        SceneManager.MoveGameObjectToScene(ExpertiseBarObject, SceneManager.GetSceneByName("VRisingWorld"));
-        SceneManager.MoveGameObjectToScene(DailyQuestTooltipObject, SceneManager.GetSceneByName("VRisingWorld"));
-        SceneManager.MoveGameObjectToScene(WeeklyQuestTooltipObject, SceneManager.GetSceneByName("VRisingWorld"));
-
-        // Set BottomBarCanvas as the parent for all bars
-        ExperienceBarRectTransform.SetParent(bottomBarCanvas.transform, false);
-        LegacyBarRectTransform.SetParent(bottomBarCanvas.transform, false);
-        ExpertiseBarRectTransform.SetParent(bottomBarCanvas.transform, false);
-        DailyQuestTransform.SetParent(bottomBarCanvas.transform, false);
-        WeeklyQuestTransform.SetParent(bottomBarCanvas.transform, false);
-
-        // Get MiniMap south icon on the compass to set location for now
+        // Get MiniMap south icon on the compass to set locations
         GameObject MiniMapSouthObject = FindTargetUIObject(canvas.transform.root, "S");
         RectTransform MiniMapSouthRectTransform = MiniMapSouthObject.GetComponent<RectTransform>();
-
-        // Assign Fill Images
-        ExperienceFill = FindTargetUIObject(ExperienceBarRectTransform.transform, "Fill").GetComponent<Image>();
-        LegacyFill = FindTargetUIObject(LegacyBarRectTransform.transform, "Fill").GetComponent<Image>();
-        ExpertiseFill = FindTargetUIObject(ExpertiseBarRectTransform.transform, "Fill").GetComponent<Image>();
-
-        // Assign LocalizedText for headers
-        ExperienceHeader = FindTargetUIObject(ExperienceBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
-        //ExperienceHeader.Text.richText = true;
-        //ExperienceHeader.Text.overflowMode = TMPro.TextOverflowModes.Overflow;
-        LegacyHeader = FindTargetUIObject(LegacyBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
-        //LegacyHeader.Text.richText = true;
-        //LegacyHeader.Text.overflowMode = TMPro.TextOverflowModes.Overflow;
-        ExpertiseHeader = FindTargetUIObject(ExpertiseBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
-        //ExpertiseHeader.Text.richText = true;
-        //ExpertiseHeader.Text.overflowMode = TMPro.TextOverflowModes.Overflow;
-
-        // Assign LocalizedText for Level
-        ExperienceText = FindTargetUIObject(ExperienceBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
-        LegacyText = FindTargetUIObject(LegacyBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
-        ExpertiseText = FindTargetUIObject(ExpertiseBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
-
-        // Assign GameObjects for InformationPanels
-        ExperienceInformationPanel = FindTargetUIObject(ExperienceBarRectTransform.transform, "InformationPanel");
-        LegacyInformationPanel = FindTargetUIObject(LegacyBarRectTransform.transform, "InformationPanel");
-        ExpertiseInformationPanel = FindTargetUIObject(ExpertiseBarRectTransform.transform, "InformationPanel");
-
-        // Assign LocalizedText for player class
-        ExperienceClassText = FindTargetUIObject(ExperienceInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
-        ExperienceClassText.ForceSet("");
-        ExperienceClassText.enabled = false;
-        LocalizedText ExperienceFirstText = FindTargetUIObject(ExperienceInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
-        ExperienceFirstText.ForceSet("");
-        ExperienceFirstText.enabled = false;
-        LocalizedText ExperienceSecondText = FindTargetUIObject(ExperienceInformationPanel.transform, "PlatformUserName").GetComponent<LocalizedText>();
-        ExperienceSecondText.ForceSet("");
-        ExperienceSecondText.enabled = false;
-
-        // Assign LocalizedText for LegacyInformationPanel
-        FirstLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
-        FirstLegacyStat.ForceSet("");
-        FirstLegacyStat.enabled = false;
-        SecondLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
-        SecondLegacyStat.ForceSet("");
-        FirstLegacyStat.Text.color = SecondLegacyStat.Text.color;
-        SecondLegacyStat.enabled = false;
-        ThirdLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "PlatformUserName").GetComponent<LocalizedText>();
-        ThirdLegacyStat.ForceSet("");
-        ThirdLegacyStat.enabled = false;
-        ThirdLegacyStat.Text.color = SecondLegacyStat.Text.color;
-
-        // Assign LocalizedText for ExpertiseInformationPanel
-        FirstExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
-        FirstExpertiseStat.ForceSet("");
-        FirstExpertiseStat.enabled = false;
-        SecondExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
-        SecondExpertiseStat.ForceSet("");
-        SecondExpertiseStat.enabled = false;
-        FirstExpertiseStat.Text.color = SecondExpertiseStat.Text.color;
-        ThirdExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "PlatformUserName").GetComponent<LocalizedText>();
-        ThirdExpertiseStat.ForceSet("");
-        ThirdExpertiseStat.enabled = false;
-        ThirdExpertiseStat.Text.color = SecondExpertiseStat.Text.color;
 
         int barNumber = 1; // ref and increment for spacing of bars to account for config options
 
         // Configure ExperienceBar
-        if (ExperienceBar) ConfigureBar(ExperienceBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExperienceFill, ExperienceHeader, ExperienceText, CanvasObject.layer, 1f, "Experience", Color.green, ref barNumber);
+        if (ExperienceBar)
+        {
+            GameObject ExperienceBarObject = GameObject.Instantiate(objectPrefab);
+            ExperienceBarGameObject = ExperienceBarObject;
+            RectTransform ExperienceBarRectTransform = ExperienceBarObject.GetComponent<RectTransform>();
+            GameObject.DontDestroyOnLoad(ExperienceBarObject);
+            SceneManager.MoveGameObjectToScene(ExperienceBarObject, SceneManager.GetSceneByName("VRisingWorld"));
+            ExperienceBarRectTransform.SetParent(bottomBarCanvas.transform, false);
+
+            ExperienceFill = FindTargetUIObject(ExperienceBarRectTransform.transform, "Fill").GetComponent<Image>();
+            ExperienceHeader = FindTargetUIObject(ExperienceBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
+            ExperienceText = FindTargetUIObject(ExperienceBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
+
+            ExperienceInformationPanel = FindTargetUIObject(ExperienceBarRectTransform.transform, "InformationPanel");
+
+            // Assign LocalizedText for player class
+            ExperienceClassText = FindTargetUIObject(ExperienceInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
+            ExperienceClassText.ForceSet("");
+            ExperienceClassText.enabled = false;
+            LocalizedText ExperienceFirstText = FindTargetUIObject(ExperienceInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
+            ExperienceFirstText.ForceSet("");
+            ExperienceFirstText.enabled = false;
+            LocalizedText ExperienceSecondText = FindTargetUIObject(ExperienceInformationPanel.transform, "PlatformUserName").GetComponent<LocalizedText>();
+            ExperienceSecondText.ForceSet("");
+            ExperienceSecondText.enabled = false;
+
+            // Configure ExperienceBar
+            ConfigureBar(ExperienceBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExperienceFill, ExperienceHeader, ExperienceText, CanvasObject.layer, 1f, "Experience", Color.green, ref barNumber);
+            ExperienceBarObject.SetActive(true);
+            ActiveObjects.Add(ExperienceBarObject);
+        }
 
         // Configure LegacyBar
-        if (LegacyBar) ConfigureBar(LegacyBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, LegacyFill, LegacyHeader, LegacyText, CanvasObject.layer, 1f, "Legacy", Color.red, ref barNumber);
+        if (LegacyBar)
+        {
+            GameObject LegacyBarObject = GameObject.Instantiate(objectPrefab);
+            LegacyBarGameObject = LegacyBarObject;
+            RectTransform LegacyBarRectTransform = LegacyBarObject.GetComponent<RectTransform>();
+            GameObject.DontDestroyOnLoad(LegacyBarObject);
+            SceneManager.MoveGameObjectToScene(LegacyBarObject, SceneManager.GetSceneByName("VRisingWorld"));
+            LegacyBarRectTransform.SetParent(bottomBarCanvas.transform, false);
+
+            LegacyFill = FindTargetUIObject(LegacyBarRectTransform.transform, "Fill").GetComponent<Image>();
+            LegacyHeader = FindTargetUIObject(LegacyBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
+            LegacyText = FindTargetUIObject(LegacyBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
+
+            LegacyInformationPanel = FindTargetUIObject(LegacyBarRectTransform.transform, "InformationPanel");
+
+            // Assign LocalizedText for LegacyInformationPanel
+            FirstLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
+            FirstLegacyStat.ForceSet("");
+            FirstLegacyStat.enabled = false;
+            SecondLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
+            SecondLegacyStat.ForceSet("");
+            FirstLegacyStat.Text.color = SecondLegacyStat.Text.color;
+            SecondLegacyStat.enabled = false;
+            ThirdLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "PlatformUserName").GetComponent<LocalizedText>();
+            ThirdLegacyStat.ForceSet("");
+            ThirdLegacyStat.enabled = false;
+            ThirdLegacyStat.Text.color = SecondLegacyStat.Text.color;
+
+            // Configure LegacyBar
+            ConfigureBar(LegacyBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, LegacyFill, LegacyHeader, LegacyText, CanvasObject.layer, 1f, "Legacy", Color.red, ref barNumber);
+            LegacyBarObject.SetActive(true);
+            ActiveObjects.Add(LegacyBarObject);
+        }
 
         // Configure ExpertiseBar
-        if (ExpertiseBar) ConfigureBar(ExpertiseBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExpertiseFill, ExpertiseHeader, ExpertiseText, CanvasObject.layer, 1f, "Expertise", Color.grey, ref barNumber);
+        if (ExpertiseBar)
+        {
+            GameObject ExpertiseBarObject = GameObject.Instantiate(objectPrefab);
+            ExpertiseBarGameObject = ExpertiseBarObject;
+            RectTransform ExpertiseBarRectTransform = ExpertiseBarObject.GetComponent<RectTransform>();
+            GameObject.DontDestroyOnLoad(ExpertiseBarObject);
+            SceneManager.MoveGameObjectToScene(ExpertiseBarObject, SceneManager.GetSceneByName("VRisingWorld"));
+            ExpertiseBarRectTransform.SetParent(bottomBarCanvas.transform, false);
+
+            ExpertiseFill = FindTargetUIObject(ExpertiseBarRectTransform.transform, "Fill").GetComponent<Image>();
+            ExpertiseHeader = FindTargetUIObject(ExpertiseBarRectTransform.transform, "Name").GetComponent<LocalizedText>();
+            ExpertiseText = FindTargetUIObject(ExpertiseBarRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
+
+            ExpertiseInformationPanel = FindTargetUIObject(ExpertiseBarRectTransform.transform, "InformationPanel");
+
+            // Assign LocalizedText for ExpertiseInformationPanel
+            FirstExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
+            FirstExpertiseStat.ForceSet("");
+            FirstExpertiseStat.enabled = false;
+            SecondExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
+            SecondExpertiseStat.ForceSet("");
+            SecondExpertiseStat.enabled = false;
+            FirstExpertiseStat.Text.color = SecondExpertiseStat.Text.color;
+            ThirdExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "PlatformUserName").GetComponent<LocalizedText>();
+            ThirdExpertiseStat.ForceSet("");
+            ThirdExpertiseStat.enabled = false;
+            ThirdExpertiseStat.Text.color = SecondExpertiseStat.Text.color;
+
+            // Configure ExpertiseBar
+            ConfigureBar(ExpertiseBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExpertiseFill, ExpertiseHeader, ExpertiseText, CanvasObject.layer, 1f, "Expertise", Color.grey, ref barNumber);
+            ExpertiseBarObject.SetActive(true);
+            ActiveObjects.Add(ExpertiseBarObject);
+        }
 
         if (QuestTracker)
         {
+            // Instantiate quest tooltip
+            GameObject DailyQuestTooltipObject = GameObject.Instantiate(tooltipPrefab);
+            GameObject WeeklyQuestTooltipObject = GameObject.Instantiate(tooltipPrefab);
+
+            DailyQuestObject = DailyQuestTooltipObject;
+            WeeklyQuestObject = WeeklyQuestTooltipObject;
+
+            RectTransform DailyQuestTransform = DailyQuestTooltipObject.GetComponent<RectTransform>();
+            RectTransform WeeklyQuestTransform = WeeklyQuestTooltipObject.GetComponent<RectTransform>();
+
+            GameObject.DontDestroyOnLoad(DailyQuestTooltipObject);
+            GameObject.DontDestroyOnLoad(WeeklyQuestTooltipObject);
+
+            SceneManager.MoveGameObjectToScene(DailyQuestTooltipObject, SceneManager.GetSceneByName("VRisingWorld"));
+            SceneManager.MoveGameObjectToScene(WeeklyQuestTooltipObject, SceneManager.GetSceneByName("VRisingWorld"));
+
+            DailyQuestTransform.SetParent(bottomBarCanvas.transform, false);
+            WeeklyQuestTransform.SetParent(bottomBarCanvas.transform, false);
+
             // Activate quest tooltips
             DailyQuestTooltipObject.gameObject.active = true;
             WeeklyQuestTooltipObject.gameObject.active = true;
@@ -630,8 +636,8 @@ internal class CanvasService
             WeeklyQuestSubHeader.ForceSet("UnitName: 0/0");
 
             // Set layer for quest tooltips
-            DailyQuestTransform.gameObject.layer = ExpertiseBarRectTransform.gameObject.layer;
-            WeeklyQuestTransform.gameObject.layer = ExpertiseBarRectTransform.gameObject.layer;
+            DailyQuestTransform.gameObject.layer = CanvasObject.layer;
+            WeeklyQuestTransform.gameObject.layer = CanvasObject.layer;
 
             // Reduce window widths
             DailyQuestTransform.sizeDelta = new Vector2(DailyQuestTransform.sizeDelta.x * 0.4f, DailyQuestTransform.sizeDelta.y);
@@ -649,32 +655,10 @@ internal class CanvasService
             ActiveObjects.Add(DailyQuestTooltipObject);
             ActiveObjects.Add(WeeklyQuestTooltipObject);
         }
-
-        // Activate all bars
-        if (ExperienceBar)
-        {
-            ExperienceBarObject.SetActive(true);
-            ActiveObjects.Add(ExperienceBarObject);
-        }
-
-        if (LegacyBar)
-        {
-            LegacyBarObject.SetActive(true);
-            ActiveObjects.Add(LegacyBarObject);
-        }
-
-        if (ExpertiseBar)
-        {
-            ExpertiseBarObject.SetActive(true);
-            ActiveObjects.Add(ExpertiseBarObject);
-        }
     }
     static void ConfigureBar(RectTransform barRectTransform, GameObject referenceObject, RectTransform referenceRectTransform, 
        Image fillImage,LocalizedText textHeader, LocalizedText levelText, int layer, float sizeMultiplier, string barHeaderText, Color fillColor, ref int barNumber)
     {
-        //GameObject WorldEventObject = FindTargetUIObject(canvas.transform.root, "HUDAlert_WorldEvent"); use for y
-        //RectTransform WorldEventRectTransform = WorldEventObject.GetComponent<RectTransform>();
-
         float rectWidth = barRectTransform.rect.width;
         float sizeOffsetX = ((rectWidth * sizeMultiplier) - rectWidth) * (1 - barRectTransform.pivot.x);
         barRectTransform.localScale *= 0.75f;
@@ -691,14 +675,8 @@ internal class CanvasService
         FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
         FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>().fillAmount = 0f;
 
-        // BloodInfo 1
-        // ProffesionInfo 2
-        // PlatformUserName (can use this but need to be short so doesn't go offscreen) 3
-        // could use these spots for text, small icons, hmmm...
-        // also best UI element for switching fam boxes? and something similar for fam 1-10 to bind, and for settings/toggles
-
         barNumber++;
-    }
+    } 
     public static class UIObjectUtils
     {
         static readonly Dictionary<BloodType, string> BloodIcons = new()
