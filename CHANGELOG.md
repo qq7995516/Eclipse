@@ -1,3 +1,6 @@
+`0.1.2`
+- clicking blood orb area if UI not active in-game will not do anything
+
 `0.1.1`
 - fixed extra bar at top of screen if only experience is enabled
 
