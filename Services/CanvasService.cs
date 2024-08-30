@@ -217,6 +217,8 @@ internal class CanvasService
             {
                 ExperienceFill.fillAmount = ExperienceProgress;
 
+                if (ExperienceLevel == 90) ExperienceFill.fillAmount = 1f;
+
                 if (ExperienceText.GetText() != ExperienceLevel.ToString())
                 {
                     ExperienceText.ForceSet(ExperienceLevel.ToString());
@@ -242,6 +244,8 @@ internal class CanvasService
             if (LegacyBar)
             {
                 LegacyFill.fillAmount = LegacyProgress;
+
+                if (LegacyLevel == 100) LegacyFill.fillAmount = 1f;
 
                 if (LegacyHeader.GetText() != LegacyType)
                 {
@@ -298,6 +302,8 @@ internal class CanvasService
             if (ExpertiseBar)
             {
                 ExpertiseFill.fillAmount = ExpertiseProgress;
+
+                if (ExpertiseLevel == 100) ExpertiseFill.fillAmount = 1f;
 
                 if (ExpertiseHeader.GetText() != ExpertiseType)
                 {
@@ -640,8 +646,8 @@ internal class CanvasService
             WeeklyQuestTransform.gameObject.layer = CanvasObject.layer;
 
             // Reduce window widths
-            DailyQuestTransform.sizeDelta = new Vector2(DailyQuestTransform.sizeDelta.x * 0.5f, DailyQuestTransform.sizeDelta.y);
-            WeeklyQuestTransform.sizeDelta = new Vector2(WeeklyQuestTransform.sizeDelta.x * 0.5f, WeeklyQuestTransform.sizeDelta.y);
+            DailyQuestTransform.sizeDelta = new Vector2(DailyQuestTransform.sizeDelta.x * 0.7f, DailyQuestTransform.sizeDelta.y);
+            WeeklyQuestTransform.sizeDelta = new Vector2(WeeklyQuestTransform.sizeDelta.x * 0.7f, WeeklyQuestTransform.sizeDelta.y);
 
             //Core.Log.LogInfo($"DailyQuestTransform: {DailyQuestTransform.position.x},{DailyQuestTransform.position.y},{DailyQuestTransform.position.z}");
 
