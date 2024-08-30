@@ -28,7 +28,7 @@ internal class CanvasService
     static readonly bool ExpertiseBar = Plugin.Expertise;
     static readonly bool QuestTracker = Plugin.Quests;
 
-    static readonly WaitForSeconds Delay = new(2.5f);
+    static readonly WaitForSeconds Delay = new(1f);
 
     static UICanvasBase UICanvasBase;
     static Canvas Canvas;
@@ -640,8 +640,8 @@ internal class CanvasService
             WeeklyQuestTransform.gameObject.layer = CanvasObject.layer;
 
             // Reduce window widths
-            DailyQuestTransform.sizeDelta = new Vector2(DailyQuestTransform.sizeDelta.x * 0.4f, DailyQuestTransform.sizeDelta.y);
-            WeeklyQuestTransform.sizeDelta = new Vector2(WeeklyQuestTransform.sizeDelta.x * 0.4f, WeeklyQuestTransform.sizeDelta.y);
+            DailyQuestTransform.sizeDelta = new Vector2(DailyQuestTransform.sizeDelta.x * 0.5f, DailyQuestTransform.sizeDelta.y);
+            WeeklyQuestTransform.sizeDelta = new Vector2(WeeklyQuestTransform.sizeDelta.x * 0.5f, WeeklyQuestTransform.sizeDelta.y);
 
             //Core.Log.LogInfo($"DailyQuestTransform: {DailyQuestTransform.position.x},{DailyQuestTransform.position.y},{DailyQuestTransform.position.z}");
 
