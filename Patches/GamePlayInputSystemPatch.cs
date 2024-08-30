@@ -15,6 +15,9 @@ internal static class GameplayInputSystemPatch
     [HarmonyPatch(typeof(GameplayInputSystem), nameof(GameplayInputSystem.HandleInput))]
     static void HandleInputPrefix(InputState inputState)
     {
+        if (!Core.hasInitialized) return;
+        if (!CanvasService.Active) return;
+
         if (Input.GetMouseButtonDown(0))
         {
             //Core.Log.LogInfo($"Mouse 0 Down {Input.mousePosition.x},{Input.mousePosition.y},{Input.mousePosition.z}");
