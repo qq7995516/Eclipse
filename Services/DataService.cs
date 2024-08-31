@@ -10,7 +10,7 @@ internal static class DataService
         Rogue,
         Mutant,
         VBlood,
-        None,
+        Frailed,
         GateBoss,
         Draculin,
         Immortal,
@@ -161,18 +161,28 @@ internal static class DataService
 
         public float ClassStatMultiplier;
 
+        public int MaxPlayerLevel;
+
+        public int MaxLegacyLevel;
+
+        public int MaxExpertiseLevel;
+
         public Dictionary<WeaponStatType, float> WeaponStatValues;
 
         public Dictionary<BloodStatType, float> BloodStatValues;
 
         public Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> bloodStats)> ClassStatSynergies;
 
-        public ConfigData(string prestigeMultiplier, string statSynergyMultiplier, string weaponStatValues, string bloodStatValues, string classStatSynergies)
+        public ConfigData(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string weaponStatValues, string bloodStatValues, string classStatSynergies)
         {
             //Core.Log.LogInfo($"ConfigData: {prestigeMultiplier}, {statSynergyMultiplier}, {weaponStatValues}, {bloodStatValues}, {classStatSynergies}");
 
             PrestigeStatMultiplier = float.Parse(prestigeMultiplier);
             ClassStatMultiplier = float.Parse(statSynergyMultiplier);
+
+            MaxPlayerLevel = int.Parse(maxPlayerLevel);
+            MaxLegacyLevel = int.Parse(maxLegacyLevel);
+            MaxExpertiseLevel = int.Parse(maxExpertiseLevel);
 
             WeaponStatValues = weaponStatValues.Split(',')
             .Select((value, index) => new { Index = index + 1, Value = float.Parse(value) })

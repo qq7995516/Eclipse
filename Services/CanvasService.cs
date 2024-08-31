@@ -43,6 +43,7 @@ internal class CanvasService
     static float ExperienceProgress = 0f;
     static int ExperienceLevel = 0;
     static int ExperiencePrestige = 0;
+    static int ExperienceMaxLevel = 90;
     static PlayerClass ClassType = PlayerClass.None;
 
     static GameObject LegacyBarGameObject;
@@ -58,6 +59,7 @@ internal class CanvasService
     static float LegacyProgress = 0f;
     static int LegacyLevel = 0;
     static int LegacyPrestige = 0;
+    static int LegacyMaxLevel = 100;
     static List<string> LegacyBonusStats = ["","",""];
 
     static GameObject ExpertiseBarGameObject;
@@ -73,6 +75,7 @@ internal class CanvasService
     static float ExpertiseProgress = 0f;
     static int ExpertiseLevel = 0;
     static int ExpertisePrestige = 0;
+    static int ExpertiseMaxLevel = 100;
     static List<string> ExpertiseBonusStats = ["","",""];
 
     static GameObject DailyQuestObject;
@@ -146,6 +149,9 @@ internal class CanvasService
         ConfigData parsedConfigData = new(
             configData[index++], // prestigeMultiplier
             configData[index++], // statSynergyMultiplier
+            configData[index++], // maxPlayerLevel
+            configData[index++], // maxLegacyLevel
+            configData[index++], // maxExpertiseLevel
             string.Join(",", configData.Skip(index).Take(12)), // Combine the next 11 elements for weaponStatValues
             string.Join(",", configData.Skip(index += 12).Take(12)), // Combine the following 11 elements for bloodStatValues
             string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
@@ -153,6 +159,10 @@ internal class CanvasService
 
         PrestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
         ClassStatMultiplier = parsedConfigData.ClassStatMultiplier;
+
+        ExperienceMaxLevel = parsedConfigData.MaxPlayerLevel;
+        LegacyMaxLevel = parsedConfigData.MaxLegacyLevel;
+        ExpertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
 
         WeaponStatValues = parsedConfigData.WeaponStatValues;
 
@@ -217,7 +227,7 @@ internal class CanvasService
             {
                 ExperienceFill.fillAmount = ExperienceProgress;
 
-                if (ExperienceLevel == 90) ExperienceFill.fillAmount = 1f;
+                if (ExperienceLevel == ExperienceMaxLevel) ExperienceFill.fillAmount = 1f;
 
                 if (ExperienceText.GetText() != ExperienceLevel.ToString())
                 {
@@ -245,7 +255,7 @@ internal class CanvasService
             {
                 LegacyFill.fillAmount = LegacyProgress;
 
-                if (LegacyLevel == 100) LegacyFill.fillAmount = 1f;
+                if (LegacyLevel == LegacyMaxLevel) LegacyFill.fillAmount = 1f;
 
                 if (LegacyHeader.GetText() != LegacyType)
                 {
@@ -259,7 +269,14 @@ internal class CanvasService
 
                 if (LegacyText.GetText() != LegacyLevel.ToString())
                 {
-                    LegacyText.ForceSet(LegacyLevel.ToString());
+                    if (LegacyType == "Frailed")
+                    {
+                        LegacyText.ForceSet("N/A");
+                    }
+                    else
+                    {
+                        LegacyText.ForceSet(LegacyLevel.ToString());
+                    }
                 }
 
                 if (LegacyBonusStats[0] != "None" && FirstLegacyStat.GetText() != LegacyBonusStats[0])
@@ -303,7 +320,7 @@ internal class CanvasService
             {
                 ExpertiseFill.fillAmount = ExpertiseProgress;
 
-                if (ExpertiseLevel == 100) ExpertiseFill.fillAmount = 1f;
+                if (ExpertiseLevel == ExpertiseMaxLevel) ExpertiseFill.fillAmount = 1f;
 
                 if (ExpertiseHeader.GetText() != ExpertiseType)
                 {
@@ -434,13 +451,24 @@ internal class CanvasService
         GameObject bloodOrbParent = FindTargetUIObject(canvas.transform.root, "BloodOrbParent");
         if (bloodOrbParent != null)
         {
-            RectTransform bloodOrbParentRectTransform = bloodOrbParent.GetComponent<RectTransform>();
-            Il2CppStructArray<Vector3> worldCorners = new(4);
-            bloodOrbParentRectTransform.GetWorldCorners(worldCorners);
-            GameplayInputSystemPatch.bottomLeft = worldCorners[0];
-            GameplayInputSystemPatch.topRight = worldCorners[2];
+            //RectTransform bloodOrbParentRectTransform = bloodOrbParent.GetComponent<RectTransform>();
+            //Il2CppStructArray<Vector3> worldCorners = new(4);
+            //bloodOrbParentRectTransform.GetWorldCorners(worldCorners);
+            //GameplayInputSystemPatch.bottomLeft = worldCorners[0];
+            //GameplayInputSystemPatch.topRight = worldCorners[2];
+            
+            GameObject bloodObject = FindTargetUIObject(bloodOrbParent.transform, "Blood");
+            if (bloodObject != null)
+            {
+                SimpleStunButton stunButton = bloodObject.AddComponent<SimpleStunButton>();
+                stunButton.onClick.AddListener(new Action(ToggleUIObjects));
+            }
+            else
+            {
+                Core.Log.LogError("Failed to find Blood object");
+            }
         }
-
+        
         // Get MiniMap south icon on the compass to set locations
         GameObject MiniMapSouthObject = FindTargetUIObject(canvas.transform.root, "S");
         RectTransform MiniMapSouthRectTransform = MiniMapSouthObject.GetComponent<RectTransform>();
@@ -646,17 +674,17 @@ internal class CanvasService
             WeeklyQuestTransform.gameObject.layer = CanvasObject.layer;
 
             // Reduce window widths
-            DailyQuestTransform.sizeDelta = new Vector2(DailyQuestTransform.sizeDelta.x * 0.7f, DailyQuestTransform.sizeDelta.y);
-            WeeklyQuestTransform.sizeDelta = new Vector2(WeeklyQuestTransform.sizeDelta.x * 0.7f, WeeklyQuestTransform.sizeDelta.y);
+            DailyQuestTransform.sizeDelta = new Vector2(DailyQuestTransform.sizeDelta.x * 0.6f, DailyQuestTransform.sizeDelta.y);
+            WeeklyQuestTransform.sizeDelta = new Vector2(WeeklyQuestTransform.sizeDelta.x * 0.6f, WeeklyQuestTransform.sizeDelta.y);
 
             //Core.Log.LogInfo($"DailyQuestTransform: {DailyQuestTransform.position.x},{DailyQuestTransform.position.y},{DailyQuestTransform.position.z}");
 
             // Set positions for quest tooltips
             //int windowNumber = 1;
             //DailyQuestTransform.anchoredPosition = new(DailyQuestTransform.anchoredPosition.x, DailyQuestTransform.anchoredPosition.y * 2);
-            DailyQuestTransform.position = new Vector3(1600f, 275f, 0f);
-            WeeklyQuestTransform.position = new Vector3(1600f, 200f, 0f);
-            //Core.Log.LogInfo($"DailyQuestTransform: {DailyQuestTransform.position.x},{DailyQuestTransform.position.y},{DailyQuestTransform.position.z}");
+            DailyQuestTransform.position = new Vector3(Screen.width, 75f, 0f);
+            WeeklyQuestTransform.position = new Vector3(Screen.width, 0f, 0f); // oops, resolution >_>
+            Core.Log.LogInfo($"DailyQuestTransform: {DailyQuestTransform.rect.height},{DailyQuestTransform.rect.top},{DailyQuestTransform.rect.y}");
             // Add objects to list for toggling later
             ActiveObjects.Add(DailyQuestTooltipObject);
             ActiveObjects.Add(WeeklyQuestTooltipObject);
@@ -668,7 +696,7 @@ internal class CanvasService
         float rectWidth = barRectTransform.rect.width;
         float sizeOffsetX = ((rectWidth * sizeMultiplier) - rectWidth) * (1 - barRectTransform.pivot.x);
         barRectTransform.localScale *= 0.75f;
-        barRectTransform.position = new Vector3(referenceObject.transform.position.x - sizeOffsetX * 2, (referenceObject.transform.position.y * 0.9f) - (referenceRectTransform.rect.height * 2.25f * barNumber), referenceObject.transform.position.z);
+        barRectTransform.position = new Vector3(referenceObject.transform.position.x - sizeOffsetX * 2, (referenceObject.transform.position.y * 0.9f) - (referenceRectTransform.rect.height * 2.5f * barNumber), referenceObject.transform.position.z);
         barRectTransform.gameObject.layer = layer;
 
         fillImage.fillAmount = 0f;
@@ -682,7 +710,15 @@ internal class CanvasService
         FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>().fillAmount = 0f;
 
         barNumber++;
-    } 
+    }
+    static void ToggleUIObjects()
+    {
+        UIActive = !UIActive;
+        foreach (GameObject gameObject in ActiveObjects)
+        {
+            gameObject.active = UIActive;
+        }
+    }
     public static class UIObjectUtils
     {
         static readonly Dictionary<BloodType, string> BloodIcons = new()

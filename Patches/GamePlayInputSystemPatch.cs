@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Eclipse.Patches;
 
+/*
 [HarmonyPatch]
 internal static class GameplayInputSystemPatch
 {
@@ -27,21 +28,15 @@ internal static class GameplayInputSystemPatch
             if (IsMouseInside(Input.mousePosition))
             {
                 //Core.Log.LogInfo($"Mouse 0 Down Inside {worldMousePosition.x},{worldMousePosition.y},{worldMousePosition.z}");
-                ToggleUIObjects();
+                //ToggleUIObjects();
             }
         }
     }
-    static void ToggleUIObjects()
-    {
-        CanvasService.UIActive = !CanvasService.UIActive;
-        foreach (GameObject gameObject in CanvasService.ActiveObjects)
-        {
-            gameObject.active = CanvasService.UIActive;
-        }
-    }
+
     static bool IsMouseInside(Vector3 position)
     {
         return position.x >= bottomLeft.x && position.x <= topRight.x &&
                position.y >= bottomLeft.y && position.y <= topRight.y;
     }
 }
+*/
