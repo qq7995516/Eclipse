@@ -1,5 +1,4 @@
-﻿using Eclipse.Patches;
-using Il2CppInterop.Runtime;
+﻿using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using ProjectM.UI;
 using Stunlock.Core;
@@ -28,7 +27,7 @@ internal class CanvasService
     static readonly bool ExpertiseBar = Plugin.Expertise;
     static readonly bool QuestTracker = Plugin.Quests;
 
-    static readonly WaitForSeconds Delay = new(1f);
+    static readonly WaitForSeconds Delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable for now
 
     static UICanvasBase UICanvasBase;
     static Canvas Canvas;
@@ -97,22 +96,14 @@ internal class CanvasService
 
     public static bool Active = false;
     public static bool KillSwitch = false;
+
+    const float BarHeightSpacing = 0.075f;
+    const float BarWidthSpacing = 0.075f; // seems solid for 1600x900, now try 1920x1080 and compare
     public CanvasService(UICanvasBase canvas)
     {
-        // Instantiate the ExperienceBar from the PlayerEntryPrefab and find the BotomBarCanvas
         UICanvasBase = canvas;
         InitializeBars(canvas);
-        try
-        {
-            //InitializeSprites();
-            //FindGameObjects(canvas.transform, Plugin.FilePaths[0], true);
-        }
-        catch (Exception ex)
-        {
-            Core.Log.LogError($"Failed to initialize blood sprites: {ex}");
-        }
     }
-
     static readonly Dictionary<int, string> RomanNumerals = new()
     {
         {100, "C"}, {90, "XC"}, {50, "L"}, {40, "XL"},
@@ -205,11 +196,11 @@ internal class CanvasService
         WeeklyGoal = weeklyQuestData.Goal;
         WeeklyTarget = weeklyQuestData.Target;
     }
-    public static IEnumerator CanvasUpdateLoop() // need to find another component, can abstract data to whatever just need something relatively unused that syncs. Check SyncingComponents or w/e that was called
+    public static IEnumerator CanvasUpdateLoop() 
     {
         while (true)
         {
-            if (KillSwitch)
+            if (KillSwitch) // stop running if player leaves game
             {
                 Active = false;
                 break;
@@ -217,7 +208,7 @@ internal class CanvasService
 
             if (!Active) Active = true;
 
-            if (!UIActive) // don't update if not active
+            if (!UIActive) // don't update if not active from blood orb click
             {
                 yield return Delay;
                 continue;
@@ -269,14 +260,12 @@ internal class CanvasService
 
                 if (LegacyText.GetText() != LegacyLevel.ToString())
                 {
-                    if (LegacyType == "Frailed")
-                    {
-                        LegacyText.ForceSet("N/A");
-                    }
-                    else
-                    {
-                        LegacyText.ForceSet(LegacyLevel.ToString());
-                    }
+                    LegacyText.ForceSet(LegacyLevel.ToString());
+                }
+
+                if (LegacyType == "Frailed" && LegacyText.GetText() != "N/A")
+                {
+                    LegacyText.ForceSet("N/A");
                 }
 
                 if (LegacyBonusStats[0] != "None" && FirstLegacyStat.GetText() != LegacyBonusStats[0])
@@ -473,7 +462,9 @@ internal class CanvasService
         GameObject MiniMapSouthObject = FindTargetUIObject(canvas.transform.root, "S");
         RectTransform MiniMapSouthRectTransform = MiniMapSouthObject.GetComponent<RectTransform>();
 
-        int barNumber = 1; // ref and increment for spacing of bars to account for config options
+        int barNumber = 0; // ref and increment for spacing of bars to account for config options
+        float screenHeight = Screen.height;
+        float screenWidth = Screen.width;
 
         // Configure ExperienceBar
         if (ExperienceBar)
@@ -493,6 +484,7 @@ internal class CanvasService
 
             // Assign LocalizedText for player class
             ExperienceClassText = FindTargetUIObject(ExperienceInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
+            ExperienceClassText.Text.fontSize *= 1.2f;
             ExperienceClassText.ForceSet("");
             ExperienceClassText.enabled = false;
             LocalizedText ExperienceFirstText = FindTargetUIObject(ExperienceInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
@@ -503,12 +495,12 @@ internal class CanvasService
             ExperienceSecondText.enabled = false;
 
             // Configure ExperienceBar
-            ConfigureBar(ExperienceBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExperienceFill, ExperienceHeader, ExperienceText, CanvasObject.layer, 1f, "Experience", Color.green, ref barNumber);
+            //ConfigureBar(ExperienceBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExperienceFill, ExperienceHeader, ExperienceText, CanvasObject.layer, 1f, "Experience", Color.green, ref barNumber);
+            ConfigureBarTest(ExperienceBarRectTransform, ExperienceFill, ExperienceHeader, ExperienceText, CanvasObject.layer, screenHeight, screenWidth, "Experience", Color.green, ref barNumber);
             ExperienceBarObject.SetActive(true);
             ActiveObjects.Add(ExperienceBarObject);
         }
 
-        // Configure LegacyBar
         if (LegacyBar)
         {
             GameObject LegacyBarObject = GameObject.Instantiate(objectPrefab);
@@ -526,24 +518,27 @@ internal class CanvasService
 
             // Assign LocalizedText for LegacyInformationPanel
             FirstLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
+            FirstLegacyStat.Text.fontSize *= 1.1f;
             FirstLegacyStat.ForceSet("");
             FirstLegacyStat.enabled = false;
             SecondLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
+            SecondLegacyStat.Text.fontSize *= 1.1f;
             SecondLegacyStat.ForceSet("");
             FirstLegacyStat.Text.color = SecondLegacyStat.Text.color;
             SecondLegacyStat.enabled = false;
             ThirdLegacyStat = FindTargetUIObject(LegacyInformationPanel.transform, "PlatformUserName").GetComponent<LocalizedText>();
+            ThirdLegacyStat.Text.fontSize *= 1.1f;
             ThirdLegacyStat.ForceSet("");
             ThirdLegacyStat.enabled = false;
             ThirdLegacyStat.Text.color = SecondLegacyStat.Text.color;
 
             // Configure LegacyBar
-            ConfigureBar(LegacyBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, LegacyFill, LegacyHeader, LegacyText, CanvasObject.layer, 1f, "Legacy", Color.red, ref barNumber);
+            //ConfigureBar(LegacyBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, LegacyFill, LegacyHeader, LegacyText, CanvasObject.layer, 1f, "Legacy", Color.red, ref barNumber);
+            ConfigureBarTest(LegacyBarRectTransform, LegacyFill, LegacyHeader, LegacyText, CanvasObject.layer, screenHeight, screenWidth, "Legacy", Color.red, ref barNumber);
             LegacyBarObject.SetActive(true);
             ActiveObjects.Add(LegacyBarObject);
         }
 
-        // Configure ExpertiseBar
         if (ExpertiseBar)
         {
             GameObject ExpertiseBarObject = GameObject.Instantiate(objectPrefab);
@@ -561,19 +556,23 @@ internal class CanvasService
 
             // Assign LocalizedText for ExpertiseInformationPanel
             FirstExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "BloodInfo").GetComponent<LocalizedText>();
+            FirstExpertiseStat.Text.fontSize *= 1.1f;
             FirstExpertiseStat.ForceSet("");
             FirstExpertiseStat.enabled = false;
             SecondExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
+            SecondExpertiseStat.Text.fontSize *= 1.1f;
             SecondExpertiseStat.ForceSet("");
             SecondExpertiseStat.enabled = false;
             FirstExpertiseStat.Text.color = SecondExpertiseStat.Text.color;
             ThirdExpertiseStat = FindTargetUIObject(ExpertiseInformationPanel.transform, "PlatformUserName").GetComponent<LocalizedText>();
+            ThirdExpertiseStat.Text.fontSize *= 1.1f;
             ThirdExpertiseStat.ForceSet("");
             ThirdExpertiseStat.enabled = false;
             ThirdExpertiseStat.Text.color = SecondExpertiseStat.Text.color;
 
             // Configure ExpertiseBar
-            ConfigureBar(ExpertiseBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExpertiseFill, ExpertiseHeader, ExpertiseText, CanvasObject.layer, 1f, "Expertise", Color.grey, ref barNumber);
+            //ConfigureBar(ExpertiseBarRectTransform, MiniMapSouthObject, MiniMapSouthRectTransform, ExpertiseFill, ExpertiseHeader, ExpertiseText, CanvasObject.layer, 1f, "Expertise", Color.grey, ref barNumber);
+            ConfigureBarTest(ExpertiseBarRectTransform, ExpertiseFill, ExpertiseHeader, ExpertiseText, CanvasObject.layer, screenHeight, screenWidth, "Expertise", Color.grey, ref barNumber);
             ExpertiseBarObject.SetActive(true);
             ActiveObjects.Add(ExpertiseBarObject);
         }
@@ -648,15 +647,18 @@ internal class CanvasService
             DailyQuestSubHeader.Text.enableAutoSizing = false;
             DailyQuestSubHeader.Text.autoSizeTextContainer = false;
             DailyQuestSubHeader.Text.enableWordWrapping = false;
+
             ContentSizeFitter DailyQuestFitter = DailyQuestSubHeaderObject.GetComponent<ContentSizeFitter>();
             DailyQuestFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             DailyQuestFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
             WeeklyQuestHeader = FindTargetUIObject(WeeklyIconNameObject.transform, "TooltipHeader").GetComponent<LocalizedText>();
             WeeklyQuestHeader.Text.fontSize *= 2f;
             WeeklyQuestSubHeader = WeeklyQuestSubHeaderObject.GetComponent<LocalizedText>();
             WeeklyQuestSubHeader.Text.enableAutoSizing = false;
             WeeklyQuestSubHeader.Text.autoSizeTextContainer = false;
             WeeklyQuestSubHeader.Text.enableWordWrapping = false;
+
             ContentSizeFitter WeeklyQuestFitter = WeeklyQuestSubHeaderObject.GetComponent<ContentSizeFitter>();
             WeeklyQuestFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             WeeklyQuestFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
@@ -677,14 +679,22 @@ internal class CanvasService
             DailyQuestTransform.sizeDelta = new Vector2(DailyQuestTransform.sizeDelta.x * 0.6f, DailyQuestTransform.sizeDelta.y);
             WeeklyQuestTransform.sizeDelta = new Vector2(WeeklyQuestTransform.sizeDelta.x * 0.6f, WeeklyQuestTransform.sizeDelta.y);
 
-            //Core.Log.LogInfo($"DailyQuestTransform: {DailyQuestTransform.position.x},{DailyQuestTransform.position.y},{DailyQuestTransform.position.z}");
-
             // Set positions for quest tooltips
-            //int windowNumber = 1;
-            //DailyQuestTransform.anchoredPosition = new(DailyQuestTransform.anchoredPosition.x, DailyQuestTransform.anchoredPosition.y * 2);
-            DailyQuestTransform.position = new Vector3(Screen.width, 75f, 0f);
-            WeeklyQuestTransform.position = new Vector3(Screen.width, 0f, 0f); // oops, resolution >_>
-            Core.Log.LogInfo($"DailyQuestTransform: {DailyQuestTransform.rect.height},{DailyQuestTransform.rect.top},{DailyQuestTransform.rect.y}");
+            DailyQuestTransform.anchorMin = new Vector2(1, 0.075f); // Anchored to bottom-right
+            DailyQuestTransform.anchorMax = new Vector2(1, 0.075f);
+            DailyQuestTransform.pivot = new Vector2(1, 0.075f);
+
+            WeeklyQuestTransform.anchorMin = new Vector2(1, 0); // Anchored to bottom-right
+            WeeklyQuestTransform.anchorMax = new Vector2(1, 0);
+            WeeklyQuestTransform.pivot = new Vector2(1, 0);
+
+            // Set anchored positions for quest tooltips
+            // WeeklyQuest anchored at the bottom-right
+            WeeklyQuestTransform.anchoredPosition = new Vector2(0f, 0f); // Anchored to the bottom right corner
+
+            // DailyQuest anchored just above WeeklyQuest
+            DailyQuestTransform.anchoredPosition = new Vector2(0f, 0.075f); // Anchored to just above bottom right corner
+
             // Add objects to list for toggling later
             ActiveObjects.Add(DailyQuestTooltipObject);
             ActiveObjects.Add(WeeklyQuestTooltipObject);
@@ -702,6 +712,40 @@ internal class CanvasService
         fillImage.fillAmount = 0f;
         fillImage.color = fillColor;
 
+        levelText.ForceSet("0");
+        textHeader.ForceSet(barHeaderText);
+        textHeader.Text.fontSize *= 1.5f;
+
+        FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
+        FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>().fillAmount = 0f;
+
+        barNumber++;
+    }
+    static void ConfigureBarTest(RectTransform barRectTransform, Image fillImage, LocalizedText textHeader,
+                         LocalizedText levelText, int layer, float screenHeight, float screenWidth, string barHeaderText, Color fillColor, ref int barNumber)
+    {
+        // Set layer
+        barRectTransform.gameObject.layer = layer;
+
+        // Set anchor and pivot to middle-upper-right
+        barRectTransform.anchorMin = new Vector2(1, 0.6f); // Middle-upper-right anchor
+        barRectTransform.anchorMax = new Vector2(1, 0.6f);
+        barRectTransform.pivot = new Vector2(1, 0.6f); // Middle-upper-right pivot
+
+        // Adjust the position so the bar is pushed into the screen by a certain amount
+        float padding = screenHeight * BarHeightSpacing;
+        float barHeight = barRectTransform.rect.height; // Bar height
+        float offsetY = (barHeight + padding) * barNumber; // Spacing between bars
+        float spacing = screenWidth * BarWidthSpacing;
+        barRectTransform.anchoredPosition = new Vector2(-spacing, -offsetY); // width of bar units from the right, adjust Y for each bar
+
+        // Set the scale of the bar
+        barRectTransform.localScale = new Vector3(0.7f, 0.7f, 1f);
+        //barRectTransform.localScale = new Vector3(0.85f * (screenWidth / 1920f), 0.85f * (screenHeight / 1080f), 1f);
+
+        // Configure the rest of the bar
+        fillImage.fillAmount = 0f;
+        fillImage.color = fillColor;
         levelText.ForceSet("0");
         textHeader.ForceSet(barHeaderText);
         textHeader.Text.fontSize *= 1.5f;

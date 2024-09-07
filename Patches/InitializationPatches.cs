@@ -5,6 +5,7 @@ using ProjectM.Network;
 using ProjectM.UI;
 using Unity.Collections;
 using Unity.Entities;
+using UnityEngine;
 
 namespace Eclipse.Patches;
 
@@ -91,10 +92,22 @@ internal static class InitializationPatches
     {
         CanvasService.KillSwitch = true;
         CanvasService.Active = false;
-        SetCanvas = false;
-        Core.hasInitialized = false;
+
         ClientChatSystemPatch.UserRegistered = false;
         ClientChatSystemPatch.localCharacter = Entity.Null;
         ClientChatSystemPatch.localUser = Entity.Null;
+
+        SetCanvas = false;
+        Core.hasInitialized = false;
+
+        foreach(GameObject gameObject in CanvasService.ActiveObjects) // destroy to let resolution be changed and elements get recreated to match new scaling?
+        {
+            if (gameObject != null)
+            {
+                GameObject.Destroy(gameObject);
+            }
+        }
+        
+        CanvasService.ActiveObjects.Clear();
     }
 }
