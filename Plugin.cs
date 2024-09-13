@@ -31,11 +31,14 @@ internal class Plugin : BasePlugin
     static ConfigEntry<bool> legacies;
     static ConfigEntry<bool> expertise;
     static ConfigEntry<bool> quests;
+    //static ConfigEntry<bool> familiars;
     public static bool Leveling => leveling.Value;
     public static bool Prestige => prestige.Value;
     public static bool Legacies => legacies.Value;
     public static bool Expertise => expertise.Value;
     public static bool Quests => quests.Value;
+
+    //public static bool Familiars => familiars.Value;
     public override void Load()
     {
         Instance = this;
@@ -55,6 +58,7 @@ internal class Plugin : BasePlugin
         legacies = InitConfigEntry("UIOptions", "LegacyBar", false, "Enable/Disable the legacy bar, requires both ClientCompanion/LegacySystem to be enabled in Bloodcraft.");
         expertise = InitConfigEntry("UIOptions", "ExpertiseBar", false, "Enable/Disable the expertise bar, requires both ClientCompanion/ExpertiseSystem to be enabled in Bloodcraft.");
         quests = InitConfigEntry("UIOptions", "QuestTracker", false, "Enable/Disable the quest tracker, requires both ClientCompanion/QuestSystem to be enabled in Bloodcraft.");
+        //familiars = InitConfigEntry("UIOptions", "Familiars", false, "Enable/Disable various functions for managing familiars.");
     }
     static ConfigEntry<T> InitConfigEntry<T>(string section, string key, T defaultValue, string description)
     {

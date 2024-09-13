@@ -117,17 +117,19 @@ internal static class ClientChatSystemPatch
         switch (eventType)
         {
             case (int)NetworkEventSubType.ProgressToClient:
-                List<string> playerData = CanvasService.ParseMessageString(regexExtract.Replace(message, ""));
-                CanvasService.ParsePlayerData(playerData);
+                List<string> playerData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
+                DataService.ParsePlayerData(playerData);
                 if (!CanvasService.Active)
                 {
                     if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
+                    CanvasService.Active = true;
+
                     Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
                 }
                 break;
             case (int)NetworkEventSubType.ConfigsToClient:
-                List<string> configData = CanvasService.ParseMessageString(regexExtract.Replace(message, ""));
-                CanvasService.ParseConfigData(configData);
+                List<string> configData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
+                DataService.ParseConfigData(configData);
                 //if (!CanvasService.Active) Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
                 break;
         }

@@ -1,4 +1,7 @@
-﻿namespace Eclipse.Services;
+﻿using System.Globalization;
+using UnityEngine.InputSystem.Utilities;
+
+namespace Eclipse.Services;
 
 internal static class DataService
 {
@@ -52,7 +55,7 @@ internal static class DataService
         SpellCritDamage // 11
     }
 
-    public static readonly Dictionary<WeaponStatType, string> WeaponStatAbbreviations = new()
+    public static readonly Dictionary<WeaponStatType, string> WeaponStatTypeAbbreviations = new()
     {
         { WeaponStatType.MaxHealth, "HP" },
         { WeaponStatType.MovementSpeed, "MS" },
@@ -66,6 +69,22 @@ internal static class DataService
         { WeaponStatType.PhysicalCritDamage, "PCD" },
         { WeaponStatType.SpellCritChance, "SCC" },
         { WeaponStatType.SpellCritDamage, "SCD" }
+    };
+
+    public static readonly Dictionary<string, string> WeaponStatStringAbbreviations = new()
+    {
+        { "MaxHealth", "HP" },
+        { "MovementSpeed", "MS" },
+        { "PrimaryAttackSpeed", "PAS" },
+        { "PhysicalLifeLeech", "PLL" },
+        { "SpellLifeLeech", "SLL" },
+        { "PrimaryLifeLeech", "PLL" },
+        { "PhysicalPower", "PP" },
+        { "SpellPower", "SP" },
+        { "PhysicalCritChance", "PCC" },
+        { "PhysicalCritDamage", "PCD" },
+        { "SpellCritChance", "SCC" },
+        { "SpellCritDamage", "SCD" }
     };
 
     public static readonly Dictionary<WeaponStatType, string> WeaponStatFormats = new()
@@ -102,7 +121,7 @@ internal static class DataService
         BloodEfficiency // 11
     }
 
-    public static readonly Dictionary<BloodStatType, string> BloodStatAbbreviations = new()
+    public static readonly Dictionary<BloodStatType, string> BloodStatTypeAbbreviations = new()
     {
         { BloodStatType.HealingReceived, "HR" },
         { BloodStatType.DamageReduction, "DR" },
@@ -116,6 +135,22 @@ internal static class DataService
         { BloodStatType.MinionDamage, "MD" },
         { BloodStatType.ShieldAbsorb, "SA" },
         { BloodStatType.BloodEfficiency, "BE" }
+    };
+
+    public static readonly Dictionary<string, string> BloodStatStringAbbreviations = new()
+    {
+        { "HealingReceived", "HR" },
+        { "DamageReduction", "DR" },
+        { "PhysicalResistance", "PR" },
+        { "SpellResistance", "SR" },
+        { "ResourceYield", "RY" },
+        { "CCReduction", "CCR" },
+        { "SpellCooldownRecoveryRate", "SCR" },
+        { "WeaponCooldownRecoveryRate", "WCR" },
+        { "UltimateCooldownRecoveryRate", "UCR" },
+        { "MinionDamage", "MD" },
+        { "ShieldAbsorb", "SA" },
+        { "BloodEfficiency", "BE" }
     };
     public enum PlayerClass // for now subtract 1 when processing this enum, if 0 no class (otherwise 0 would be bloodknight. should probably add a None enum)
     {
@@ -134,7 +169,7 @@ internal static class DataService
     public static float ClassStatMultiplier;
     internal class ExperienceData(string percent, string level, string prestige, string playerClass)
     {
-        public float Progress { get; set; } = float.Parse(percent) / 100f;
+        public float Progress { get; set; } = float.Parse(percent, CultureInfo.InvariantCulture) / 100f;
         public int Level { get; set; } = int.Parse(level);
         public int Prestige { get; set; } = int.Parse(prestige);
         public PlayerClass Class { get; set; } = (PlayerClass)int.Parse(playerClass);
@@ -177,19 +212,19 @@ internal static class DataService
         {
             //Core.Log.LogInfo($"ConfigData: {prestigeMultiplier}, {statSynergyMultiplier}, {weaponStatValues}, {bloodStatValues}, {classStatSynergies}");
 
-            PrestigeStatMultiplier = float.Parse(prestigeMultiplier);
-            ClassStatMultiplier = float.Parse(statSynergyMultiplier);
+            PrestigeStatMultiplier = float.Parse(prestigeMultiplier, CultureInfo.InvariantCulture);
+            ClassStatMultiplier = float.Parse(statSynergyMultiplier, CultureInfo.InvariantCulture);
 
             MaxPlayerLevel = int.Parse(maxPlayerLevel);
             MaxLegacyLevel = int.Parse(maxLegacyLevel);
             MaxExpertiseLevel = int.Parse(maxExpertiseLevel);
 
             WeaponStatValues = weaponStatValues.Split(',')
-            .Select((value, index) => new { Index = index + 1, Value = float.Parse(value) })
+            .Select((value, index) => new { Index = index + 1, Value = float.Parse(value, CultureInfo.InvariantCulture) })
             .ToDictionary(x => (WeaponStatType)x.Index, x => x.Value);
 
             BloodStatValues = bloodStatValues.Split(',')
-            .Select((value, index) => new { Index = index + 1, Value = float.Parse(value) })
+            .Select((value, index) => new { Index = index + 1, Value = float.Parse(value, CultureInfo.InvariantCulture) })
             .ToDictionary(x => (BloodStatType)x.Index, x => x.Value);
 
             ClassStatSynergies = classStatSynergies
@@ -208,5 +243,76 @@ internal static class DataService
                 )
             );
         }
+    }
+    public static List<string> ParseMessageString(string configString)
+    {
+        if (string.IsNullOrEmpty(configString))
+        {
+            return [];
+        }
+        return [.. configString.Split(',')];
+    }
+    public static void ParseConfigData(List<string> configData)
+    {
+        int index = 0;
+
+        ConfigData parsedConfigData = new(
+            configData[index++], // prestigeMultiplier
+            configData[index++], // statSynergyMultiplier
+            configData[index++], // maxPlayerLevel
+            configData[index++], // maxLegacyLevel
+            configData[index++], // maxExpertiseLevel
+            string.Join(",", configData.Skip(index).Take(12)), // Combine the next 11 elements for weaponStatValues
+            string.Join(",", configData.Skip(index += 12).Take(12)), // Combine the following 11 elements for bloodStatValues
+            string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
+        );
+
+        PrestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
+        ClassStatMultiplier = parsedConfigData.ClassStatMultiplier;
+
+        CanvasService.ExperienceMaxLevel = parsedConfigData.MaxPlayerLevel;
+        CanvasService.LegacyMaxLevel = parsedConfigData.MaxLegacyLevel;
+        CanvasService.ExpertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
+
+        WeaponStatValues = parsedConfigData.WeaponStatValues;
+
+        BloodStatValues = parsedConfigData.BloodStatValues;
+
+        ClassStatSynergies = parsedConfigData.ClassStatSynergies;
+    }
+    public static void ParsePlayerData(List<string> playerData)
+    {
+        int index = 0;
+
+        ExperienceData experienceData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+        LegacyData legacyData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+        ExpertiseData expertiseData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+        QuestData dailyQuestData = new(playerData[index++], playerData[index++], playerData[index++]);
+        QuestData weeklyQuestData = new(playerData[index++], playerData[index++], playerData[index]);
+
+        CanvasService.ExperienceProgress = experienceData.Progress;
+        CanvasService.ExperienceLevel = experienceData.Level;
+        CanvasService.ExperiencePrestige = experienceData.Prestige;
+        CanvasService.ClassType = experienceData.Class;
+
+        CanvasService.LegacyProgress = legacyData.Progress;
+        CanvasService.LegacyLevel = legacyData.Level;
+        CanvasService.LegacyPrestige = legacyData.Prestige;
+        CanvasService.LegacyType = legacyData.LegacyType;
+        CanvasService.LegacyBonusStats = legacyData.BonusStats;
+
+        CanvasService.ExpertiseProgress = expertiseData.Progress;
+        CanvasService.ExpertiseLevel = expertiseData.Level;
+        CanvasService.ExpertisePrestige = expertiseData.Prestige;
+        CanvasService.ExpertiseType = expertiseData.ExpertiseType;
+        CanvasService.ExpertiseBonusStats = expertiseData.BonusStats;
+
+        CanvasService.DailyProgress = dailyQuestData.Progress;
+        CanvasService.DailyGoal = dailyQuestData.Goal;
+        CanvasService.DailyTarget = dailyQuestData.Target;
+
+        CanvasService.WeeklyProgress = weeklyQuestData.Progress;
+        CanvasService.WeeklyGoal = weeklyQuestData.Goal;
+        CanvasService.WeeklyTarget = weeklyQuestData.Target;
     }
 }

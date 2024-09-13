@@ -48,7 +48,7 @@ internal static class InitializationPatches
             Core.SetCanvas(canvas);
         }
     }
-    
+
     [HarmonyPatch(typeof(CommonClientDataSystem), nameof(CommonClientDataSystem.OnUpdate))]
     [HarmonyPostfix]
     static void OnUpdatePostfix(CommonClientDataSystem __instance)
@@ -110,4 +110,16 @@ internal static class InitializationPatches
         
         CanvasService.ActiveObjects.Clear();
     }
+
+    /*
+    [HarmonyPatch(typeof(AbilityBarEntry), nameof(AbilityBarEntry.UpdateState))]
+    [HarmonyPostfix]
+    static void OnUpdatePostfix(ref AbilityBarEntry.UIState newState, InputActionSystem inputActionSystem)
+    {
+        if (newState != null)
+        {
+            if (!newState.GameObjectActive) newState.GameObjectActive = true;
+        }
+    }
+    */
 }
