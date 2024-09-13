@@ -29,4 +29,4 @@
 
 ## Sponsors
 
-Jairon Orellana; Odjit; Jera;
+Jairon Orellana; Odjit; Jera; Eve winters;
