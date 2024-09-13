@@ -10,7 +10,7 @@
 
 ## Features
 
-- WIP
+- Currently supports progress bars and info for leveling, legacies, expertise, and quest progress windows. Blood orb can be clicked to enable/disable UI.
  
 ## Configuration
 
