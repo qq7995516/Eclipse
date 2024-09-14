@@ -28,7 +28,8 @@ internal class CanvasService
         Experience,
         Legacy,
         Expertise,
-        QuestTracker
+        Daily,
+        Weekly
     }
 
     static readonly Dictionary<int, string> RomanNumerals = new()
@@ -37,6 +38,17 @@ internal class CanvasService
         {10, "X"}, {9, "IX"}, {5, "V"}, {4, "IV"},
         {1, "I"}
     };
+
+    static readonly List<string> SpriteNames = 
+    [
+        "BloodIcon_Cursed",
+        "BloodIcon_Small_Cursed",
+        "BloodIcon_Small_Holy",
+        "BloodIcon_Warrior",
+        "BloodIcon_Small_Warrior"
+    ];
+
+    static readonly Dictionary<string, Sprite> SpriteMap = [];
 
     static readonly WaitForSeconds Delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable for now
 
@@ -91,16 +103,20 @@ internal class CanvasService
     static GameObject DailyQuestObject;
     static LocalizedText DailyQuestHeader;
     static LocalizedText DailyQuestSubHeader;
+    static Image DailyQuestIcon;
     public static int DailyProgress = 0;
     public static int DailyGoal = 0;
     public static string DailyTarget = "";
+    public static bool DailyVBlood = false;
 
     static GameObject WeeklyQuestObject;
     static LocalizedText WeeklyQuestHeader;
     static LocalizedText WeeklyQuestSubHeader;
+    static Image WeeklyQuestIcon;
     public static int WeeklyProgress = 0;
     public static int WeeklyGoal = 0;
     public static string WeeklyTarget = "";
+    public static bool WeeklyVBlood = false;
 
     static readonly float ScreenWidth = Screen.width;
     static readonly float ScreenHeight = Screen.height;
@@ -125,6 +141,7 @@ internal class CanvasService
         BarNumber = 0;
         WindowOffset = 0f;
 
+        FindSpritesByName(SpriteNames);
         InitializeBloodButton();
         InitializeUI();
     }
@@ -138,8 +155,8 @@ internal class CanvasService
 
         if (QuestTracker)
         {
-            ConfigureQuestWindow(ref DailyQuestObject, "Daily Quest", Color.green, ref DailyQuestHeader, ref DailyQuestSubHeader);
-            ConfigureQuestWindow(ref WeeklyQuestObject, "Weekly Quest", Color.magenta, ref WeeklyQuestHeader, ref WeeklyQuestSubHeader);
+            ConfigureQuestWindow(ref DailyQuestObject, UIElement.Daily, Color.green, ref DailyQuestHeader, ref DailyQuestSubHeader, ref DailyQuestIcon);
+            ConfigureQuestWindow(ref WeeklyQuestObject, UIElement.Weekly, Color.magenta, ref WeeklyQuestHeader, ref WeeklyQuestSubHeader, ref WeeklyQuestIcon);
         }
     }
     static void InitializeBloodButton()
@@ -186,8 +203,8 @@ internal class CanvasService
 
             if (QuestTracker)
             {
-                UpdateQuests(DailyQuestObject, DailyQuestSubHeader, DailyTarget, DailyProgress, DailyGoal);
-                UpdateQuests(WeeklyQuestObject, WeeklyQuestSubHeader, WeeklyTarget, WeeklyProgress, WeeklyGoal);
+                UpdateQuests(DailyQuestObject, DailyQuestSubHeader, DailyQuestIcon, DailyTarget, DailyProgress, DailyGoal, DailyVBlood);
+                UpdateQuests(WeeklyQuestObject, WeeklyQuestSubHeader, WeeklyQuestIcon, WeeklyTarget, WeeklyProgress, WeeklyGoal, WeeklyVBlood);
             }
 
             yield return Delay;
@@ -259,7 +276,7 @@ internal class CanvasService
     {
         for (int i = 0; i < bonusStats.Count; i++)
         {
-            if (bonusStats[i] != "None" && !statTexts[i].GetText().Contains(abbreviations[bonusStats[i]]))
+            if (bonusStats[i] != "None")
             {
                 if (!statTexts[i].enabled) statTexts[i].enabled = true;
                 string statInfo = getStatInfo(bonusStats[i]);
@@ -272,16 +289,28 @@ internal class CanvasService
             }
         }
     }
-    static void UpdateQuests(GameObject questObject, LocalizedText questSubHeader, string target, int progress, int goal)
+    static void UpdateQuests(GameObject questObject, LocalizedText questSubHeader, Image questIcon, string target, int progress, int goal, bool isVBlood)
     {
         if (progress != goal)
         {
             if (!questObject.gameObject.active) questObject.gameObject.active = true;
             questSubHeader.ForceSet($"<color=white>{target}</color>: {progress}/<color=yellow>{goal}</color>");
+
+            if (isVBlood && questIcon.sprite.name != "BloodIcon_Cursed" && SpriteMap.TryGetValue("BloodIcon_Cursed", out Sprite vBloodSprite))
+            {
+                if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
+                questIcon.sprite = vBloodSprite;
+            }
+            else if (!isVBlood && questIcon.sprite.name != "BloodIcon_Warrior" && SpriteMap.TryGetValue("BloodIcon_Warrior", out Sprite warriorSprite))
+            {
+                if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
+                questIcon.sprite = warriorSprite;
+            }
         }
         else
         {
             questObject.gameObject.active = false;
+            questIcon.gameObject.active = false;
         }
     }
     static string GetWeaponStatInfo(string statType)
@@ -306,13 +335,13 @@ internal class CanvasService
                 float classMultiplier = ClassSynergy(bloodStat, ClassType, ClassStatSynergies);
                 statValue *= ((1 + (PrestigeStatMultiplier * LegacyPrestige)) * classMultiplier * ((float)LegacyLevel / LegacyMaxLevel));
 
-                string displayString = $"<color=#00FFFF>{BloodStatTypeAbbreviations[bloodStat]}</color>: <color=#90EE90>{statValue.ToString("F0") + "%"}</color>";
+                string displayString = $"<color=#00FFFF>{BloodStatTypeAbbreviations[bloodStat]}</color>: <color=#90EE90>{(statValue * 100).ToString("F0") + "%"}</color>";
                 return displayString;
             }
         }
         return "";
     }
-    static void ConfigureQuestWindow(ref GameObject questObject, string questType, Color headerColor, ref LocalizedText header, ref LocalizedText subHeader)
+    static void ConfigureQuestWindow(ref GameObject questObject, UIElement questType, Color headerColor, ref LocalizedText header, ref LocalizedText subHeader, ref Image questIcon)
     {
         // Instantiate quest tooltip
         questObject = GameObject.Instantiate(UICanvasBase.BottomBarParentPrefab.FakeTooltip.gameObject);
@@ -347,7 +376,36 @@ internal class CanvasService
 
         // Deactivate TooltipIcon
         GameObject tooltipIcon = FindTargetUIObject(tooltipHeader.transform, "TooltipIcon");
-        tooltipIcon.SetActive(false);
+        RectTransform tooltipIconTransform = tooltipIcon.GetComponent<RectTransform>();
+
+        // Set position relative to parent
+        tooltipIconTransform.anchorMin = new Vector2(tooltipIconTransform.anchorMin.x, 0.55f);
+        tooltipIconTransform.anchorMax = new Vector2(tooltipIconTransform.anchorMax.x, 0.55f);
+
+        // Set the pivot to the vertical center
+        tooltipIconTransform.pivot = new Vector2(tooltipIconTransform.pivot.x, 0.55f);
+
+        // Reset the vertical position to zero to center it
+        //Vector2 anchoredPosition = tooltipIconTransform.anchoredPosition;
+        //anchoredPosition.x = 0;
+        //tooltipIconTransform.anchoredPosition = anchoredPosition;
+
+        questIcon = tooltipIcon.GetComponent<Image>();
+        if (questType.Equals(UIElement.Daily))
+        {
+            if (SpriteMap.ContainsKey("BloodIcon_Small_Warrior"))
+            {
+                questIcon.sprite = SpriteMap["BloodIcon_Small_Warrior"];
+            }
+        }
+        else if (questType.Equals(UIElement.Weekly))
+        {
+            if (SpriteMap.ContainsKey("BloodIcon_Warrior"))
+            {
+                questIcon.sprite = SpriteMap["BloodIcon_Warrior"];
+            }
+        }
+        tooltipIconTransform.sizeDelta = new Vector2(tooltipIconTransform.sizeDelta.x * 0.35f, tooltipIconTransform.sizeDelta.y * 0.35f);
 
         // Set LocalizedText for QuestHeaders
         GameObject subHeaderObject = FindTargetUIObject(iconNameObject.transform, "TooltipSubHeader");
@@ -365,14 +423,14 @@ internal class CanvasService
         subHeaderFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
 
         // Size window and set anchors
-        questTransform.sizeDelta = new Vector2(questTransform.sizeDelta.x * 0.6f, questTransform.sizeDelta.y);
+        questTransform.sizeDelta = new Vector2(questTransform.sizeDelta.x * 0.65f, questTransform.sizeDelta.y);
         questTransform.anchorMin = new Vector2(1, WindowOffset); // Anchored to bottom-right
         questTransform.anchorMax = new Vector2(1, WindowOffset);
         questTransform.pivot = new Vector2(1, WindowOffset);
         questTransform.anchoredPosition = new Vector2(0, WindowOffset);
 
         // Set header text
-        header.ForceSet(questType);
+        header.ForceSet(questType.ToString() + " Quest");
         subHeader.ForceSet("UnitName: 0/0"); // For testing, can be updated later
 
         // Add to active objects
@@ -704,6 +762,19 @@ internal class CanvasService
             }
 
             return components;
+        }
+        public static void FindSpritesByName(List<string> SpriteNames)
+        {
+            Il2CppArrayBase<Sprite> allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
+
+            var matchedSprites = allSprites
+                .Where(sprite => SpriteNames.Contains(sprite.name))
+                .ToDictionary(sprite => SpriteNames.First(pair => pair == sprite.name), sprite => sprite);
+
+            foreach (var pair in matchedSprites)
+            {
+                SpriteMap[pair.Key] = pair.Value;
+            }
         }
     }
 }

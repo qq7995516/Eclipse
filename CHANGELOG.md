@@ -1,3 +1,7 @@
+`0.2.0`
+- added icons for quests based on normal/vblood target
+- handled displaying stats in different locales
+
 `0.1.4`
 - making an attempt at handling scaling for UI elements at various resolutions, will need feedback on this although seems decent so far
 
