@@ -1,3 +1,6 @@
+`0.2.1`
+- fixed loop update if more than 3 bonus stats were chosen
+
 `0.2.0`
 - added icons for quests based on normal/vblood target
 - handled displaying stats in different locales

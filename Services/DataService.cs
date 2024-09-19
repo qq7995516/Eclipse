@@ -5,6 +5,12 @@ namespace Eclipse.Services;
 
 internal static class DataService
 {
+    public enum TargetType
+    {
+        Kill,
+        Craft,
+        Gather
+    }
     public enum BloodType
     {
         Worker,
@@ -40,19 +46,19 @@ internal static class DataService
     public static Dictionary<WeaponStatType, float> WeaponStatValues = [];
     public enum WeaponStatType
     {
-        None, // 0 not shifting the rest right now :p
-        MaxHealth, // 0
-        MovementSpeed, // 1
-        PrimaryAttackSpeed, // 2
-        PhysicalLifeLeech, // 3
-        SpellLifeLeech, // 4
-        PrimaryLifeLeech, // 5
-        PhysicalPower, // 6
-        SpellPower, // 7
-        PhysicalCritChance, // 8
-        PhysicalCritDamage, // 9
-        SpellCritChance, // 10
-        SpellCritDamage // 11
+        None, 
+        MaxHealth,
+        MovementSpeed,
+        PrimaryAttackSpeed,
+        PhysicalLifeLeech,
+        SpellLifeLeech,
+        PrimaryLifeLeech,
+        PhysicalPower,
+        SpellPower,
+        PhysicalCritChance,
+        PhysicalCritDamage,
+        SpellCritChance, 
+        SpellCritDamage 
     }
 
     public static readonly Dictionary<WeaponStatType, string> WeaponStatTypeAbbreviations = new()
@@ -184,14 +190,15 @@ internal static class DataService
         public string ExpertiseType { get; set; } = ((WeaponType)int.Parse(expertiseType)).ToString();
         public List<string> BonusStats { get; set; } = Enumerable.Range(0, bonusStats.Length / 2).Select(i => ((WeaponStatType)int.Parse(bonusStats.Substring(i * 2, 2))).ToString()).ToList();
     }
-    internal class QuestData(string progress, string goal, string target, string isVBlood)
+    internal class QuestData(string type, string progress, string goal, string target, string isVBlood)
     {
+        public TargetType TargetType { get; set; } = (TargetType)int.Parse(type);
         public int Progress { get; set; } = int.Parse(progress);
         public int Goal { get; set; } = int.Parse(goal);
         public string Target { get; set; } = target;
         public bool IsVBlood { get; set; } = bool.Parse(isVBlood);
     }
-    internal class  ConfigData
+    internal class ConfigData
     {
         public float PrestigeStatMultiplier;
 
@@ -208,7 +215,6 @@ internal static class DataService
         public Dictionary<BloodStatType, float> BloodStatValues;
 
         public Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> bloodStats)> ClassStatSynergies;
-
         public ConfigData(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string weaponStatValues, string bloodStatValues, string classStatSynergies)
         {
             //Core.Log.LogInfo($"ConfigData: {prestigeMultiplier}, {statSynergyMultiplier}, {weaponStatValues}, {bloodStatValues}, {classStatSynergies}");
@@ -288,8 +294,12 @@ internal static class DataService
         ExperienceData experienceData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         LegacyData legacyData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         ExpertiseData expertiseData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
-        QuestData dailyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
-        QuestData weeklyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index]);
+        QuestData dailyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+        QuestData weeklyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index]);
+
+        //Core.Log.LogInfo(string.Join(",", playerData));
+        //Core.Log.LogInfo(string.Join(",", legacyData.BonusStats));
+        //Core.Log.LogInfo(string.Join(",", expertiseData.BonusStats));
 
         CanvasService.ExperienceProgress = experienceData.Progress;
         CanvasService.ExperienceLevel = experienceData.Level;
@@ -308,14 +318,19 @@ internal static class DataService
         CanvasService.ExpertiseType = expertiseData.ExpertiseType;
         CanvasService.ExpertiseBonusStats = expertiseData.BonusStats;
 
+        CanvasService.DailyTargetType = dailyQuestData.TargetType;
         CanvasService.DailyProgress = dailyQuestData.Progress;
         CanvasService.DailyGoal = dailyQuestData.Goal;
         CanvasService.DailyTarget = dailyQuestData.Target;
         CanvasService.DailyVBlood = dailyQuestData.IsVBlood;
 
+        CanvasService.WeeklyTargetType = weeklyQuestData.TargetType;
         CanvasService.WeeklyProgress = weeklyQuestData.Progress;
         CanvasService.WeeklyGoal = weeklyQuestData.Goal;
         CanvasService.WeeklyTarget = weeklyQuestData.Target;
         CanvasService.WeeklyVBlood = weeklyQuestData.IsVBlood;
+
+        //Core.Log.LogInfo(string.Join(",", playerData));
+        //Core.Log.LogInfo($"{dailyQuestData.TargetType}/{dailyQuestData.IsVBlood} | {weeklyQuestData.TargetType}/{weeklyQuestData.IsVBlood}");
     }
 }

@@ -4,7 +4,6 @@ using Eclipse.Services;
 using ProjectM;
 using ProjectM.Physics;
 using ProjectM.UI;
-using Stunlock.Localization;
 using System.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -27,6 +26,27 @@ internal class Core
 
         Client = __instance.World;
         PrefabCollectionSystem = Client.GetExistingSystemManaged<PrefabCollectionSystem>();
+
+        /*
+        foreach (var kvp in Client.m_SystemLookup)
+        {
+            Il2CppSystem.Type systemType = kvp.Key;
+            ComponentSystemBase systemBase = kvp.Value;
+            if (systemBase.EntityQueries.Length == 0) continue;
+
+            Core.Log.LogInfo("=============================");
+            Core.Log.LogInfo(systemType.FullName);
+            foreach (EntityQuery query in systemBase.EntityQueries)
+            {
+                EntityQueryDesc entityQueryDesc = query.GetEntityQueryDesc();
+                Core.Log.LogInfo($" All: {string.Join(",", entityQueryDesc.All)}");
+                Core.Log.LogInfo($" Any: {string.Join(",", entityQueryDesc.Any)}");
+                Core.Log.LogInfo($" Absent: {string.Join(",", entityQueryDesc.Absent)}");
+                Core.Log.LogInfo($" None: {string.Join(",", entityQueryDesc.None)}");
+            }
+            Core.Log.LogInfo("=============================");
+        }
+        */
 
         hasInitialized = true;
     }

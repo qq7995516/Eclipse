@@ -45,7 +45,10 @@ internal class CanvasService
         "BloodIcon_Small_Cursed",
         "BloodIcon_Small_Holy",
         "BloodIcon_Warrior",
-        "BloodIcon_Small_Warrior"
+        "BloodIcon_Small_Warrior",
+        "Poneti_Icon_Hammer_30",
+        "Poneti_Icon_Bag",
+        "Poneti_Icon_Res_93"
     ];
 
     static readonly Dictionary<string, Sprite> SpriteMap = [];
@@ -98,12 +101,13 @@ internal class CanvasService
     public static int ExpertiseLevel = 0;
     public static int ExpertisePrestige = 0;
     public static int ExpertiseMaxLevel = 100;
-    public static List<string> ExpertiseBonusStats = ["","",""];
+    public static List<string> ExpertiseBonusStats = ["", "", ""];
 
     static GameObject DailyQuestObject;
     static LocalizedText DailyQuestHeader;
     static LocalizedText DailyQuestSubHeader;
     static Image DailyQuestIcon;
+    public static TargetType DailyTargetType = TargetType.Kill;
     public static int DailyProgress = 0;
     public static int DailyGoal = 0;
     public static string DailyTarget = "";
@@ -113,6 +117,7 @@ internal class CanvasService
     static LocalizedText WeeklyQuestHeader;
     static LocalizedText WeeklyQuestSubHeader;
     static Image WeeklyQuestIcon;
+    public static TargetType WeeklyTargetType = TargetType.Kill;
     public static int WeeklyProgress = 0;
     public static int WeeklyGoal = 0;
     public static string WeeklyTarget = "";
@@ -192,19 +197,19 @@ internal class CanvasService
             if (LegacyBar)
             {
                 UpdateBar(LegacyProgress, LegacyLevel, LegacyMaxLevel, LegacyPrestige, LegacyText, LegacyHeader, LegacyFill, UIElement.Legacy, LegacyType);
-                UpdateStats(LegacyBonusStats, [FirstLegacyStat, SecondLegacyStat, ThirdLegacyStat], BloodStatStringAbbreviations, GetBloodStatInfo);
+                UpdateStats(LegacyBonusStats, [FirstLegacyStat, SecondLegacyStat, ThirdLegacyStat], GetBloodStatInfo);
             }
 
             if (ExpertiseBar)
             {
                 UpdateBar(ExpertiseProgress, ExpertiseLevel, ExpertiseMaxLevel, ExpertisePrestige, ExpertiseText, ExpertiseHeader, ExpertiseFill, UIElement.Expertise, ExpertiseType);
-                UpdateStats(ExpertiseBonusStats, [FirstExpertiseStat, SecondExpertiseStat, ThirdExpertiseStat], WeaponStatStringAbbreviations, GetWeaponStatInfo);
+                UpdateStats(ExpertiseBonusStats, [FirstExpertiseStat, SecondExpertiseStat, ThirdExpertiseStat], GetWeaponStatInfo);
             }
 
             if (QuestTracker)
             {
-                UpdateQuests(DailyQuestObject, DailyQuestSubHeader, DailyQuestIcon, DailyTarget, DailyProgress, DailyGoal, DailyVBlood);
-                UpdateQuests(WeeklyQuestObject, WeeklyQuestSubHeader, WeeklyQuestIcon, WeeklyTarget, WeeklyProgress, WeeklyGoal, WeeklyVBlood);
+                UpdateQuests(DailyQuestObject, DailyQuestSubHeader, DailyQuestIcon, DailyTargetType, DailyTarget, DailyProgress, DailyGoal, DailyVBlood);
+                UpdateQuests(WeeklyQuestObject, WeeklyQuestSubHeader, WeeklyQuestIcon, WeeklyTargetType, WeeklyTarget, WeeklyProgress, WeeklyGoal, WeeklyVBlood);
             }
 
             yield return Delay;
@@ -272,9 +277,9 @@ internal class CanvasService
             classText.enabled = false;
         }
     }
-    static void UpdateStats(List<string> bonusStats, List<LocalizedText> statTexts, Dictionary<string, string> abbreviations, Func<string, string> getStatInfo)
+    static void UpdateStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, string> getStatInfo)
     {
-        for (int i = 0; i < bonusStats.Count; i++)
+        for (int i = 0; i < 3; i++) // hard coding this for now
         {
             if (bonusStats[i] != "None")
             {
@@ -289,22 +294,35 @@ internal class CanvasService
             }
         }
     }
-    static void UpdateQuests(GameObject questObject, LocalizedText questSubHeader, Image questIcon, string target, int progress, int goal, bool isVBlood)
+    static void UpdateQuests(GameObject questObject, LocalizedText questSubHeader, Image questIcon, TargetType targetType, string target, int progress, int goal, bool isVBlood)
     {
         if (progress != goal)
         {
             if (!questObject.gameObject.active) questObject.gameObject.active = true;
             questSubHeader.ForceSet($"<color=white>{target}</color>: {progress}/<color=yellow>{goal}</color>");
 
-            if (isVBlood && questIcon.sprite.name != "BloodIcon_Cursed" && SpriteMap.TryGetValue("BloodIcon_Cursed", out Sprite vBloodSprite))
+            if (targetType.Equals(TargetType.Kill))
             {
-                if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
-                questIcon.sprite = vBloodSprite;
+                if (isVBlood && questIcon.sprite.name != "BloodIcon_Cursed" && SpriteMap.TryGetValue("BloodIcon_Cursed", out Sprite vBloodSprite))
+                {
+                    if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
+                    questIcon.sprite = vBloodSprite;
+                }
+                else if (!isVBlood && questIcon.sprite.name != "BloodIcon_Warrior" && SpriteMap.TryGetValue("BloodIcon_Warrior", out Sprite unitSprite))
+                {
+                    if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
+                    questIcon.sprite = unitSprite;
+                }
             }
-            else if (!isVBlood && questIcon.sprite.name != "BloodIcon_Warrior" && SpriteMap.TryGetValue("BloodIcon_Warrior", out Sprite warriorSprite))
+            else if (targetType.Equals(TargetType.Craft) && questIcon.sprite.name != "Poneti_Icon_Hammer_30" && SpriteMap.TryGetValue("Poneti_Icon_Hammer_30", out Sprite craftingSprite))
             {
                 if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
-                questIcon.sprite = warriorSprite;
+                questIcon.sprite = craftingSprite;
+            }
+            else if (targetType.Equals(TargetType.Gather) && questIcon.sprite.name != "Poneti_Icon_Res_93" && SpriteMap.TryGetValue("Poneti_Icon_Res_93", out Sprite gatherSprite))
+            {
+                if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
+                questIcon.sprite = gatherSprite;
             }
         }
         else
