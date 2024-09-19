@@ -329,8 +329,5 @@ internal static class DataService
         CanvasService.WeeklyGoal = weeklyQuestData.Goal;
         CanvasService.WeeklyTarget = weeklyQuestData.Target;
         CanvasService.WeeklyVBlood = weeklyQuestData.IsVBlood;
-
-        //Core.Log.LogInfo(string.Join(",", playerData));
-        //Core.Log.LogInfo($"{dailyQuestData.TargetType}/{dailyQuestData.IsVBlood} | {weeklyQuestData.TargetType}/{weeklyQuestData.IsVBlood}");
     }
 }

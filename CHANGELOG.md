@@ -1,5 +1,9 @@
+`1.0.0`
+- versioning for Thunderstore
+
 `0.2.1`
 - fixed loop update if more than 3 bonus stats were chosen
+- added quest icons for crafting and gathering
 
 `0.2.0`
 - added icons for quests based on normal/vblood target
