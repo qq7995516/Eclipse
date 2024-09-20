@@ -1,5 +1,6 @@
 `1.0.0`
-- versioning for Thunderstore
+- versioning for Thunderstore/sanity
+- requires Bloodcraft 1.4.0
 
 `0.2.1`
 - fixed loop update if more than 3 bonus stats were chosen
