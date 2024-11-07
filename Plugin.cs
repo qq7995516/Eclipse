@@ -12,7 +12,6 @@ internal class Plugin : BasePlugin
 {
     Harmony _harmony;
     internal static Plugin Instance { get; private set; }
-    public static Harmony Harmony => Instance._harmony;
     public static ManualLogSource LogInstance => Instance.Log;
 
     public static readonly List<string> DirectoryPaths =

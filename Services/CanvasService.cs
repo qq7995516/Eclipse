@@ -2,6 +2,8 @@
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using ProjectM.UI;
 using System.Collections;
+using System.Text.RegularExpressions;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -9,6 +11,7 @@ using static Eclipse.Services.CanvasService.GameObjectUtilities;
 using static Eclipse.Services.DataService;
 using Image = UnityEngine.UI.Image;
 using StringComparison = System.StringComparison;
+using Toggle = UnityEngine.UI.Toggle;
 
 // UI ideas
 // how to summon familiars, choose class spells, etc with a menu on the client? could just have the various UI elements correspond to respective familiar lists, class spells, etc.
@@ -19,10 +22,11 @@ namespace Eclipse.Services;
 internal class CanvasService
 {
     static readonly bool ExperienceBar = Plugin.Leveling;
-    //static readonly bool ShowPrestige = Plugin.Prestige;
+    static readonly bool ShowPrestige = Plugin.Prestige;
     static readonly bool LegacyBar = Plugin.Legacies;
     static readonly bool ExpertiseBar = Plugin.Expertise;
     static readonly bool QuestTracker = Plugin.Quests;
+    static readonly bool Familiars = true;
     public enum UIElement
     {
         Experience,
@@ -52,6 +56,30 @@ internal class CanvasService
     ];
 
     static readonly Dictionary<string, Sprite> SpriteMap = [];
+
+    static readonly Regex ClassNameRegex = new("(?<!^)([A-Z])");
+
+    /*
+    static readonly Dictionary<PlayerClass, string> ClassColorHexMap = new()
+    {
+        { PlayerClass.ShadowBlade, "#A020F0" },   // ignite purple (Hex: A020F0)
+        { PlayerClass.DemonHunter, "#FFD700" },  // static yellow (Hex: FFD700)
+        { PlayerClass.BloodKnight, "#FF0000" },  // leech red (Hex: FF0000)
+        { PlayerClass.ArcaneSorcerer, "#008080" },   // weaken teal (Hex: 008080)
+        { PlayerClass.VampireLord, "#00FFFF" },     // chill cyan (Hex: 00FFFF)
+        { PlayerClass.DeathMage, "#00FF00" }    // condemn green (Hex: 00FF00)
+    };
+    */
+
+    static readonly Dictionary<PlayerClass, Color> ClassColorHexMap = new()
+    {
+        { PlayerClass.ShadowBlade, new Color(0.63f, 0.13f, 0.94f) },  // ignite purple
+        { PlayerClass.DemonHunter, new Color(1f, 0.84f, 0f) },        // static yellow
+        { PlayerClass.BloodKnight, new Color(1f, 0f, 0f) },           // leech red
+        { PlayerClass.ArcaneSorcerer, new Color(0f, 0.5f, 0.5f) },    // weaken teal
+        { PlayerClass.VampireLord, new Color(0f, 1f, 1f) },           // chill cyan
+        { PlayerClass.DeathMage, new Color(0f, 1f, 0f) }              // condemn green
+    };
 
     static readonly WaitForSeconds Delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable for now
 
@@ -123,6 +151,8 @@ internal class CanvasService
     public static string WeeklyTarget = "";
     public static bool WeeklyVBlood = false;
 
+    static GameObject FamiliarObject;
+
     static readonly float ScreenWidth = Screen.width;
     static readonly float ScreenHeight = Screen.height;
 
@@ -147,6 +177,7 @@ internal class CanvasService
         WindowOffset = 0f;
 
         FindSpritesByName(SpriteNames);
+
         InitializeBloodButton();
         InitializeUI();
     }
@@ -162,6 +193,477 @@ internal class CanvasService
         {
             ConfigureQuestWindow(ref DailyQuestObject, UIElement.Daily, Color.green, ref DailyQuestHeader, ref DailyQuestSubHeader, ref DailyQuestIcon);
             ConfigureQuestWindow(ref WeeklyQuestObject, UIElement.Weekly, Color.magenta, ref WeeklyQuestHeader, ref WeeklyQuestSubHeader, ref WeeklyQuestIcon);
+        }
+
+        if (Familiars)
+        {
+            //ConfigureFamiliarObject();
+        }
+    }
+
+    static GameObject DropdownMenu;
+    static TMP_Dropdown DropdownSelection;
+    static List<string> Selections = ["1","2","3"];
+    static LocalizedText DropdownText;
+    static void ConfigureFamiliarObject()
+    {
+        /*
+        OptionsPanel_Interface optionsPanelInterface = GameObject.FindObjectOfType<OptionsPanel_Interface>();
+
+        if (optionsPanelInterface != null)
+        {
+            Core.Log.LogInfo("OptionsPanel_Interface found!");
+
+            familiarObject = new GameObject("FamiliarObject");
+
+            GameObject.DontDestroyOnLoad(familiarObject);
+            SceneManager.MoveGameObjectToScene(familiarObject, SceneManager.GetSceneByName("VRisingWorld"));
+
+            RectTransform familiarTransform = familiarObject.AddComponent<RectTransform>();
+            familiarTransform.SetParent(Canvas.transform, false);
+            familiarObject.layer = Layer;
+
+            familiarTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            familiarTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            familiarTransform.pivot = new Vector2(0.5f, 0.5f);
+
+            List<string> stringOptions = ["Box1", "Box2", "Box3"];
+            Il2CppSystem.Collections.Generic.List<string> testOptions = new(stringOptions.Count);
+
+            foreach (string testOption in stringOptions)
+            {
+                testOptions.Add(testOption);
+            }
+
+            OptionsHelper.AddDropdown(familiarTransform, optionsPanelInterface.DropdownPrefab, false, LocalizationKey.Empty, LocalizationKey.Empty, testOptions, 1, 2, new Action<int>(OnDropDownChanged));
+            familiarObject.SetActive(true);
+        }
+        else
+        {
+            Core.Log.LogInfo("OptionsPanel_Interface not found...");
+        }
+        */
+
+        try
+        {
+            Core.Log.LogInfo("Creating dropdown menu...");
+            GameObject dropdownMenuObject = new("DropdownMenu");
+            DropdownMenu = dropdownMenuObject;
+            RectTransform dropdownRectTransform = dropdownMenuObject.AddComponent<RectTransform>();
+
+            Core.Log.LogInfo("Making persistent and moving to scene before setting parent...");
+            GameObject.DontDestroyOnLoad(dropdownMenuObject);
+            SceneManager.MoveGameObjectToScene(dropdownMenuObject, SceneManager.GetSceneByName("VRisingWorld"));
+            dropdownRectTransform.SetParent(Canvas.transform, false);
+
+            Core.Log.LogInfo("Adding Dropdown component...");
+            TMP_Dropdown dropdownMenu = dropdownMenuObject.AddComponent<TMP_Dropdown>();
+            DropdownSelection = dropdownMenu;
+
+            Core.Log.LogInfo("Setting dropdown position/anchors...");
+            dropdownRectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            dropdownRectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            dropdownRectTransform.pivot = new Vector2(0.5f, 0.5f);
+            dropdownRectTransform.anchoredPosition = Vector2.zero;
+            dropdownRectTransform.sizeDelta = new Vector2(160f, 30f);
+
+            // Caption Text
+            Core.Log.LogInfo("Creating caption text...");
+            GameObject captionObject = new("CaptionText");
+            TextMeshProUGUI dropdownText = captionObject.AddComponent<TextMeshProUGUI>();
+            dropdownText.text = "Familiar Boxes";
+            RectTransform captionRectTransform = captionObject.GetComponent<RectTransform>();
+
+            GameObject.DontDestroyOnLoad(captionObject);
+            SceneManager.MoveGameObjectToScene(captionObject, SceneManager.GetSceneByName("VRisingWorld"));
+            captionObject.transform.SetParent(dropdownMenu.transform, false);
+
+            Core.Log.LogInfo("Setting caption anchors and size...");
+            captionRectTransform.anchorMin = new Vector2(0, 0.5f);
+            captionRectTransform.anchorMax = new Vector2(1, 0.5f);
+            captionRectTransform.pivot = new Vector2(0.5f, 0.5f);
+            captionRectTransform.sizeDelta = new Vector2(0, 30f);
+            captionRectTransform.anchoredPosition = Vector2.zero;
+
+            Core.Log.LogInfo("Setting caption text properties...");
+            dropdownText.font = ExperienceClassText.Text.font;
+            dropdownText.fontSize = (int)ExperienceClassText.Text.fontSize;
+            dropdownText.color = ExperienceClassText.Text.color;
+            dropdownText.alignment = TextAlignmentOptions.Center;
+
+            // Create Dropdown Template
+            Core.Log.LogInfo("Creating dropdown template...");
+            GameObject templateObject = new("Template");
+            RectTransform templateRectTransform = templateObject.AddComponent<RectTransform>();
+            templateObject.transform.SetParent(dropdownMenuObject.transform, false);
+
+            templateRectTransform.anchorMin = new Vector2(0, 0);
+            templateRectTransform.anchorMax = new Vector2(1, 0);
+            templateRectTransform.pivot = new Vector2(0.5f, 1f);
+            templateRectTransform.sizeDelta = new Vector2(0, 90f);
+
+            // Add background to the template
+            Core.Log.LogInfo("Adding background to template...");
+            Image templateBackground = templateObject.AddComponent<Image>();
+            templateBackground.color = new Color(0, 0, 0, 0.5f);
+
+            // Create Viewport
+            GameObject viewportObject = new("Viewport");
+            RectTransform viewportRectTransform = viewportObject.AddComponent<RectTransform>();
+            viewportObject.transform.SetParent(templateObject.transform, false);
+
+            viewportRectTransform.anchorMin = Vector2.zero;
+            viewportRectTransform.anchorMax = Vector2.one;
+            viewportRectTransform.sizeDelta = Vector2.zero;
+
+            Mask viewportMask = viewportObject.AddComponent<Mask>();
+            viewportMask.showMaskGraphic = false;
+
+            // Create Content
+            Core.Log.LogInfo("Creating content object...");
+            GameObject contentObject = new("Content");
+            RectTransform contentRectTransform = contentObject.AddComponent<RectTransform>();
+            contentObject.transform.SetParent(viewportObject.transform, false);
+
+            contentRectTransform.anchorMin = new Vector2(0, 1);
+            contentRectTransform.anchorMax = new Vector2(1, 1);
+            contentRectTransform.pivot = new Vector2(0.5f, 1f);
+            contentRectTransform.sizeDelta = new Vector2(0, 90f);
+
+            // Create Item Template
+            GameObject itemObject = new("Item");
+            itemObject.transform.SetParent(contentObject.transform, false);
+
+            RectTransform itemRectTransform = itemObject.AddComponent<RectTransform>();
+            itemRectTransform.anchorMin = new Vector2(0, 0.5f);
+            itemRectTransform.anchorMax = new Vector2(1, 0.5f);
+            itemRectTransform.sizeDelta = new Vector2(0, 25f);
+
+            // Add Toggle to the item
+            Core.Log.LogInfo("Adding toggle to item...");
+            Toggle itemToggle = itemObject.AddComponent<Toggle>();
+            itemToggle.isOn = false;
+
+            // Create 'Item Background'
+            GameObject itemBackgroundObject = new("ItemBackground");
+            itemBackgroundObject.transform.SetParent(itemObject.transform, false);
+
+            RectTransform itemBackgroundRect = itemBackgroundObject.AddComponent<RectTransform>();
+            itemBackgroundRect.anchorMin = Vector2.zero;
+            itemBackgroundRect.anchorMax = Vector2.one;
+            itemBackgroundRect.sizeDelta = Vector2.zero;
+
+            Image itemBackgroundImage = itemBackgroundObject.AddComponent<Image>();
+            itemBackgroundImage.color = new Color(1, 1, 1, 1);
+
+            // Create 'Item Checkmark'
+            GameObject itemCheckmarkObject = new("ItemCheckmark");
+            itemCheckmarkObject.transform.SetParent(itemBackgroundObject.transform, false);
+
+            RectTransform itemCheckmarkRect = itemCheckmarkObject.AddComponent<RectTransform>();
+            itemCheckmarkRect.anchorMin = new Vector2(0, 0.5f);
+            itemCheckmarkRect.anchorMax = new Vector2(0, 0.5f);
+            itemCheckmarkRect.pivot = new Vector2(0.5f, 0.5f);
+            itemCheckmarkRect.sizeDelta = new Vector2(20, 20);
+            itemCheckmarkRect.anchoredPosition = new Vector2(10, 0);
+
+            Image itemCheckmarkImage = itemCheckmarkObject.AddComponent<Image>();
+            // Assign a sprite to the checkmark image if available
+            // itemCheckmarkImage.sprite = yourCheckmarkSprite;
+
+            // Create 'Item Label'
+            GameObject itemLabelObject = new("ItemLabel");
+            itemLabelObject.transform.SetParent(itemBackgroundObject.transform, false);
+
+            RectTransform itemLabelRect = itemLabelObject.AddComponent<RectTransform>();
+            itemLabelRect.anchorMin = new Vector2(0, 0);
+            itemLabelRect.anchorMax = new Vector2(1, 1);
+            itemLabelRect.offsetMin = new Vector2(20, 0);
+            itemLabelRect.offsetMax = new Vector2(0, 0);
+
+            TextMeshProUGUI itemLabelText = itemLabelObject.AddComponent<TextMeshProUGUI>();
+            itemLabelText.font = ExperienceClassText.Text.font;
+            itemLabelText.fontSize = (int)ExperienceClassText.Text.fontSize;
+            itemLabelText.color = ExperienceClassText.Text.color;
+            itemLabelText.alignment = TextAlignmentOptions.Left;
+            itemLabelText.text = "Option";
+
+            // Configure the Toggle component
+            itemToggle.targetGraphic = itemBackgroundImage;
+            itemToggle.graphic = itemCheckmarkImage;
+            itemToggle.isOn = false;
+
+            // Assign the itemText property of the dropdown
+            dropdownMenu.itemText = itemLabelText;
+
+            // Add ScrollRect to the template
+            ScrollRect scrollRect = templateObject.AddComponent<ScrollRect>();
+            scrollRect.content = contentRectTransform;
+            scrollRect.viewport = viewportRectTransform;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+
+            // Disable the item template and template by default
+            itemObject.SetActive(false);
+            templateObject.SetActive(false);
+
+            // Set layers
+            itemObject.layer = Canvas.gameObject.layer;
+            itemBackgroundObject.layer = Canvas.gameObject.layer;
+            itemCheckmarkObject.layer = Canvas.gameObject.layer;
+            itemLabelObject.layer = Canvas.gameObject.layer;
+
+            // Remove redundant addition of TextMeshProUGUI to itemObject
+
+            Core.Log.LogInfo("Adding background to dropdown...");
+            Image dropdownImage = dropdownMenuObject.AddComponent<Image>();
+            dropdownImage.color = new Color(0, 0, 0, 0.5f);
+            dropdownImage.type = Image.Type.Sliced;
+
+            // Assign properties to the dropdown
+            dropdownMenu.template = templateRectTransform;
+            dropdownMenu.targetGraphic = dropdownImage;
+            dropdownMenu.captionText = dropdownText;
+            // dropdownMenu.itemText is already assigned above
+
+            Core.Log.LogInfo("Setting initial dropdown options...");
+            dropdownMenu.ClearOptions();
+            Il2CppSystem.Collections.Generic.List<string> selections = new(Selections.Count);
+            foreach (string selection in Selections)
+            {
+                selections.Add(selection);
+            }
+
+            Core.Log.LogInfo("Adding dropdown options and listener...");
+            dropdownMenu.AddOptions(selections);
+            dropdownMenu.RefreshShownValue();
+            dropdownMenu.onValueChanged.AddListener(new Action<int>(OnDropDownChanged));
+
+            Core.Log.LogInfo("Setting layer and activating...");
+            dropdownMenuObject.layer = Canvas.gameObject.layer;
+            dropdownMenuObject.SetActive(true);
+
+            /*
+            Core.Log.LogInfo("Creating dropdown menu...");
+            // might need to use own canvas for this if BottomBarParent throws a fit which it probably will
+            GameObject dropdownMenuObject = new("DropdownMenu");
+            DropdownMenu = dropdownMenuObject;
+            RectTransform dropdownRectTransform = dropdownMenuObject.AddComponent<RectTransform>();
+
+            Core.Log.LogInfo("Making persistent and moving to scene before setting parent...");
+            // DontDestroyOnLoad, move to proper scene, set canvas as parent
+            GameObject.DontDestroyOnLoad(dropdownMenuObject);
+            SceneManager.MoveGameObjectToScene(dropdownMenuObject, SceneManager.GetSceneByName("VRisingWorld"));
+            dropdownRectTransform.SetParent(Canvas.transform, false);
+
+            Core.Log.LogInfo("Adding Dropdown component...");
+            // Add dropdown components and configure position, starting state, etc
+            TMP_Dropdown dropdownMenu = dropdownMenuObject.AddComponent<TMP_Dropdown>();
+            DropdownSelection = dropdownMenu;
+
+            Core.Log.LogInfo("Setting dropdown position/anchors...");     
+            dropdownRectTransform.anchorMin = new Vector2(0.5f, 0.5f);  // Centered
+            dropdownRectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            dropdownRectTransform.pivot = new Vector2(0.5f, 0.5f);
+            dropdownRectTransform.anchoredPosition = Vector2.zero;  // Centered on screen
+            dropdownRectTransform.sizeDelta = new Vector2(160f, 30f);  // Test with a larger size
+
+            // captionText
+            Core.Log.LogInfo("Creating caption text...");
+            GameObject captionObject = new("CaptionText");
+            TextMeshProUGUI dropdownText = captionObject.AddComponent<TextMeshProUGUI>();
+            dropdownText.text = "Familiar Boxes";
+            RectTransform captionRectTransform = captionObject.AddComponent<RectTransform>();
+
+            // DontDestroyOnLoad, move to proper scene, set canvas as parent
+            GameObject.DontDestroyOnLoad(captionObject);
+            SceneManager.MoveGameObjectToScene(captionObject, SceneManager.GetSceneByName("VRisingWorld"));
+            captionObject.transform.SetParent(dropdownMenu.transform, false);
+
+            // Anchor the text to stretch across the width of the dropdown
+            Core.Log.LogInfo("Setting caption anchors and size...");
+            captionRectTransform.anchorMin = new Vector2(0, 0.5f);  // Anchored to the middle of the dropdown
+            captionRectTransform.anchorMax = new Vector2(1, 0.5f);  // Stretched horizontally
+            captionRectTransform.pivot = new Vector2(0.5f, 0.5f);   // Center pivot
+
+            // Set size and position relative to dropdown
+            captionRectTransform.sizeDelta = new Vector2(0, 30f);   // Matches dropdown height (30 units)
+            captionRectTransform.anchoredPosition = new Vector2(0, 0);  // Centered within dropdown
+
+            // Configure the font, font size, and other properties
+            Core.Log.LogInfo("Setting caption text properties...");
+            dropdownText.font = ExperienceClassText.Text.font;
+            dropdownText.fontSize = (int)ExperienceClassText.Text.fontSize;
+            dropdownText.color = ExperienceClassText.Text.color;
+            dropdownText.alignment = TextAlignmentOptions.Center;
+
+            // Create Dropdown Template (needed for displaying options)
+            Core.Log.LogInfo("Creating dropdown template...");
+            GameObject templateObject = new("Template");
+            RectTransform templateRectTransform = templateObject.AddComponent<RectTransform>();
+            templateObject.transform.SetParent(dropdownMenuObject.transform, false);
+
+            // Set up the template’s size and positioning
+            templateRectTransform.anchorMin = new Vector2(0, 0);
+            templateRectTransform.anchorMax = new Vector2(1, 0);
+            templateRectTransform.pivot = new Vector2(0.5f, 1f);
+            templateRectTransform.sizeDelta = new Vector2(0, 90f);  // Size for showing options
+
+            // Add a background to the template (optional for styling)
+            Core.Log.LogInfo("Adding background to template...");
+            Image templateBackground = templateObject.AddComponent<Image>();
+            templateBackground.color = new Color(0, 0, 0, 0.5f);  // Semi-transparent background
+
+            // Create Viewport for scrolling within the template
+            GameObject viewportObject = new("Viewport");
+            RectTransform viewportRectTransform = viewportObject.AddComponent<RectTransform>();
+            viewportObject.transform.SetParent(templateObject.transform, false);
+
+            viewportRectTransform.anchorMin = Vector2.zero;
+            viewportRectTransform.anchorMax = Vector2.one;
+            viewportRectTransform.sizeDelta = Vector2.zero;
+
+            Mask viewportMask = viewportObject.AddComponent<Mask>();
+            viewportMask.showMaskGraphic = false;  // Hide the mask graphic
+
+            // Create Content for the options list
+            Core.Log.LogInfo("Creating content object...");
+            GameObject contentObject = new("Content");
+            RectTransform contentRectTransform = contentObject.AddComponent<RectTransform>();
+            contentObject.transform.SetParent(viewportObject.transform, false);
+
+            contentRectTransform.anchorMin = new Vector2(0, 1);
+            contentRectTransform.anchorMax = new Vector2(1, 1);
+            contentRectTransform.pivot = new Vector2(0.5f, 1f);
+            contentRectTransform.sizeDelta = new Vector2(0, 90f);
+
+            // Create Item (this will be duplicated for each dropdown option)
+            GameObject itemObject = new("Item");
+            itemObject.transform.SetParent(contentObject.transform, false);
+
+            RectTransform itemRectTransform = itemObject.AddComponent<RectTransform>();
+            itemRectTransform.anchorMin = new Vector2(0, 0.5f);
+            itemRectTransform.anchorMax = new Vector2(1, 0.5f);
+            itemRectTransform.sizeDelta = new Vector2(0, 25f);
+
+            // Add Toggle to the item (this is required for each option)
+            Core.Log.LogInfo("Adding toggle to item...");
+            Toggle itemToggle = itemObject.AddComponent<Toggle>();
+            itemToggle.isOn = false;  // Default to off
+
+            // Create 'Item Background' GameObject
+            GameObject itemBackgroundObject = new("ItemBackground");
+            itemBackgroundObject.transform.SetParent(itemObject.transform, false);
+
+            RectTransform itemBackgroundRect = itemBackgroundObject.AddComponent<RectTransform>();
+            itemBackgroundRect.anchorMin = Vector2.zero;
+            itemBackgroundRect.anchorMax = Vector2.one;
+            itemBackgroundRect.sizeDelta = Vector2.zero;
+
+            Image itemBackgroundImage = itemBackgroundObject.AddComponent<Image>();
+            itemBackgroundImage.color = new Color(1, 1, 1, 1); // White background
+
+            // Create 'Item Checkmark' GameObject
+            GameObject itemCheckmarkObject = new("ItemCheckmark");
+            itemCheckmarkObject.transform.SetParent(itemBackgroundObject.transform, false);
+
+            RectTransform itemCheckmarkRect = itemCheckmarkObject.AddComponent<RectTransform>();
+            itemCheckmarkRect.anchorMin = new Vector2(0, 0.5f);
+            itemCheckmarkRect.anchorMax = new Vector2(0, 0.5f);
+            itemCheckmarkRect.pivot = new Vector2(0.5f, 0.5f);
+            itemCheckmarkRect.sizeDelta = new Vector2(20, 20);
+            itemCheckmarkRect.anchoredPosition = new Vector2(10, 0);
+
+            Image itemCheckmarkImage = itemCheckmarkObject.AddComponent<Image>();
+            // Assign a sprite to the checkmark image if available
+            // itemCheckmarkImage.sprite = yourCheckmarkSprite;
+
+            // Create 'Item Label' GameObject
+            GameObject itemLabelObject = new("ItemLabel");
+            itemLabelObject.transform.SetParent(itemBackgroundObject.transform, false);
+
+            RectTransform itemLabelRect = itemLabelObject.AddComponent<RectTransform>();
+            itemLabelRect.anchorMin = new Vector2(0, 0);
+            itemLabelRect.anchorMax = new Vector2(1, 1);
+            itemLabelRect.offsetMin = new Vector2(20, 0); // Left padding
+            itemLabelRect.offsetMax = new Vector2(0, 0);
+
+            TextMeshProUGUI itemLabelText = itemLabelObject.AddComponent<TextMeshProUGUI>();
+            itemLabelText.font = ExperienceClassText.Text.font;
+            itemLabelText.fontSize = (int)ExperienceClassText.Text.fontSize;
+            itemLabelText.color = ExperienceClassText.Text.color;
+            itemLabelText.alignment = TextAlignmentOptions.Left;
+            itemLabelText.text = "Option"; // Placeholder text
+
+            // Configure the Toggle component
+            itemToggle.targetGraphic = itemBackgroundImage;
+            itemToggle.graphic = itemCheckmarkImage;
+            itemToggle.isOn = false;
+
+            // Assign the itemText property of the dropdown
+            dropdownMenu.itemText = itemLabelText;
+
+            // Add ScrollRect to the template
+            ScrollRect scrollRect = templateObject.AddComponent<ScrollRect>();
+            scrollRect.content = contentRectTransform;
+            scrollRect.viewport = viewportRectTransform;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+
+            // Disable the template by default
+            templateObject.SetActive(false);
+
+            // set layers
+            itemObject.layer = Canvas.gameObject.layer;
+            itemBackgroundObject.layer = Canvas.gameObject.layer;
+            itemCheckmarkObject.layer = Canvas.gameObject.layer;
+            itemLabelObject.layer = Canvas.gameObject.layer;
+
+            // Add TextMeshProUGUI for the option text
+            Core.Log.LogInfo("Adding text to item...");
+            TextMeshProUGUI itemText = itemObject.AddComponent<TextMeshProUGUI>();
+            //itemText.text = "Option";  // Placeholder text for the option
+            itemText.font = ExperienceClassText.Text.font;
+            itemText.fontSize = (int)ExperienceClassText.Text.fontSize;
+            itemText.color = ExperienceClassText.Text.color;
+            itemText.alignment = TextAlignmentOptions.Center;
+
+            Core.Log.LogInfo("Adding background to dropdown...");
+            Image dropdownImage = dropdownMenuObject.AddComponent<Image>();
+            dropdownImage.color = new Color(0, 0, 0, 0.5f);
+            dropdownImage.type = Image.Type.Sliced;
+
+            dropdownMenu.template = templateRectTransform;
+            dropdownMenu.targetGraphic = dropdownImage;
+            dropdownMenu.captionText = dropdownText;
+            dropdownMenu.itemText = itemText;
+
+            Core.Log.LogInfo("Setting initial dropdown options...");
+            // clear defaults, set empty options
+            dropdownMenu.ClearOptions();
+            Il2CppSystem.Collections.Generic.List<string> selections = new(Selections.Count);
+            foreach (string selection in Selections)
+            {
+                selections.Add(selection);
+            }
+
+            Core.Log.LogInfo("Adding dropdown options and listener...");
+            dropdownMenu.AddOptions(selections);
+            dropdownMenu.RefreshShownValue();
+            dropdownMenu.onValueChanged.AddListener(new Action<int>(OnDropDownChanged));
+
+            Core.Log.LogInfo("Setting layer and activating...");
+            dropdownMenuObject.layer = Canvas.gameObject.layer;
+            dropdownMenuObject.SetActive(true);
+            */
+        }
+        catch (Exception e)
+        {
+            Core.Log.LogError(e);
         }
     }
     static void InitializeBloodButton()
@@ -237,7 +739,7 @@ internal class CanvasService
             levelText.ForceSet(levelString);
         }
 
-        if (prestiges != 0)
+        if (ShowPrestige && prestiges != 0)
         {
             string header = "";
 
@@ -269,13 +771,24 @@ internal class CanvasService
         if (classType != PlayerClass.None)
         {
             if (!classText.enabled) classText.enabled = true;
-            classText.ForceSet(classType.ToString());
+
+            string formattedClassName = FormatClassName(classType);
+            classText.ForceSet(formattedClassName);
+
+            if (ClassColorHexMap.TryGetValue(classType, out Color classColor))
+            {
+                classText.Text.color = classColor;
+            }
         }
         else
         {
             classText.ForceSet("");
             classText.enabled = false;
         }
+    }
+    static string FormatClassName(PlayerClass classType)
+    {
+        return ClassNameRegex.Replace(classType.ToString(), " $1");
     }
     static void UpdateStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, string> getStatInfo)
     {
@@ -469,15 +982,19 @@ internal class CanvasService
         barRectTransform.gameObject.layer = Layer;
 
         // Set anchor and pivot to middle-upper-right
-        barRectTransform.anchorMin = new Vector2(1, 0.6f); // Middle-upper-right anchor
-        barRectTransform.anchorMax = new Vector2(1, 0.6f);
-        barRectTransform.pivot = new Vector2(1, 0.6f); // Middle-upper-right pivot
+        float offsetY = BarHeightSpacing * BarNumber;
+        float offsetX = 1f - BarWidthSpacing;
+        barRectTransform.anchorMin = new Vector2(offsetX, 0.6f - offsetY);
+        barRectTransform.anchorMax = new Vector2(offsetX, 0.6f - offsetY);
+        barRectTransform.pivot = new Vector2(offsetX, 0.6f - offsetY);
 
         // Adjust the position so the bar is pushed into the screen by a certain amount
-        float padding = ScreenHeight * BarHeightSpacing;
-        float offsetY = (barRectTransform.rect.height + padding) * BarNumber; // Spacing between bars
-        float spacing = ScreenWidth * BarWidthSpacing;
-        barRectTransform.anchoredPosition = new Vector2(-spacing, -offsetY); // width of bar units from the right, adjust Y for each bar
+        //float padding = ScreenHeight * BarHeightSpacing;
+        //float padding = BarHeightSpacing * BarNumber;
+        //float offsetY = (barRectTransform.rect.height + padding) * BarNumber; // Spacing between bars
+        //float spacing = ScreenWidth * BarWidthSpacing;
+        //float spacing = BarWidthSpacing;
+        //barRectTransform.anchoredPosition = new Vector2( -spacing, -offsetY); // width of bar units from the right, adjust Y for each bar
 
         // Best scale found so far for different resolutions
         barRectTransform.localScale = new Vector3(0.7f, 0.7f, 1f);
@@ -541,7 +1058,7 @@ internal class CanvasService
         firstText.ForceSet("");
         firstText.enabled = false;
 
-        secondText = FindTargetUIObject(panel.transform, "ProffesionInfo").GetComponent<LocalizedText>();
+        secondText = FindTargetUIObject(panel.transform, "ProffesionInfo").GetComponent<LocalizedText>(); // having to refer to mispelled names is fun >_>
         secondText.Text.fontSize *= 1.1f;
         secondText.ForceSet("");
         secondText.enabled = false;
@@ -795,9 +1312,35 @@ internal class CanvasService
             }
         }
     }
+    static void OnDropDownChanged(int optionIndex)
+    {
+        Core.Log.LogInfo($"OnDropDownChanged {optionIndex}");
+    }
+
+    static void OnDeselect(bool selected)
+    {
+        Core.Log.LogInfo($"OnDeselect {selected}");
+    }
 }
 /*
 
+public static GameObject CreateUIObject(string name, GameObject parent, Vector2 sizeDelta = default)
+{
+    GameObject obj = new(name)
+    {
+        layer = 5,
+        hideFlags = HideFlags.HideAndDontSave,
+    };
+
+    if (parent)
+    {
+        obj.transform.SetParent(parent.transform, false);
+    }
+
+    RectTransform rect = obj.AddComponent<RectTransform>();
+    rect.sizeDelta = sizeDelta;
+    return obj;
+}
 //static GameObject DropdownMenu;
 //static TMP_Dropdown DropdownSelection;
 //static List<string> Selections = ["1","2","3"];

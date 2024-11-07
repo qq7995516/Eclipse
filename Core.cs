@@ -26,6 +26,7 @@ internal class Core
 
         Client = __instance.World;
         PrefabCollectionSystem = Client.GetExistingSystemManaged<PrefabCollectionSystem>();
+        
 
         /*
         foreach (var kvp in Client.m_SystemLookup)

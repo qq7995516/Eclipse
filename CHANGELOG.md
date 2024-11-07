@@ -1,3 +1,7 @@
+`1.1.1`
+- class text under experience bar formatted more aesthetically
+- improved positioning for UI elements at various resolutions (probably >_>)
+
 `1.0.0`
 - versioning for Thunderstore/sanity
 - requires Bloodcraft 1.4.0

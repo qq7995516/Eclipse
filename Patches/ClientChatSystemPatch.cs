@@ -131,7 +131,6 @@ internal static class ClientChatSystemPatch
             case (int)NetworkEventSubType.ConfigsToClient:
                 List<string> configData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
                 DataService.ParseConfigData(configData);
-                //if (!CanvasService.Active) Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
                 break;
         }
     }
