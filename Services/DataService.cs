@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
+using UnityEngine;
 using UnityEngine.InputSystem.Utilities;
+using UnityEngine.UI;
 
 namespace Eclipse.Services;
 
@@ -10,6 +12,17 @@ internal static class DataService
         Kill,
         Craft,
         Gather
+    }
+    public enum Profession
+    {
+        Enchanting,
+        Alchemy,
+        Harvesting,
+        Blacksmithing,
+        Tailoring,
+        Woodcutting,
+        Mining,
+        Fishing
     }
     public enum BloodType
     {
@@ -158,7 +171,63 @@ internal static class DataService
         { "ShieldAbsorb", "SA" },
         { "BloodEfficiency", "BE" }
     };
-    public enum PlayerClass // for now subtract 1 when processing this enum, if 0 no class (otherwise 0 would be bloodknight. should probably add a None enum)
+
+    public static Dictionary<FamiliarStatType, float> FamiliarStatValues = [];
+    public enum FamiliarStatType
+    {
+        MaxHealth,
+        PhysicalPower,
+        SpellPower
+    }
+
+    public static readonly Dictionary<FamiliarStatType, string> FamiliarStatTypeAbbreviations = new()
+    {
+        { FamiliarStatType.MaxHealth, "HP" },
+        { FamiliarStatType.PhysicalPower, "PP" },
+        { FamiliarStatType.SpellPower, "SP" }
+    };
+
+    public static readonly List<string> FamiliarStatStringAbbreviations = new()
+    {
+        { "HP" },
+        { "PP" },
+        { "SP" }
+    };
+
+    public static readonly Dictionary<Profession, Color> ProfessionColors = new()
+    {
+        { Profession.Enchanting,    new Color(0.494f, 0.133f, 0.808f) },
+        { Profession.Alchemy,       new Color(0.071f, 0.831f, 0.635f) },
+        { Profession.Harvesting,    new Color(0.0f,    0.502f, 0.0f) },
+        { Profession.Blacksmithing, new Color(0.208f, 0.212f, 0.255f) },
+        { Profession.Tailoring,     new Color(0.976f, 0.871f, 0.741f) },
+        { Profession.Woodcutting,   new Color(0.647f, 0.165f, 0.165f) },
+        { Profession.Mining,        new Color(0.502f, 0.502f, 0.502f) },
+        { Profession.Fishing,       new Color(0.0f, 0.7f, 0.9f) }
+    };
+    internal class ProfessionData(string enchantingProgress, string enchantingLevel, string alchemyProgress, string alchemyLevel, 
+        string harvestingProgress, string harvestingLevel, string blacksmithingProgress, string blacksmithingLevel, 
+        string tailoringProgress, string tailoringLevel, string woodcuttingProgress, string woodcuttingLevel, string miningProgress, 
+        string miningLevel, string fishingProgress, string fishingLevel)
+    {
+        public float EnchantingProgress { get; set; } = float.Parse(enchantingProgress, CultureInfo.InvariantCulture) / 100f;
+        public int EnchantingLevel { get; set; } = int.Parse(enchantingLevel);
+        public float AlchemyProgress { get; set; } = float.Parse(alchemyProgress, CultureInfo.InvariantCulture) / 100f;
+        public int AlchemyLevel { get; set; } = int.Parse(alchemyLevel);
+        public float HarvestingProgress { get; set; } = float.Parse(harvestingProgress, CultureInfo.InvariantCulture) / 100f;
+        public int HarvestingLevel { get; set; } = int.Parse(harvestingLevel);
+        public float BlacksmithingProgress { get; set; } = float.Parse(blacksmithingProgress, CultureInfo.InvariantCulture) / 100f;
+        public int BlacksmithingLevel { get; set; } = int.Parse(blacksmithingLevel);
+        public float TailoringProgress { get; set; } = float.Parse(tailoringProgress, CultureInfo.InvariantCulture) / 100f;
+        public int TailoringLevel { get; set; } = int.Parse(tailoringLevel);
+        public float WoodcuttingProgress { get; set; } = float.Parse(woodcuttingProgress, CultureInfo.InvariantCulture) / 100f;
+        public int WoodcuttingLevel { get; set; } = int.Parse(woodcuttingLevel);
+        public float MiningProgress { get; set; } = float.Parse(miningProgress, CultureInfo.InvariantCulture) / 100f;
+        public int MiningLevel { get; set; } = int.Parse(miningLevel);
+        public float FishingProgress { get; set; } = float.Parse(fishingProgress, CultureInfo.InvariantCulture) / 100f;
+        public int FishingLevel { get; set; } = int.Parse(fishingLevel);
+    }
+    public enum PlayerClass
     {
         None,
         BloodKnight,
@@ -198,6 +267,16 @@ internal static class DataService
         public string Target { get; set; } = target;
         public bool IsVBlood { get; set; } = bool.Parse(isVBlood);
     }
+    internal class FamiliarData(string percent, string level, string prestige, string familiarName, string familiarStats)
+    {
+        public float Progress { get; set; } = float.Parse(percent, CultureInfo.InvariantCulture) / 100f;
+        public int Level { get; set; } = int.TryParse(level, out int parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;
+        public int Prestige { get; set; } = int.Parse(prestige);
+        public string FamiliarName { get; set; } = !string.IsNullOrEmpty(familiarName) ? familiarName : "Familiar";
+        public List<string> FamiliarStats { get; set; } = !string.IsNullOrEmpty(familiarStats) ? new List<string> { familiarStats[..4], familiarStats[4..7], familiarStats[7..] }
+                .Select(stat => int.Parse(stat).ToString())
+                .ToList() : ["", "", ""];
+    }
     internal class ConfigData
     {
         public float PrestigeStatMultiplier;
@@ -210,12 +289,16 @@ internal static class DataService
 
         public int MaxExpertiseLevel;
 
+        public int MaxFamiliarLevel;
+
+        public int MaxProfessionLevel;
+
         public Dictionary<WeaponStatType, float> WeaponStatValues;
 
         public Dictionary<BloodStatType, float> BloodStatValues;
 
         public Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> bloodStats)> ClassStatSynergies;
-        public ConfigData(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string weaponStatValues, string bloodStatValues, string classStatSynergies)
+        public ConfigData(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string maxFamiliarLevel, string maxProfessionLevel, string weaponStatValues, string bloodStatValues, string classStatSynergies)
         {
             //Core.Log.LogInfo($"ConfigData: {prestigeMultiplier}, {statSynergyMultiplier}, {weaponStatValues}, {bloodStatValues}, {classStatSynergies}");
 
@@ -225,6 +308,8 @@ internal static class DataService
             MaxPlayerLevel = int.Parse(maxPlayerLevel);
             MaxLegacyLevel = int.Parse(maxLegacyLevel);
             MaxExpertiseLevel = int.Parse(maxExpertiseLevel);
+            MaxFamiliarLevel = int.Parse(maxFamiliarLevel);
+            MaxProfessionLevel = int.Parse(maxProfessionLevel);
 
             WeaponStatValues = weaponStatValues.Split(',')
             .Select((value, index) => new { Index = index + 1, Value = float.Parse(value, CultureInfo.InvariantCulture) })
@@ -257,7 +342,7 @@ internal static class DataService
         {
             return [];
         }
-        return [.. configString.Split(',')];
+        return [..configString.Split(',')];
     }
     public static void ParseConfigData(List<string> configData)
     {
@@ -269,6 +354,8 @@ internal static class DataService
             configData[index++], // maxPlayerLevel
             configData[index++], // maxLegacyLevel
             configData[index++], // maxExpertiseLevel
+            configData[index++], // maxFamiliarLevel
+            configData[index++], // maxProfessionLevel
             string.Join(",", configData.Skip(index).Take(12)), // Combine the next 11 elements for weaponStatValues
             string.Join(",", configData.Skip(index += 12).Take(12)), // Combine the following 11 elements for bloodStatValues
             string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
@@ -280,6 +367,8 @@ internal static class DataService
         CanvasService.ExperienceMaxLevel = parsedConfigData.MaxPlayerLevel;
         CanvasService.LegacyMaxLevel = parsedConfigData.MaxLegacyLevel;
         CanvasService.ExpertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
+        CanvasService.FamiliarMaxLevel = parsedConfigData.MaxFamiliarLevel;
+        CanvasService.ProfessionMaxLevel = parsedConfigData.MaxProfessionLevel;
 
         WeaponStatValues = parsedConfigData.WeaponStatValues;
 
@@ -291,15 +380,15 @@ internal static class DataService
     {
         int index = 0;
 
+        //Core.Log.LogInfo($"PlayerData: {string.Join(",", playerData)}");
+
         ExperienceData experienceData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         LegacyData legacyData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         ExpertiseData expertiseData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+        FamiliarData familiarData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+        ProfessionData professionData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         QuestData dailyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         QuestData weeklyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index]);
-
-        //Core.Log.LogInfo(string.Join(",", playerData));
-        //Core.Log.LogInfo(string.Join(",", legacyData.BonusStats));
-        //Core.Log.LogInfo(string.Join(",", expertiseData.BonusStats));
 
         CanvasService.ExperienceProgress = experienceData.Progress;
         CanvasService.ExperienceLevel = experienceData.Level;
@@ -317,6 +406,29 @@ internal static class DataService
         CanvasService.ExpertisePrestige = expertiseData.Prestige;
         CanvasService.ExpertiseType = expertiseData.ExpertiseType;
         CanvasService.ExpertiseBonusStats = expertiseData.BonusStats;
+
+        CanvasService.FamiliarProgress = familiarData.Progress;
+        CanvasService.FamiliarLevel = familiarData.Level;
+        CanvasService.FamiliarPrestige = familiarData.Prestige;
+        CanvasService.FamiliarName = familiarData.FamiliarName;
+        CanvasService.FamiliarStats = familiarData.FamiliarStats;
+
+        CanvasService.EnchantingProgress = professionData.EnchantingProgress;
+        CanvasService.EnchantingLevel = professionData.EnchantingLevel;
+        CanvasService.AlchemyProgress = professionData.AlchemyProgress;
+        CanvasService.AlchemyLevel = professionData.AlchemyLevel;
+        CanvasService.HarvestingProgress = professionData.HarvestingProgress;
+        CanvasService.HarvestingLevel = professionData.HarvestingLevel;
+        CanvasService.BlacksmithingProgress = professionData.BlacksmithingProgress;
+        CanvasService.BlacksmithingLevel = professionData.BlacksmithingLevel;
+        CanvasService.TailoringProgress = professionData.TailoringProgress;
+        CanvasService.TailoringLevel = professionData.TailoringLevel;
+        CanvasService.WoodcuttingProgress = professionData.WoodcuttingProgress;
+        CanvasService.WoodcuttingLevel = professionData.WoodcuttingLevel;
+        CanvasService.MiningProgress = professionData.MiningProgress;
+        CanvasService.MiningLevel = professionData.MiningLevel;
+        CanvasService.FishingProgress = professionData.FishingProgress;
+        CanvasService.FishingLevel = professionData.FishingLevel;
 
         CanvasService.DailyTargetType = dailyQuestData.TargetType;
         CanvasService.DailyProgress = dailyQuestData.Progress;

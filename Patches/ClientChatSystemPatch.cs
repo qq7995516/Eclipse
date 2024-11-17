@@ -17,7 +17,7 @@ internal static class ClientChatSystemPatch
 {
     static EntityManager EntityManager => Core.EntityManager;
 
-    static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests;
+    static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests || Plugin.Familiars || Plugin.Professions;
     public static bool UserRegistered = false;
 
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
@@ -60,12 +60,15 @@ internal static class ClientChatSystemPatch
             UserRegistered = true;
             try
             {
-                string message = localUser.Read<User>().PlatformId.ToString();
+                string modVersion = MyPluginInfo.PLUGIN_VERSION;
+                string stringId = localUser.Read<User>().PlatformId.ToString();
+
+                string message = $"{modVersion};{stringId}";
                 SendMessage(NetworkEventSubType.RegisterUser, message);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to register user... {ex}");
+                Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to register with Bloodcraft on server! Error - {e}");
             }
         }
 

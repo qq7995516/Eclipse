@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using Epic.OnlineServices.RTCAudio;
 using HarmonyLib;
 using System.Reflection;
 
@@ -29,12 +30,16 @@ internal class Plugin : BasePlugin
     static ConfigEntry<bool> prestige;
     static ConfigEntry<bool> legacies;
     static ConfigEntry<bool> expertise;
+    static ConfigEntry<bool> familiars;
+    static ConfigEntry<bool> professions;
     static ConfigEntry<bool> quests;
     //static ConfigEntry<bool> familiars;
     public static bool Leveling => leveling.Value;
     public static bool Prestige => prestige.Value;
     public static bool Legacies => legacies.Value;
     public static bool Expertise => expertise.Value;
+    public static bool Familiars => familiars.Value;
+    public static bool Professions => professions.Value;
     public static bool Quests => quests.Value;
 
     //public static bool Familiars => familiars.Value;
@@ -52,12 +57,13 @@ internal class Plugin : BasePlugin
             CreateDirectory(path);
         }
 
-        leveling = InitConfigEntry("UIOptions", "ExperienceBar", false, "Enable/Disable the experience bar, requires both ClientCompanion/LevelingSystem to be enabled in Bloodcraft.");
-        prestige = InitConfigEntry("UIOptions", "ShowPrestige", false, "Enable/Disable showing prestige level in front of experience bar, requires both ClientCompanion/PrestigeSystem to be enabled in Bloodcraft .");
-        legacies = InitConfigEntry("UIOptions", "LegacyBar", false, "Enable/Disable the legacy bar, requires both ClientCompanion/LegacySystem to be enabled in Bloodcraft.");
-        expertise = InitConfigEntry("UIOptions", "ExpertiseBar", false, "Enable/Disable the expertise bar, requires both ClientCompanion/ExpertiseSystem to be enabled in Bloodcraft.");
-        quests = InitConfigEntry("UIOptions", "QuestTracker", false, "Enable/Disable the quest tracker, requires both ClientCompanion/QuestSystem to be enabled in Bloodcraft.");
-        //familiars = InitConfigEntry("UIOptions", "Familiars", false, "Enable/Disable various functions for managing familiars.");
+        leveling = InitConfigEntry("UIOptions", "ExperienceBar", true, "Enable/Disable the experience bar, requires both ClientCompanion/LevelingSystem to be enabled in Bloodcraft.");
+        prestige = InitConfigEntry("UIOptions", "ShowPrestige", true, "Enable/Disable showing prestige level in front of experience bar, requires both ClientCompanion/PrestigeSystem to be enabled in Bloodcraft .");
+        legacies = InitConfigEntry("UIOptions", "LegacyBar", true, "Enable/Disable the legacy bar, requires both ClientCompanion/BloodSystem to be enabled in Bloodcraft.");
+        expertise = InitConfigEntry("UIOptions", "ExpertiseBar", true, "Enable/Disable the expertise bar, requires both ClientCompanion/ExpertiseSystem to be enabled in Bloodcraft.");
+        professions = InitConfigEntry("UIOptions", "Professions", true, "Enable/Disable the professions tab, requires both ClientCompanion/ProfessionSystem to be enabled in Bloodcraft.");
+        quests = InitConfigEntry("UIOptions", "QuestTracker", true, "Enable/Disable the quest tracker, requires both ClientCompanion/QuestSystem to be enabled in Bloodcraft.");
+        familiars = InitConfigEntry("UIOptions", "Familiars", true, "Enable/Disable showing basic familiar details bar, requires both ClientCompanion/FamiliarSystem to be enabled in Bloodcraft..");
     }
     static ConfigEntry<T> InitConfigEntry<T>(string section, string key, T defaultValue, string description)
     {
