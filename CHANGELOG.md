@@ -1,3 +1,6 @@
+`1.1.2`
+- removed unneeded dependency like I meant to for 1.1.1, oopsie
+
 `1.1.1`
 - class text under experience bar formatted more aesthetically
 - improved positioning for UI elements at various resolutions (probably >_>)
