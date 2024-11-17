@@ -23,7 +23,8 @@ internal static class ClientChatSystemPatch
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex regexMAC = new(@";mac([^;]+)$");
 
-    static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZQ==");
+    //static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZQ==");
+    static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLUNlY3JldC1rZLktaGVyZQ==");
 
     static readonly ComponentType[] NetworkEventComponents =
     [
