@@ -23,7 +23,8 @@ internal static class ClientChatSystemPatch
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex regexMAC = new(@";mac([^;]+)$");
 
-    static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZQ==");
+    //static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZQ==");
+    static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZV9uZXc=");
 
     static readonly ComponentType[] NetworkEventComponents =
     [
@@ -58,6 +59,7 @@ internal static class ClientChatSystemPatch
         if (!UserRegistered && localCharacter != Entity.Null && localUser != Entity.Null)
         {
             UserRegistered = true;
+
             try
             {
                 string modVersion = MyPluginInfo.PLUGIN_VERSION;
