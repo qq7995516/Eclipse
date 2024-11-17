@@ -24,7 +24,6 @@ internal static class ClientChatSystemPatch
     static readonly Regex regexMAC = new(@";mac([^;]+)$");
 
     static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZQ==");
-    //static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLUNlY3JldC1rZLktaGVyZQ==");
 
     static readonly ComponentType[] NetworkEventComponents =
     [
@@ -101,8 +100,8 @@ internal static class ClientChatSystemPatch
     }
     static void SendMessage(NetworkEventSubType subType, string message)
     {
-        string intermediateMessage = $"[{(int)subType}]:{message}";
-        string messageWithMAC = $"[ECLIPSE]{intermediateMessage};mac{GenerateMAC(intermediateMessage)}";
+        string intermediateMessage = $"[ECLIPSE][{(int)subType}]:{message}";
+        string messageWithMAC = $"{intermediateMessage};mac{GenerateMAC(intermediateMessage)}";
 
         ChatMessageEvent chatMessageEvent = new()
         {
