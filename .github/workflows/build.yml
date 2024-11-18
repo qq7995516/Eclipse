@@ -40,13 +40,16 @@ jobs:
 
       - name: Create secrets.json
         run: |
-          mkdir -p Eclipse/Resources
+          mkdir -p /home/runner/work/Eclipse/Eclipse/Resources
           echo '{
             "NEW_SHARED_KEY": "${{ secrets.NEW_SHARED_KEY }}"
-          }' > Eclipse/Resources/secrets.json
+          }' > /home/runner/work/Eclipse/Eclipse/Resources/secrets.json
           
       - name: Build (Release)
         run: dotnet build . --configuration Release -p:Version=${{ env.version }}
+
+      - name: Clean Up
+        run: rm /home/runner/work/Eclipse/Eclipse/Resources/secrets.json
         
       - name: GH Release
         uses: softprops/action-gh-release@v1
@@ -62,6 +65,3 @@ jobs:
             CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Clean Up
-        run: rm Eclipse/Resources/secrets.json
