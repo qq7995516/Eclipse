@@ -23,8 +23,9 @@ internal static class ClientChatSystemPatch
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex regexMAC = new(@";mac([^;]+)$");
 
-    //static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZQ==");
-    static readonly byte[] sharedKey = Convert.FromBase64String("c2VjdXJlLXN1cGVyLXNlY3JldC1rZXktaGVyZV9uZXc=");
+    static readonly string NEW_SHARED_KEY = Environment.GetEnvironmentVariable("NEW_SHARED_KEY");
+
+    static readonly byte[] newSharedKey = Convert.FromBase64String(NEW_SHARED_KEY);
 
     static readonly ComponentType[] NetworkEventComponents =
     [
@@ -162,7 +163,7 @@ internal static class ClientChatSystemPatch
     }
     public static string GenerateMAC(string message)
     {
-        using var hmac = new HMACSHA256(sharedKey);
+        using var hmac = new HMACSHA256(newSharedKey);
         byte[] messageBytes = Encoding.UTF8.GetBytes(message);
         byte[] hashBytes = hmac.ComputeHash(messageBytes);
         return Convert.ToBase64String(hashBytes);
