@@ -26,6 +26,7 @@ internal static class InitializationPatches
             if (ShouldInitialize && __instance.GameDataInitialized && !Core.hasInitialized)
             {
                 Core.Initialize(__instance);
+
                 if (Core.hasInitialized)
                 {
                     Core.Log.LogInfo($"|{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] initialized on client|");

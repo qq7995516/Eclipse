@@ -20,6 +20,10 @@
     <Optimize>True</Optimize>
   </PropertyGroup>
 
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\secrets.json" />
+	</ItemGroup>
+	
   <ItemGroup>
     <None Include=".github\FUNDING.yml" />
     <None Include=".github\workflows\build.yml" />
@@ -33,6 +37,7 @@
     <PackageReference Include="HarmonyX" Version="2.10.1" />
     <PackageReference Include="VRising.Unhollowed.Client" Version="1.0.2.794360001" />
     </ItemGroup>
+	
 	<Target Name="BuildToClient" AfterTargets="Build">
 		<Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="C:\Program Files (x86)\Steam\steamapps\common\VRising\BepInEx\plugins" />
 	</Target>   

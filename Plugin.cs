@@ -5,6 +5,7 @@ using BepInEx.Unity.IL2CPP;
 using Epic.OnlineServices.RTCAudio;
 using HarmonyLib;
 using System.Reflection;
+using UnityEngine;
 
 namespace Eclipse;
 
@@ -33,7 +34,6 @@ internal class Plugin : BasePlugin
     static ConfigEntry<bool> familiars;
     static ConfigEntry<bool> professions;
     static ConfigEntry<bool> quests;
-    //static ConfigEntry<bool> familiars;
     public static bool Leveling => leveling.Value;
     public static bool Prestige => prestige.Value;
     public static bool Legacies => legacies.Value;
@@ -46,6 +46,15 @@ internal class Plugin : BasePlugin
     public override void Load()
     {
         Instance = this;
+
+        /*
+        if (Application.productName.Equals("VRisingServer"))
+        {
+            Core.Log.LogInfo($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] is a client mod! ({Application.productName})");
+            return;
+        }
+        */
+
         _harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
         InitConfig();
         Core.Log.LogInfo($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] loaded! Note that mod will not continue to initialization on dedicated servers.");

@@ -1,5 +1,6 @@
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
+using Bloodcraft.Resources;
 using Eclipse.Services;
 using ProjectM;
 using ProjectM.Physics;
@@ -18,6 +19,7 @@ internal class Core
     public static ManualLogSource Log => Plugin.LogInstance;
 
     static MonoBehaviour monoBehaviour;
+    public static byte[] NEW_SHARED_KEY { get; internal set; }
 
     public static bool hasInitialized = false;
     public static void Initialize(GameDataManager __instance)
@@ -26,7 +28,6 @@ internal class Core
 
         Client = __instance.World;
         PrefabCollectionSystem = Client.GetExistingSystemManaged<PrefabCollectionSystem>();
-        
 
         /*
         foreach (var kvp in Client.m_SystemLookup)
@@ -49,6 +50,8 @@ internal class Core
         }
         */
 
+        NEW_SHARED_KEY = Convert.FromBase64String(SecretManager.GetNewSharedKey());
+
         hasInitialized = true;
     }
     public static void SetCanvas(UICanvasBase canvas)
@@ -63,6 +66,7 @@ internal class Core
             monoBehaviour = go.AddComponent<IgnorePhysicsDebugSystem>();
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
+
         monoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
     }
 }

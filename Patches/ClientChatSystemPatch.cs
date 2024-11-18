@@ -23,10 +23,6 @@ internal static class ClientChatSystemPatch
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex regexMAC = new(@";mac([^;]+)$");
 
-    static readonly string NEW_SHARED_KEY = Environment.GetEnvironmentVariable("NEW_SHARED_KEY");
-
-    static readonly byte[] newSharedKey = Convert.FromBase64String(NEW_SHARED_KEY);
-
     static readonly ComponentType[] NetworkEventComponents =
     [
         ComponentType.ReadOnly(Il2CppType.Of<FromCharacter>()),
@@ -163,7 +159,7 @@ internal static class ClientChatSystemPatch
     }
     public static string GenerateMAC(string message)
     {
-        using var hmac = new HMACSHA256(newSharedKey);
+        using var hmac = new HMACSHA256(Core.NEW_SHARED_KEY);
         byte[] messageBytes = Encoding.UTF8.GetBytes(message);
         byte[] hashBytes = hmac.ComputeHash(messageBytes);
         return Convert.ToBase64String(hashBytes);
