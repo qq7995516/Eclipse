@@ -40,10 +40,10 @@ jobs:
 
       - name: Create secrets.json
         run: |
-          mkdir -p Eclipse/Resources
+          mkdir -p Eclipse/Eclipse/Resources
           echo '{
             "NEW_SHARED_KEY": "${{ secrets.NEW_SHARED_KEY }}"
-          }' > Eclipse/Resources/secrets.json
+          }' > Eclipse/Eclipse/Resources/secrets.json
           
       - name: Build (Release)
         run: dotnet build . --configuration Release -p:Version=${{ env.version }}
