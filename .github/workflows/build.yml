@@ -49,7 +49,7 @@ jobs:
         run: dotnet build . --configuration Release -p:Version=${{ env.version }}
 
       - name: Clean Up
-        run: rm secrets.json
+        run: rm Eclipse/Resources/secrets.json
         
       - name: GH Release
         uses: softprops/action-gh-release@v1
