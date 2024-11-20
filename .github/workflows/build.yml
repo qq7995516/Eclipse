@@ -37,14 +37,20 @@ jobs:
       - name: Update thunderstore.toml
         run: |
           sed -i "s/versionNumber = \".*\"/versionNumber = \"${{ env.version }}\"/" thunderstore.toml
+
+      - name: Create secrets.json
+        run: |
+          mkdir -p /home/runner/work/Eclipse/Eclipse/Resources
+          echo '{
+            "NEW_SHARED_KEY": "${{ secrets.NEW_SHARED_KEY }}"
+          }' > /home/runner/work/Eclipse/Eclipse/Resources/secrets.json
           
       - name: Build (Release)
-        env: 
-          NEW_SHARED_KEY: ${{ secrets.NEW_SHARED_KEY }}
-        run: |
-          echo "Using NEW_SHARED_KEY: $NEW_SHARED_KEY"
-          dotnet build . --configuration Release -p:Version=${{ env.version }}
-     
+        run: dotnet build . --configuration Release -p:Version=${{ env.version }}
+
+      - name: Clean Up
+        run: rm /home/runner/work/Eclipse/Eclipse/Resources/secrets.json
+        
       - name: GH Release
         uses: softprops/action-gh-release@v1
         if: github.event_name == 'workflow_dispatch'
