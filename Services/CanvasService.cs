@@ -1,21 +1,17 @@
-﻿using Il2CppInterop.Runtime;
+﻿using Eclipse.Patches;
+using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using ProjectM;
 using ProjectM.UI;
 using System.Collections;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using static Eclipse.Services.CanvasService.GameObjectUtilities;
 using static Eclipse.Services.DataService;
 using Image = UnityEngine.UI.Image;
 using StringComparison = System.StringComparison;
-
-// UI ideas
-// how to summon familiars, choose class spells, etc with a menu on the client? could just have the various UI elements correspond to respective familiar lists, class spells, etc.
-// like if menu 1 has 4 buttons they choose the spell to request from the server if the server detects a change in a certain component which the client would do when they click a button
-// display class somewhere in UI
 
 namespace Eclipse.Services;
 internal class CanvasService
@@ -83,7 +79,7 @@ internal class CanvasService
         { PlayerClass.DeathMage, new Color(0f, 1f, 0f) }              // condemn green
     };
 
-    static readonly WaitForSeconds Delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable for now
+    static readonly WaitForSeconds Delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable
 
     // object references for UI elements
     static UICanvasBase UICanvasBase;
@@ -134,7 +130,7 @@ internal class CanvasService
     public static List<string> ExpertiseBonusStats = ["", "", ""];
 
     static GameObject FamiliarBarGameObject;
-    static GameObject FamiliarInformationPanel; // show physical power, spell power and max health? ah need to send those too, rip
+    static GameObject FamiliarInformationPanel;
     static LocalizedText FamiliarMaxHealth;
     static LocalizedText FamiliarPhysicalPower;
     static LocalizedText FamiliarSpellPower;
@@ -198,6 +194,8 @@ internal class CanvasService
     public static float FishingProgress = 0f;
     public static int FishingLevel = 0;
 
+    static readonly List<GameObject> ProfessionObjects = [];
+
     static GameObject DailyQuestObject;
     static LocalizedText DailyQuestHeader;
     static LocalizedText DailyQuestSubHeader;
@@ -227,7 +225,54 @@ internal class CanvasService
     //const float BAR_WIDTH_SPACING = 0.075f;
     const float BAR_WIDTH_SPACING = 0.065f;
 
-    public static readonly List<GameObject> ActiveObjects = [];
+    //public static readonly List<GameObject> ActiveObjects = [];
+    //public static readonly Dictionary<UIElement, GameObject> UIObjects = [];
+
+    public static readonly Dictionary<GameObject, bool> UIObjectStates = [];
+
+    static readonly Dictionary<int, Action> ActionToggles = new()
+    {
+        {0, ExperienceToggle},
+        {1, LegacyToggle},
+        {2, ExpertiseToggle},
+        {3, FamiliarToggle},
+        {4, ProfessionToggle},
+        {5, DailyQuestToggle},
+        {6, WeeklyQuestToggle}
+    };
+
+    static readonly Dictionary<UIElement, string> AbilitySlotNamePaths = new()
+    {
+        { UIElement.Experience, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Primary/" },
+        { UIElement.Legacy, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_WeaponSkill1/" },
+        { UIElement.Expertise, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_WeaponSkill2/" },
+        { UIElement.Familiars, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Travel/" },
+        { UIElement.Professions, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Spell1/" },
+        { UIElement.Weekly, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Spell2/" },
+        { UIElement.Daily, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Ultimate/" }
+    };
+
+    static readonly Dictionary<UIElement, bool> UIElementsConfigured = new()
+    {
+        { UIElement.Experience, ExperienceBar },
+        { UIElement.Legacy, LegacyBar },
+        { UIElement.Expertise, ExpertiseBar },
+        { UIElement.Familiars, FamiliarBar },
+        { UIElement.Professions, ProfessionBars },
+        { UIElement.Daily, QuestTracker },
+        { UIElement.Weekly, QuestTracker }
+    };
+
+    static readonly Dictionary<UIElement, int> UIElementIndexes = new()
+    {
+        { UIElement.Experience, 0 },
+        { UIElement.Legacy, 1 },
+        { UIElement.Expertise, 2 },
+        { UIElement.Familiars, 3 },
+        { UIElement.Professions, 4 },
+        { UIElement.Daily, 5 },
+        { UIElement.Weekly, 6 }
+    };
 
     public static bool Active = false;
     public static bool KillSwitch = false;
@@ -246,6 +291,7 @@ internal class CanvasService
         FindSpritesByName(SpriteNames);
 
         InitializeBloodButton();
+        InitializeAbilitySlotButtons();
         InitializeUI();
     }
     static void InitializeUI()
@@ -276,14 +322,108 @@ internal class CanvasService
             ConfigureVerticalProgressBar(ref FishingBarGameObject, ref FishingFill, ref FishingLevelText, ProfessionColors[Profession.Fishing]);
         }
     }
+    static void InitializeAbilitySlotButtons()
+    {
+        foreach (var keyValuePair in UIElementsConfigured)
+        {
+            if (keyValuePair.Value)
+            {
+                int index = UIElementIndexes[keyValuePair.Key];
+                GameObject abilitySlotObject = GameObject.Find(AbilitySlotNamePaths[keyValuePair.Key]);
+
+                if (abilitySlotObject != null)
+                {
+                    //UIGameObjects.Add(abilitySlotObject);
+                    SimpleStunButton stunButton = abilitySlotObject.AddComponent<SimpleStunButton>();
+
+                    if (ActionToggles.TryGetValue(index, out var toggleAction))
+                    {
+                        stunButton.onClick.AddListener(new Action(toggleAction));
+                    }
+                }
+            }
+        }
+    }
+    static void ExperienceToggle()
+    {
+        bool active = !ExperienceBarGameObject.activeSelf;
+
+        ExperienceBarGameObject.SetActive(active);
+        UIObjectStates[ExperienceBarGameObject] = active;
+    }
+    static void LegacyToggle()
+    {
+        bool active = !LegacyBarGameObject.activeSelf;
+
+        LegacyBarGameObject.SetActive(active);
+        UIObjectStates[LegacyBarGameObject] = active;
+    }
+    static void ExpertiseToggle()
+    {
+        bool active = !ExpertiseBarGameObject.activeSelf;
+
+        ExpertiseBarGameObject.SetActive(active);
+        UIObjectStates[ExpertiseBarGameObject] = active;
+    }
+    static void FamiliarToggle()
+    {
+        bool active = !FamiliarBarGameObject.activeSelf;
+
+        FamiliarBarGameObject.SetActive(active);
+        UIObjectStates[FamiliarBarGameObject] = active;
+    }
+    static void ProfessionToggle()
+    {
+        foreach (GameObject professionObject in UIObjectStates.Keys)
+        {
+            if (ProfessionObjects.Contains(professionObject))
+            {
+                bool active = !professionObject.activeSelf;
+
+                professionObject.SetActive(active);
+                UIObjectStates[professionObject] = active;
+            }
+            else
+            {
+                Core.Log.LogWarning($"Profession object not found!");
+            }
+        }
+    }
+    static void DailyQuestToggle()
+    {
+        bool active = !DailyQuestObject.activeSelf;
+
+        DailyQuestObject.SetActive(active);
+        UIObjectStates[DailyQuestObject] = active;
+    }
+    static void WeeklyQuestToggle()
+    {
+        bool active = !WeeklyQuestObject.activeSelf;
+
+        WeeklyQuestObject.SetActive(active);
+        UIObjectStates[WeeklyQuestObject] = active;
+    }
     static void InitializeBloodButton()
     {
         // Find blood (the one with raycasting) to add button for UI toggling
         GameObject bloodObject = GameObject.Find("HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/BloodOrbParent/BloodOrb/BlackBackground/Blood");
 
         // Add button
-        SimpleStunButton stunButton = bloodObject.AddComponent<SimpleStunButton>();
-        stunButton.onClick.AddListener(new Action(ToggleUIObjects));
+        if (bloodObject != null)
+        {
+            SimpleStunButton stunButton = bloodObject.AddComponent<SimpleStunButton>();
+            stunButton.onClick.AddListener(new Action(ToggleAllObjects));
+        }
+    }
+    static void ToggleAllObjects()
+    {
+        Active = !Active;
+
+        foreach (GameObject gameObject in UIObjectStates.Keys)
+        {
+            gameObject.active = Active;
+            UIObjectStates[gameObject] = Active;
+        }
     }
     public static IEnumerator CanvasUpdateLoop()
     {
@@ -477,7 +617,7 @@ internal class CanvasService
     }
     static void UpdateQuests(GameObject questObject, LocalizedText questSubHeader, Image questIcon, TargetType targetType, string target, int progress, int goal, bool isVBlood)
     {
-        if (progress != goal)
+        if (progress != goal && UIObjectStates[questObject])
         {
             if (!questObject.gameObject.active) questObject.gameObject.active = true;
             questSubHeader.ForceSet($"<color=white>{target}</color>: {progress}/<color=yellow>{goal}</color>");
@@ -630,7 +770,7 @@ internal class CanvasService
         subHeader.ForceSet("UnitName: 0/0"); // For testing, can be updated later
 
         // Add to active objects
-        ActiveObjects.Add(questObject);
+        UIObjectStates.Add(questObject, true);
         WindowOffset += 0.075f;
     }
     static void ConfigureHorizontalProgressBar(ref GameObject barGameObject, ref GameObject informationPanelObject, ref Image fill, ref LocalizedText level, ref LocalizedText header, UIElement element, Color fillColor, ref LocalizedText firstText, ref LocalizedText secondText, ref LocalizedText thirdText)
@@ -679,7 +819,7 @@ internal class CanvasService
         // Increment for spacing
         BarNumber++;
         barGameObject.SetActive(true);
-        ActiveObjects.Add(barGameObject);
+        UIObjectStates.Add(barGameObject, true);
     }
     static void ConfigureVerticalProgressBar(ref GameObject barGameObject, ref Image fill, ref LocalizedText level, Color fillColor)
     {
@@ -698,12 +838,12 @@ internal class CanvasService
         int totalBars = 8;
 
         // Calculate the total width and height for the bars
-        float totalBarAreaWidth = 0.185f;
+        float totalBarAreaWidth = 0.215f; // previous 0.185f
         float barWidth = totalBarAreaWidth / (float)totalBars; // Width of each bar
 
         // Calculate the starting X position to center the bar graph and position added bars appropriately
-        float padding = 1f - (0.075f * 2.25f); // BAR_WIDTH_SPACING previously 0.075f
-        float offsetX = padding + (barWidth * GraphBarNumber / 1.45f); // previously used 1.5f
+        float padding = 1f - (0.075f * 2.45f); // BAR_WIDTH_SPACING previously 0.075f
+        float offsetX = padding + (barWidth * GraphBarNumber / 1.4f); // previously used 1.5f
 
         // scale size
         Vector3 updatedScale = new(0.4f, 1f, 1f);
@@ -731,6 +871,7 @@ internal class CanvasService
 
         // **Rotate the level text back by -90 degrees to keep it upright**
         levelRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
+        levelRectTransform.localScale = Vector3.one;
 
         // Hide unnecessary UI elements
         var headerObject = FindTargetUIObject(barRectTransform.transform, "Name");
@@ -750,7 +891,8 @@ internal class CanvasService
         GraphBarNumber++;
 
         barGameObject.SetActive(true);
-        ActiveObjects.Add(barGameObject);
+        UIObjectStates.Add(barGameObject, true);
+        ProfessionObjects.Add(barGameObject);
     }
     static void ConfigureInformationPanel(ref GameObject informationPanelObject, ref LocalizedText firstText, ref LocalizedText secondText, ref LocalizedText thirdText, UIElement element)
     {
@@ -840,15 +982,6 @@ internal class CanvasService
         }
 
         return result;
-    }
-    static void ToggleUIObjects()
-    {
-        Active = !Active;
-
-        foreach (GameObject gameObject in ActiveObjects)
-        {
-            gameObject.active = Active;
-        }
     }
     public static class GameObjectUtilities
     {

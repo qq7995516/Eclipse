@@ -3,6 +3,7 @@ using HarmonyLib;
 using ProjectM;
 using ProjectM.Network;
 using ProjectM.UI;
+using StunShared.UI;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -101,7 +102,7 @@ internal static class InitializationPatches
         SetCanvas = false;
         Core.hasInitialized = false;
 
-        foreach(GameObject gameObject in CanvasService.ActiveObjects) // destroy to let resolution be changed and elements get recreated to match new scaling?
+        foreach(GameObject gameObject in CanvasService.UIObjectStates.Keys) // destroy to let resolution be changed and elements get recreated to match new scaling?
         {
             if (gameObject != null)
             {
@@ -109,18 +110,18 @@ internal static class InitializationPatches
             }
         }
         
-        CanvasService.ActiveObjects.Clear();
+        CanvasService.UIObjectStates.Clear();
     }
 
-    /*
-    [HarmonyPatch(typeof(AbilityBarEntry), nameof(AbilityBarEntry.UpdateState))]
+    public static GameObject AbilityBarEntry_Dummy;
+
+    [HarmonyPatch(typeof(InputActionSystem), nameof(InputActionSystem.OnUpdate))]
     [HarmonyPostfix]
-    static void OnUpdatePostfix(ref AbilityBarEntry.UIState newState, InputActionSystem inputActionSystem)
+    static void OnUpdatePostfix(InputActionSystem __instance)
     {
-        if (newState != null)
+        if (AbilityBarEntry_Dummy != null)
         {
-            if (!newState.GameObjectActive) newState.GameObjectActive = true;
+            AbilityBarEntry_Dummy.SetActive(true);
         }
     }
-    */
 }

@@ -2,7 +2,6 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-using Epic.OnlineServices.RTCAudio;
 using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
@@ -47,17 +46,15 @@ internal class Plugin : BasePlugin
     {
         Instance = this;
 
-        /*
-        if (Application.productName.Equals("VRisingServer"))
+        if (Application.productName == "VRisingServer")
         {
             Core.Log.LogInfo($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] is a client mod! ({Application.productName})");
             return;
         }
-        */
 
         _harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
         InitConfig();
-        Core.Log.LogInfo($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] loaded! Note that mod will not continue to initialization on dedicated servers.");
+        Core.Log.LogInfo($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] loaded on client!");
     }
     static void InitConfig()
     {

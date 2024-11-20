@@ -1,6 +1,7 @@
 `1.2.2`
 - added bar for basic familiar info
 - added bargraph of sorts for professions
+- can toggle individual parts by clicking on ability slots 1-7
 
 `1.1.2`
 - removed unneeded dependency like I meant to for 1.1.1, oopsie
