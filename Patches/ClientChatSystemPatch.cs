@@ -44,7 +44,8 @@ internal static class ClientChatSystemPatch
     {
         RegisterUser,
         ProgressToClient,
-        ConfigsToClient
+        ConfigsToClient,
+        UpdateShiftSlot
     }
 
     [HarmonyPatch(typeof(ClientChatSystem), nameof(ClientChatSystem.OnUpdate))]
@@ -122,6 +123,7 @@ internal static class ClientChatSystemPatch
             case (int)NetworkEventSubType.ProgressToClient:
                 List<string> playerData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
                 DataService.ParsePlayerData(playerData);
+
                 if (!CanvasService.Active)
                 {
                     if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
@@ -129,10 +131,23 @@ internal static class ClientChatSystemPatch
 
                     Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
                 }
+
                 break;
             case (int)NetworkEventSubType.ConfigsToClient:
                 List<string> configData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
                 DataService.ParseConfigData(configData);
+                break;
+            case (int)NetworkEventSubType.UpdateShiftSlot:
+                List<string> abilityData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
+                DataService.ParseAbilityData(abilityData);
+
+                if (!CanvasService.ShiftActive)
+                {
+                    //if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
+
+                    //Core.StartCoroutine(CanvasService.ShiftUpdateLoop());
+                }
+
                 break;
         }
     }

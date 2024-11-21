@@ -1,7 +1,7 @@
-﻿using System.Globalization;
+﻿using Stunlock.Core;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.InputSystem.Utilities;
-using UnityEngine.UI;
 
 namespace Eclipse.Services;
 
@@ -277,6 +277,13 @@ internal static class DataService
                 .Select(stat => int.Parse(stat).ToString())
                 .ToList() : ["", "", ""];
     }
+    internal class AbilityData(string prefabHash, string cooldown, string charges, string chargesCooldown)
+    {
+        public PrefabGUID AbilityPrefabGUID { get; set; } = int.TryParse(prefabHash, out int parsedHash) ? new PrefabGUID(parsedHash) : PrefabGUID.Empty;
+        public float Cooldown { get; set; } = float.TryParse(cooldown, NumberStyles.Integer, CultureInfo.InvariantCulture, out float parsedCooldown) ? parsedCooldown : 0f;
+        public int Charges { get; set; } = int.TryParse(charges, out int parsedCharges) ? parsedCharges : 0;
+        public float ChargesCooldown { get; set; } = float.TryParse(chargesCooldown, NumberStyles.Integer, CultureInfo.InvariantCulture, out float parsedChargesCooldown) ? parsedChargesCooldown : 0f;
+    }
     internal class ConfigData
     {
         public float PrestigeStatMultiplier;
@@ -441,5 +448,17 @@ internal static class DataService
         CanvasService.WeeklyGoal = weeklyQuestData.Goal;
         CanvasService.WeeklyTarget = weeklyQuestData.Target;
         CanvasService.WeeklyVBlood = weeklyQuestData.IsVBlood;
+    }
+    public static void ParseAbilityData(List<string> playerData)
+    {
+        int index = 0;
+
+        AbilityData abilityData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index]);
+
+        CanvasService.AbilityGroupPrefabGUID = abilityData.AbilityPrefabGUID;
+        CanvasService.AbilityGroupPrefabName = abilityData.AbilityPrefabGUID.IsEmpty() ? "" : abilityData.AbilityPrefabGUID.LookupName();
+        CanvasService.Cooldown = abilityData.Cooldown;
+        CanvasService.Charges = abilityData.Charges;
+        CanvasService.ChargesCooldown = abilityData.ChargesCooldown;
     }
 }

@@ -1,11 +1,13 @@
-﻿using Eclipse.Patches;
-using Il2CppInterop.Runtime;
+﻿using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using ProjectM;
 using ProjectM.UI;
+using Stunlock.Core;
 using System.Collections;
 using System.Text.RegularExpressions;
+using TMPro;
+using Unity.Entities;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using static Eclipse.Services.CanvasService.GameObjectUtilities;
@@ -23,6 +25,7 @@ internal class CanvasService
     static readonly bool FamiliarBar = Plugin.Familiars;
     static readonly bool ProfessionBars = Plugin.Professions;
     static readonly bool QuestTracker = Plugin.Quests;
+    static readonly bool ShiftSlot = false;
     public enum UIElement
     {
         Experience,
@@ -31,7 +34,8 @@ internal class CanvasService
         Familiars,
         Professions,
         Daily,
-        Weekly
+        Weekly,
+        ShiftSlot
     }
 
     static readonly Dictionary<int, string> RomanNumerals = new()
@@ -53,9 +57,14 @@ internal class CanvasService
         "Poneti_Icon_Res_93"
     ];
 
+    const string ABILITY_ICON = "Stunlock_Icon_Ability_Spell_";
+    const string NPC_ABILITY = "Ashka_M1_64";
+
     static readonly Dictionary<string, Sprite> SpriteMap = [];
+    static readonly Dictionary<string, Sprite> AbilityIconMap = [];
 
     static readonly Regex ClassNameRegex = new("(?<!^)([A-Z])");
+    static readonly Regex AbilitySpellRegex = new(@"(?<=AB_).*(?=_Group)");
 
     /*
     static readonly Dictionary<PlayerClass, string> ClassColorHexMap = new()
@@ -80,6 +89,7 @@ internal class CanvasService
     };
 
     static readonly WaitForSeconds Delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable
+    static readonly WaitForSeconds ShiftDelay = new(0.1f);
 
     // object references for UI elements
     static UICanvasBase UICanvasBase;
@@ -216,6 +226,21 @@ internal class CanvasService
     public static string WeeklyTarget = "";
     public static bool WeeklyVBlood = false;
 
+    static GameObject ShiftAbilityGroupObject;
+    static AbilityBarEntry ShiftSlotEntry;
+    static Image ShiftSlotIconImage;
+    static Sprite AbilityIconSprite;
+    static TextMeshProUGUI CooldownText;
+    static Image CooldownFillImage;
+    static TextMeshProUGUI ChargesText;
+    static Image ChargeUpFillImage;
+    static Image ChargesCooldownFillImage;
+    public static PrefabGUID AbilityGroupPrefabGUID = PrefabGUID.Empty;
+    public static string AbilityGroupPrefabName = "";
+    public static float Cooldown = 0f;
+    public static int Charges = 0;
+    public static float ChargesCooldown = 0f;
+
     static int Layer;
     static int BarNumber;
     static int GraphBarNumber;
@@ -238,7 +263,8 @@ internal class CanvasService
         {3, FamiliarToggle},
         {4, ProfessionToggle},
         {5, DailyQuestToggle},
-        {6, WeeklyQuestToggle}
+        {6, WeeklyQuestToggle},
+        {7, ShiftSlotToggle}
     };
 
     static readonly Dictionary<UIElement, string> AbilitySlotNamePaths = new()
@@ -249,7 +275,7 @@ internal class CanvasService
         { UIElement.Familiars, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Travel/" },
         { UIElement.Professions, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Spell1/" },
         { UIElement.Weekly, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Spell2/" },
-        { UIElement.Daily, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Ultimate/" }
+        { UIElement.Daily, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Ultimate/" },
     };
 
     static readonly Dictionary<UIElement, bool> UIElementsConfigured = new()
@@ -260,10 +286,11 @@ internal class CanvasService
         { UIElement.Familiars, FamiliarBar },
         { UIElement.Professions, ProfessionBars },
         { UIElement.Daily, QuestTracker },
-        { UIElement.Weekly, QuestTracker }
+        { UIElement.Weekly, QuestTracker },
+        { UIElement.ShiftSlot, ShiftSlot }
     };
 
-    static readonly Dictionary<UIElement, int> UIElementIndexes = new()
+    static readonly Dictionary<UIElement, int> UIElementIndices = new()
     {
         { UIElement.Experience, 0 },
         { UIElement.Legacy, 1 },
@@ -271,11 +298,15 @@ internal class CanvasService
         { UIElement.Familiars, 3 },
         { UIElement.Professions, 4 },
         { UIElement.Daily, 5 },
-        { UIElement.Weekly, 6 }
+        { UIElement.Weekly, 6 },
+        { UIElement.ShiftSlot, 7 }
     };
 
     public static bool Active = false;
+    public static bool ShiftActive = false;
     public static bool KillSwitch = false;
+
+    public static Entity playerCharacter = Entity.Null;
     public CanvasService(UICanvasBase canvas)
     {
         UICanvasBase = canvas;
@@ -288,8 +319,8 @@ internal class CanvasService
 
         //RectTransform MapCompassSouthTransform = GameObject.Find("HUDCanvas(Clone)/HUDClockCanvas/HUDMinimap/MiniMapParent(Clone)/Root/Panel/Compass/S").GetComponent<RectTransform>();
         //ReferenceOffsetX = (MapCompassSouthTransform.anchorMin + MapCompassSouthTransform.pivot * (MapCompassSouthTransform.anchorMax - MapCompassSouthTransform.anchorMin)).normalized.x;
-        FindSpritesByName(SpriteNames);
-
+        
+        FindSprites();
         InitializeBloodButton();
         InitializeAbilitySlotButtons();
         InitializeUI();
@@ -321,14 +352,20 @@ internal class CanvasService
             ConfigureVerticalProgressBar(ref MiningBarGameObject, ref MiningFill, ref MiningLevelText, ProfessionColors[Profession.Mining]);
             ConfigureVerticalProgressBar(ref FishingBarGameObject, ref FishingFill, ref FishingLevelText, ProfessionColors[Profession.Fishing]);
         }
+
+        if (ShiftSlot)
+        {
+            //ConfigureShiftSlot(ref ShiftAbilityGroupObject, ref ShiftSlotEntry, ref ShiftSlotIconImage, 
+                //ref CooldownText, ref CooldownFillImage, ref ChargesText, ref ChargeUpFillImage, ref ChargesCooldownFillImage);
+        }
     }
     static void InitializeAbilitySlotButtons()
     {
         foreach (var keyValuePair in UIElementsConfigured)
         {
-            if (keyValuePair.Value)
+            if (keyValuePair.Value && AbilitySlotNamePaths.ContainsKey(keyValuePair.Key))
             {
-                int index = UIElementIndexes[keyValuePair.Key];
+                int index = UIElementIndices[keyValuePair.Key];
                 GameObject abilitySlotObject = GameObject.Find(AbilitySlotNamePaths[keyValuePair.Key]);
 
                 if (abilitySlotObject != null)
@@ -342,6 +379,93 @@ internal class CanvasService
                     }
                 }
             }
+        }
+    }
+    static void ConfigureShiftSlot(ref GameObject shiftSlotObject, ref AbilityBarEntry shiftSlotEntry, ref Image shiftSlotImage, 
+        ref TextMeshProUGUI cooldownText, ref Image cooldownFill, ref TextMeshProUGUI chargesText, ref Image chargesFill, ref Image chargesCooldownFill)
+    {
+        GameObject AbilityDummyObject = GameObject.Find("HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/Abilities/AbilityBarEntry_Dummy/");
+        GameObject abilityDummyObject = GameObjectUtilities.FindTargetUIObject(Canvas.transform, "AbilityBarEntry_Dummy");
+
+        if (AbilityDummyObject != null)
+        {
+            shiftSlotObject = GameObject.Instantiate(AbilityDummyObject);
+            shiftSlotObject.transform.SetParent(AbilityDummyObject.transform.parent, true);
+            shiftSlotObject.SetActive(true);
+
+            shiftSlotEntry = shiftSlotObject.GetComponent<AbilityBarEntry>();
+            shiftSlotImage = shiftSlotEntry.AbilityIconImage;
+
+            cooldownText = shiftSlotEntry.CooldownText;
+            cooldownText.SetText("0");
+            cooldownText.enabled = false;
+
+            cooldownFill = shiftSlotEntry.CooldownFillImage;
+            cooldownFill.fillAmount = 0f;
+            cooldownFill.enabled = false;
+
+            chargesText = shiftSlotEntry.ChargesText;
+            chargesText.SetText("0");
+            chargesText.enabled = false;
+
+            chargesFill = shiftSlotEntry.ChargeUpFillImage;
+            chargesFill.fillAmount = 0f;
+            chargesFill.enabled = false;
+
+            chargesCooldownFill = shiftSlotEntry.ChargesCooldownImage;
+            chargesCooldownFill.fillAmount = 0f;
+            chargesCooldownFill.enabled = false;
+
+            UIObjectStates.Add(shiftSlotObject, true);
+
+            SimpleStunButton stunButton = shiftSlotObject.AddComponent<SimpleStunButton>();
+
+            if (ActionToggles.TryGetValue(7, out var toggleAction))
+            {
+                stunButton.onClick.AddListener(new Action(toggleAction));
+            }
+        }
+        else if (abilityDummyObject != null)
+        {
+            shiftSlotObject = GameObject.Instantiate(AbilityDummyObject);
+            shiftSlotObject.transform.SetParent(AbilityDummyObject.transform.parent, true);
+            shiftSlotObject.SetActive(true);
+
+            shiftSlotEntry = shiftSlotObject.GetComponent<AbilityBarEntry>();
+            shiftSlotImage = shiftSlotEntry.AbilityIconImage;
+
+            cooldownText = shiftSlotEntry.CooldownText;
+            cooldownText.SetText("0");
+            cooldownText.enabled = false;
+
+            cooldownFill = shiftSlotEntry.CooldownFillImage;
+            cooldownFill.fillAmount = 0f;
+            cooldownFill.enabled = false;
+
+            chargesText = shiftSlotEntry.ChargesText;
+            chargesText.SetText("0");
+            chargesText.enabled = false;
+
+            chargesFill = shiftSlotEntry.ChargeUpFillImage;
+            chargesFill.fillAmount = 0f;
+            chargesFill.enabled = false;
+
+            chargesCooldownFill = shiftSlotEntry.ChargesCooldownImage;
+            chargesCooldownFill.fillAmount = 0f;
+            chargesCooldownFill.enabled = false;
+
+            UIObjectStates.Add(shiftSlotObject, true);
+
+            SimpleStunButton stunButton = shiftSlotObject.AddComponent<SimpleStunButton>();
+
+            if (ActionToggles.TryGetValue(7, out var toggleAction))
+            {
+                stunButton.onClick.AddListener(new Action(toggleAction));
+            }
+        }
+        else
+        {
+            Core.Log.LogWarning("AbilityBarEntry_Dummy not found for both attempts!");
         }
     }
     static void ExperienceToggle()
@@ -402,6 +526,13 @@ internal class CanvasService
 
         WeeklyQuestObject.SetActive(active);
         UIObjectStates[WeeklyQuestObject] = active;
+    }
+    static void ShiftSlotToggle()
+    {
+        bool active = !ShiftAbilityGroupObject.activeSelf;
+
+        ShiftAbilityGroupObject.SetActive(active);
+        UIObjectStates[ShiftAbilityGroupObject] = active;
     }
     static void InitializeBloodButton()
     {
@@ -482,7 +613,59 @@ internal class CanvasService
                 UpdateProfessions(FishingProgress, FishingLevel, ProfessionMaxLevel, FishingLevelText, FishingFill);
             }
 
+            if (playerCharacter.Exists())
+            {
+                //playerCharacter.LogComponentTypes();
+            }
+            else
+            {
+                //Core.Log.LogWarning("Player character entity does not exist!");
+            }
+
             yield return Delay;
+        }
+    }
+    public static IEnumerator ShiftUpdateLoop()
+    {
+        while (true)
+        {
+            if (KillSwitch) // stop running if player leaves game
+            {
+                ShiftActive = false;
+                break;
+            }
+            else if (!ShiftActive) // don't update if not active from blood orb click
+            {
+                yield return Delay;
+                continue;
+            }
+
+            UpdateShiftSlot(ShiftAbilityGroupObject, ShiftSlotEntry, ShiftSlotIconImage, AbilityIconSprite, AbilityGroupPrefabName, Cooldown, CooldownFillImage, Charges, ChargeUpFillImage, ChargesCooldown, ChargesCooldownFillImage);
+
+            yield return ShiftDelay;
+        }
+    }
+    static void UpdateShiftSlot(GameObject shiftAbilityGroupObject, AbilityBarEntry shiftSlotEntry, Image shiftSlotIconImage,
+        Sprite abilityIconSprite, string abilityGroupPrefabName, 
+        float cooldown, Image cooldownFillImage, 
+        int charges, Image chargeUpFillImage, 
+        float chargesCooldown, Image chargesCooldownFillImage)
+    {
+        if (abilityIconSprite == null && !string.IsNullOrEmpty(abilityGroupPrefabName))
+        {
+            Match match = AbilitySpellRegex.Match(abilityGroupPrefabName);
+
+            if (match.Success)
+            {
+                if (AbilityIconMap.TryGetValue(match.Value, out abilityIconSprite))
+                {
+                    shiftSlotIconImage.sprite = abilityIconSprite;
+                }
+            }
+        }
+        else // update values, fills etc here after checking if player can get the ability entity from client data
+        {
+
         }
     }
     static void UpdateProfessions(float progress, int level, int maxLevel, LocalizedText levelText, Image fill)
@@ -1160,30 +1343,56 @@ internal class CanvasService
 
             return components;
         }
-        public static void FindSpritesByName(List<string> SpriteNames)
+        public static void FindSprites()
         {
             Il2CppArrayBase<Sprite> allSprites = Resources.FindObjectsOfTypeAll<Sprite>();
 
+            /*
             var matchedSprites = allSprites
                 .Where(sprite => SpriteNames.Contains(sprite.name))
                 .ToDictionary(sprite => SpriteNames.First(pair => pair == sprite.name), sprite => sprite);
+
+            var abilityIconSprites  = allSprites
+                .Where(sprite => sprite.name.StartsWith(ABILITY_ICON))
+                .ToDictionary(sprite => sprite.name, sprite => sprite);
+
+            Sprite npcAbilityIconSprite = allSprites.FirstOrDefault(sprite => sprite.name == NPC_ABILITY);
 
             foreach (var pair in matchedSprites)
             {
                 SpriteMap[pair.Key] = pair.Value;
             }
+
+            foreach (var pair in abilityIconSprites)
+            {
+                AbilityIconMap[pair.Key] = pair.Value;
+            }
+            */
+
+            foreach (Sprite sprite in allSprites)
+            {
+                // Check for matched sprites
+                if (SpriteNames.Contains(sprite.name) && !SpriteMap.ContainsKey(sprite.name))
+                {
+                    SpriteMap[sprite.name] = sprite;
+                }
+
+                // Check for ability icon sprites
+                if (sprite.name.StartsWith(ABILITY_ICON) && !AbilityIconMap.ContainsKey(sprite.name))
+                {
+                    AbilityIconMap[sprite.name.Replace(ABILITY_ICON, "")] = sprite;
+                }
+
+                // Check for NPC ability sprite
+                if (sprite.name == NPC_ABILITY && !AbilityIconMap.ContainsKey(sprite.name))
+                {
+                    AbilityIconMap[sprite.name] = sprite;
+                }
+            }
         }
     }
-    static void OnDropDownChanged(int optionIndex)
-    {
-        Core.Log.LogInfo($"OnDropDownChanged {optionIndex}");
-    }
-
-    static void OnDeselect(bool selected)
-    {
-        Core.Log.LogInfo($"OnDeselect {selected}");
-    }
 }
+
 /*
     static GameObject DropdownMenu;
     static TMP_Dropdown DropdownSelection;
