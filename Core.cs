@@ -4,6 +4,7 @@ using Bloodcraft.Resources;
 using Eclipse.Services;
 using ProjectM;
 using ProjectM.Physics;
+using ProjectM.Scripting;
 using ProjectM.UI;
 using System.Collections;
 using Unity.Entities;
@@ -12,10 +13,16 @@ using UnityEngine;
 namespace Eclipse;
 internal class Core
 {
-    static World Client;
+    public static World Client;
     public static EntityManager EntityManager => Client.EntityManager;
+    public static ClientScriptMapper ClientScriptMapper { get; internal set; }
+    public static ClientGameManager ClientGameManager => ClientScriptMapper._ClientGameManager;
     public static CanvasService CanvasService { get; internal set; }
     public static PrefabCollectionSystem PrefabCollectionSystem { get; internal set; }
+    public static GameDataSystem GameDataSystem { get; internal set; }
+    public static ManagedDataSystem ManagedDataSystem { get; internal set; }
+    public static UIDataSystem UIDataSystem { get; internal set; }
+    public static ServerTime ServerTime => ClientGameManager.ServerTime;
     public static ManualLogSource Log => Plugin.LogInstance;
 
     static MonoBehaviour monoBehaviour;
@@ -28,6 +35,9 @@ internal class Core
 
         Client = __instance.World;
         PrefabCollectionSystem = Client.GetExistingSystemManaged<PrefabCollectionSystem>();
+        ManagedDataSystem = Client.GetExistingSystemManaged<ManagedDataSystem>();
+        GameDataSystem = Client.GetExistingSystemManaged<GameDataSystem>();
+        ClientScriptMapper = Client.GetExistingSystemManaged<ClientScriptMapper>();    
 
         /*
         foreach (var kvp in Client.m_SystemLookup)

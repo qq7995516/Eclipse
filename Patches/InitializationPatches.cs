@@ -3,7 +3,6 @@ using HarmonyLib;
 using ProjectM;
 using ProjectM.Network;
 using ProjectM.UI;
-using StunShared.UI;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -30,7 +29,7 @@ internal static class InitializationPatches
 
                 if (Core.hasInitialized)
                 {
-                    Core.Log.LogInfo($"|{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] initialized on client|");
+                    Core.Log.LogInfo($"|{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] initialized on client!");
                 }
             }
         }
@@ -113,17 +112,5 @@ internal static class InitializationPatches
         }
         
         CanvasService.UIObjectStates.Clear();
-    }
-
-    public static GameObject AbilityBarEntry_Dummy;
-
-    [HarmonyPatch(typeof(InputActionSystem), nameof(InputActionSystem.OnUpdate))]
-    [HarmonyPostfix]
-    static void OnUpdatePostfix(InputActionSystem __instance)
-    {
-        if (AbilityBarEntry_Dummy != null)
-        {
-            AbilityBarEntry_Dummy.SetActive(true);
-        }
     }
 }

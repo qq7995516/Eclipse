@@ -1,5 +1,6 @@
 using Il2CppInterop.Runtime;
 using ProjectM;
+using ProjectM.Scripting;
 using Stunlock.Core;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -9,6 +10,7 @@ namespace Eclipse;
 internal static class Extensions
 {
     static EntityManager EntityManager => Core.EntityManager;
+    static ClientGameManager ClientGameManager => Core.ClientGameManager;
     static PrefabCollectionSystem PrefabCollectionSystem => Core.PrefabCollectionSystem;
 
     public delegate void ActionRef<T>(ref T item);
@@ -55,6 +57,11 @@ internal static class Extensions
 
         return byteArray;
     }
+    public static PrefabGUID GetPrefabGUID(this Entity entity)
+    {
+        if (entity.TryGetComponent(out PrefabGUID prefabGUID)) return prefabGUID;
+        return PrefabGUID.Empty;
+    }
     public static unsafe T Read<T>(this Entity entity) where T : struct
     {
         // Get the ComponentType for T
@@ -72,14 +79,33 @@ internal static class Extensions
     {
         return EntityManager.GetBuffer<T>(entity);
     }
+    public static bool TryGetBuffer<T>(this Entity entity, out DynamicBuffer<T> dynamicBuffer) where T : struct
+    {
+        if (ClientGameManager.TryGetBuffer(entity, out dynamicBuffer))
+        {
+            return true;
+        }
+
+        return false;
+    }
+    public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
+    {
+        foreach (var item in source)
+        {
+            action(item);
+        }
+    }
     public static bool TryGetComponent<T>(this Entity entity, out T componentData) where T : struct
     {
         componentData = default;
+
         if (entity.Has<T>())
         {
             componentData = entity.Read<T>();
+
             return true;
         }
+
         return false;
     }
     public static bool Has<T>(this Entity entity)
@@ -105,16 +131,32 @@ internal static class Extensions
     public static void LogComponentTypes(this Entity entity)
     {
         NativeArray<ComponentType>.Enumerator enumerator = EntityManager.GetComponentTypes(entity).GetEnumerator();
+
         Core.Log.LogInfo("===");
+
         while (enumerator.MoveNext())
         {
             ComponentType current = enumerator.Current;
             Core.Log.LogInfo($"{current}");
         }
+
         Core.Log.LogInfo("===");
     }
     public static bool Exists(this Entity entity)
     {
         return EntityManager.Exists(entity);
+    }
+    public static bool TryGetComponentObject<T>(this Entity entity, out T component) where T : class
+    {
+        component = default;
+
+        if (entity.Has<T>())
+        {
+            component = EntityManager.GetComponentObject<T>(entity);
+
+            return true;
+        }
+
+        return false;
     }
 }

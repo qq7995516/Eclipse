@@ -1,5 +1,4 @@
-﻿using Stunlock.Core;
-using System.Globalization;
+﻿using System.Globalization;
 using UnityEngine;
 using UnityEngine.InputSystem.Utilities;
 
@@ -201,7 +200,7 @@ internal static class DataService
         { Profession.Harvesting,    new Color(0.0f,    0.502f, 0.0f) },
         { Profession.Blacksmithing, new Color(0.208f, 0.212f, 0.255f) },
         { Profession.Tailoring,     new Color(0.976f, 0.871f, 0.741f) },
-        { Profession.Woodcutting,   new Color(0.647f, 0.165f, 0.165f) },
+        { Profession.Woodcutting,   new Color(0.545f, 0.271f, 0.075f) },
         { Profession.Mining,        new Color(0.502f, 0.502f, 0.502f) },
         { Profession.Fishing,       new Color(0.0f, 0.7f, 0.9f) }
     };
@@ -277,13 +276,6 @@ internal static class DataService
                 .Select(stat => int.Parse(stat).ToString())
                 .ToList() : ["", "", ""];
     }
-    internal class AbilityData(string prefabHash, string cooldown, string charges, string chargesCooldown)
-    {
-        public PrefabGUID AbilityPrefabGUID { get; set; } = int.TryParse(prefabHash, out int parsedHash) ? new PrefabGUID(parsedHash) : PrefabGUID.Empty;
-        public float Cooldown { get; set; } = float.TryParse(cooldown, NumberStyles.Integer, CultureInfo.InvariantCulture, out float parsedCooldown) ? parsedCooldown : 0f;
-        public int Charges { get; set; } = int.TryParse(charges, out int parsedCharges) ? parsedCharges : 0;
-        public float ChargesCooldown { get; set; } = float.TryParse(chargesCooldown, NumberStyles.Integer, CultureInfo.InvariantCulture, out float parsedChargesCooldown) ? parsedChargesCooldown : 0f;
-    }
     internal class ConfigData
     {
         public float PrestigeStatMultiplier;
@@ -307,8 +299,6 @@ internal static class DataService
         public Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> bloodStats)> ClassStatSynergies;
         public ConfigData(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string maxFamiliarLevel, string maxProfessionLevel, string weaponStatValues, string bloodStatValues, string classStatSynergies)
         {
-            //Core.Log.LogInfo($"ConfigData: {prestigeMultiplier}, {statSynergyMultiplier}, {weaponStatValues}, {bloodStatValues}, {classStatSynergies}");
-
             PrestigeStatMultiplier = float.Parse(prestigeMultiplier, CultureInfo.InvariantCulture);
             ClassStatMultiplier = float.Parse(statSynergyMultiplier, CultureInfo.InvariantCulture);
 
@@ -387,8 +377,6 @@ internal static class DataService
     {
         int index = 0;
 
-        //Core.Log.LogInfo($"PlayerData: {string.Join(",", playerData)}");
-
         ExperienceData experienceData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         LegacyData legacyData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         ExpertiseData expertiseData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
@@ -448,17 +436,5 @@ internal static class DataService
         CanvasService.WeeklyGoal = weeklyQuestData.Goal;
         CanvasService.WeeklyTarget = weeklyQuestData.Target;
         CanvasService.WeeklyVBlood = weeklyQuestData.IsVBlood;
-    }
-    public static void ParseAbilityData(List<string> playerData)
-    {
-        int index = 0;
-
-        AbilityData abilityData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index]);
-
-        CanvasService.AbilityGroupPrefabGUID = abilityData.AbilityPrefabGUID;
-        CanvasService.AbilityGroupPrefabName = abilityData.AbilityPrefabGUID.IsEmpty() ? "" : abilityData.AbilityPrefabGUID.LookupName();
-        CanvasService.Cooldown = abilityData.Cooldown;
-        CanvasService.Charges = abilityData.Charges;
-        CanvasService.ChargesCooldown = abilityData.ChargesCooldown;
     }
 }

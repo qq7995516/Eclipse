@@ -3,10 +3,12 @@ using HarmonyLib;
 using Il2CppInterop.Runtime;
 using ProjectM.Network;
 using ProjectM.UI;
+using System.Collections;
 using System.Text;
 using System.Text.RegularExpressions;
 using Unity.Collections;
 using Unity.Entities;
+using UnityEngine;
 using CryptographicOperations = System.Security.Cryptography.CryptographicOperations;
 using HMACSHA256 = System.Security.Cryptography.HMACSHA256;
 
@@ -22,6 +24,8 @@ internal static class ClientChatSystemPatch
 
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex regexMAC = new(@";mac([^;]+)$");
+
+    static readonly WaitForSeconds RegistrationDelay = new(4f);
 
     static readonly ComponentType[] NetworkEventComponents =
     [
@@ -44,8 +48,8 @@ internal static class ClientChatSystemPatch
     {
         RegisterUser,
         ProgressToClient,
-        ConfigsToClient,
-        UpdateShiftSlot
+        ConfigsToClient
+        //UpdateShiftSlot
     }
 
     [HarmonyPatch(typeof(ClientChatSystem), nameof(ClientChatSystem.OnUpdate))]
@@ -64,11 +68,11 @@ internal static class ClientChatSystemPatch
                 string stringId = localUser.Read<User>().PlatformId.ToString();
 
                 string message = $"{modVersion};{stringId}";
-                SendMessage(NetworkEventSubType.RegisterUser, message);
+                Core.StartCoroutine(DelayedSendMessage(message));
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to register with Bloodcraft on server! Error - {e}");
+                Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to register with Bloodcraft on server! Error - {ex}");
             }
         }
 
@@ -82,11 +86,11 @@ internal static class ClientChatSystemPatch
                 {
                     ChatMessageServerEvent chatMessage = entity.Read<ChatMessageServerEvent>();
                     string message = chatMessage.MessageText.Value;
+
                     //Core.Log.LogInfo($"Received message: {message}");
 
                     if (VerifyMAC(message, out string originalMessage))
                     {
-                        //Core.Log.LogInfo($"Verified message, handling...");
                         HandleServerMessage(originalMessage);
                         EntityManager.DestroyEntity(entity);
                     }
@@ -97,6 +101,12 @@ internal static class ClientChatSystemPatch
         {
             entities.Dispose();
         }
+    }
+    static IEnumerator DelayedSendMessage(string message)
+    {
+        yield return RegistrationDelay;
+
+        SendMessage(NetworkEventSubType.RegisterUser, message);
     }
     static void SendMessage(NetworkEventSubType subType, string message)
     {
@@ -124,36 +134,33 @@ internal static class ClientChatSystemPatch
                 List<string> playerData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
                 DataService.ParsePlayerData(playerData);
 
-                if (!CanvasService.Active)
-                {
-                    if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
-                    CanvasService.Active = true;
+                if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
+                if (!CanvasService.Active) CanvasService.Active = true;
 
-                    Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
-                }
+                Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
 
                 break;
             case (int)NetworkEventSubType.ConfigsToClient:
                 List<string> configData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
                 DataService.ParseConfigData(configData);
+
                 break;
+                /*
             case (int)NetworkEventSubType.UpdateShiftSlot:
                 List<string> abilityData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
                 DataService.ParseAbilityData(abilityData);
 
-                if (!CanvasService.ShiftActive)
-                {
-                    //if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
+                if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
+                if (!CanvasService.ShiftActive) CanvasService.ShiftActive = true;
 
-                    //Core.StartCoroutine(CanvasService.ShiftUpdateLoop());
-                }
+                Core.StartCoroutine(CanvasService.ShiftUpdateLoop());
 
                 break;
+                */
         }
     }
     public static bool VerifyMAC(string receivedMessage, out string originalMessage)
     {
-        // Separate the original message and the MAC
         Match match = regexMAC.Match(receivedMessage);
         originalMessage = "";
 
@@ -163,13 +170,14 @@ internal static class ClientChatSystemPatch
             string intermediateMessage = regexMAC.Replace(receivedMessage, "");
             string recalculatedMAC = GenerateMAC(intermediateMessage);
 
-            // Compare the MACs
             if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(recalculatedMAC), Encoding.UTF8.GetBytes(receivedMAC)))
             {
                 originalMessage = intermediateMessage;
+
                 return true;
             }
         }
+
         return false;
     }
     public static string GenerateMAC(string message)
