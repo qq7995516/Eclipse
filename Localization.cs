@@ -55,13 +55,12 @@ internal class Localization
         string jsonContent = localizationReader.ReadToEnd();
         var localizationFile = JsonSerializer.Deserialize<LocalizationFile>(jsonContent);
 
-        localizationFile.Nodes
-            .ToDictionary(x => x.Guid, x => x.Text)
-            .ForEach(kvp => GuidStringsToLocalizedNames[kvp.Key] = kvp.Value);
+        var nodesDict = localizationFile.Nodes
+            .ToDictionary(x => x.Guid, x => x.Text);
+            //.ForEach(kvp => GuidStringsToLocalizedNames[kvp.Key] = kvp.Value);
 
-        localizationFile.Nodes
-            .ToDictionary(x => x.Text, x => x.Guid)
-            .ForEach(kvp => LocalizedNamesToGuidStrings[kvp.Key] = kvp.Value);
+        nodesDict.ForEach(kvp => GuidStringsToLocalizedNames[kvp.Key] = kvp.Value);
+        nodesDict.ForEach(kvp => LocalizedNamesToGuidStrings[kvp.Value] = kvp.Key);
     }
     static void LoadPrefabNames()
     {

@@ -34,6 +34,8 @@ internal class Core
         if (hasInitialized) return;
 
         Client = __instance.World;
+        _ = new Localization();
+
         PrefabCollectionSystem = Client.GetExistingSystemManaged<PrefabCollectionSystem>();
         ManagedDataSystem = Client.GetExistingSystemManaged<ManagedDataSystem>();
         GameDataSystem = Client.GetExistingSystemManaged<GameDataSystem>();

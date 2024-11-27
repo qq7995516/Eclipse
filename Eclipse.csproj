@@ -22,6 +22,8 @@
 
 	<ItemGroup>
 		<EmbeddedResource Include="Resources\secrets.json" />
+		<EmbeddedResource Include="Localization\English.json" />
+		<EmbeddedResource Include="Localization\Prefabs.json" />
 	</ItemGroup>
 	
   <ItemGroup>

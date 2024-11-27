@@ -68,7 +68,7 @@ internal class CanvasService
     public const string ABILITY_ICON = "Stunlock_Icon_Ability_Spell_";
     public const string NPC_ABILITY = "Ashka_M1_64";
 
-    static readonly Dictionary<string, Sprite> SpriteMap = [];
+    public static readonly Dictionary<string, Sprite> SpriteMap = [];
     public static readonly Dictionary<string, Sprite> AbilityIconMap = [];
 
     static readonly Regex ClassNameRegex = new("(?<!^)([A-Z])");
@@ -596,6 +596,7 @@ internal class CanvasService
         if (abilityCastEntity.TryGetComponent(out AbilityCooldownData abilityCooldownData))
         {
             CooldownTime = abilityCooldownData.Cooldown._Value;
+            CooldownEndTime = Core.ServerTime.TimeOnServer + (double)CooldownTime; // see if this fixes not appearing till second use
         }
     }
     static void UpdateAbilityState(Entity abilityGroupEntity, Entity abilityCastEntity)
@@ -628,7 +629,6 @@ internal class CanvasService
                 
                 //CooldownFillImage.fillAmount = CooldownRemaining / CooldownTime;
                 CooldownFillImage.fillAmount = ChargeUpTime / CooldownTime;
-
                 //Core.Log.LogInfo($"(1) Charges: {CurrentCharges}/{MaxCharges} - CooldownRemaining: {CooldownRemaining}, CooldownTime: {CooldownTime} ({CooldownRemaining / CooldownTime}%), ChargeTime: {ChargeUpTime} ({1 - (ChargeUpTimeRemaining / ChargeUpTime)}%)");
             }
             else
@@ -645,7 +645,6 @@ internal class CanvasService
                 ChargeCooldownFillImage.fillAmount = 1 - (CooldownRemaining / CooldownTime);
 
                 if (CurrentCharges == MaxCharges) ChargeCooldownFillImage.fillAmount = 0f;
-
                 //Core.Log.LogInfo($"(2) Charges: {CurrentCharges}/{MaxCharges} - CooldownRemaining: {CooldownRemaining}, CooldownTime: {CooldownTime} ({CooldownRemaining / CooldownTime}%), ChargeTime: {ChargeUpTime} ({1 - (ChargeUpTimeRemaining / ChargeUpTime)}%)");
             }
         }
@@ -956,8 +955,7 @@ internal class CanvasService
             else if (targetType.Equals(TargetType.Craft))
             {
                 if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
-
-                /*
+                
                 PrefabGUID targetPrefabGUID = Localization.GetPrefabGUIDFromLocalizedName(target);
                 ManagedItemData managedItemData = ManagedDataRegistry.GetOrDefault<ManagedItemData>(targetPrefabGUID);
 
@@ -967,18 +965,15 @@ internal class CanvasService
                 {
                     questIcon.sprite = managedItemData.Icon;
                 }
-                */
-
-                if (questIcon.sprite.name != "Poneti_Icon_Hammer_30" && SpriteMap.TryGetValue("Poneti_Icon_Hammer_30", out Sprite craftingSprite))
+                //else if (questIcon.sprite.name != "Poneti_Icon_Hammer_30" && SpriteMap.TryGetValue("Poneti_Icon_Hammer_30", out Sprite craftingSprite))
                 {
-                    questIcon.sprite = craftingSprite;
+                    //questIcon.sprite = craftingSprite;
                 }
             }
             else if (targetType.Equals(TargetType.Gather))
             {
                 if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
 
-                /*
                 PrefabGUID targetPrefabGUID = Localization.GetPrefabGUIDFromLocalizedName(target);
                 ManagedItemData managedItemData = ManagedDataRegistry.GetOrDefault<ManagedItemData>(targetPrefabGUID);
 
@@ -988,11 +983,9 @@ internal class CanvasService
                 {
                     questIcon.sprite = managedItemData.Icon;
                 }
-                */
-
-                if (questIcon.sprite.name != "Poneti_Icon_Res_93" && SpriteMap.TryGetValue("Poneti_Icon_Res_93", out Sprite gatherSprite))
+                //else if (questIcon.sprite.name != "Poneti_Icon_Res_93" && SpriteMap.TryGetValue("Poneti_Icon_Res_93", out Sprite gatherSprite))
                 {
-                    questIcon.sprite = gatherSprite;
+                    //questIcon.sprite = gatherSprite;
                 }
             }
         }

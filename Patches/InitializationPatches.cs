@@ -112,5 +112,6 @@ internal static class InitializationPatches
         }
         
         CanvasService.UIObjectStates.Clear();
+        CanvasService.SpriteMap.Clear();
     }
 }
