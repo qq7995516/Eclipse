@@ -1,6 +1,6 @@
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
-using Bloodcraft.Resources;
+using Eclipse.Resources;
 using Eclipse.Services;
 using ProjectM;
 using ProjectM.Physics;
@@ -13,8 +13,8 @@ using UnityEngine;
 namespace Eclipse;
 internal class Core
 {
-    public static World Client;
-    public static EntityManager EntityManager => Client.EntityManager;
+    public static World _client;
+    public static EntityManager EntityManager => _client.EntityManager;
     public static ClientScriptMapper ClientScriptMapper { get; internal set; }
     public static ClientGameManager ClientGameManager => ClientScriptMapper._ClientGameManager;
     public static CanvasService CanvasService { get; internal set; }
@@ -25,21 +25,21 @@ internal class Core
     public static ServerTime ServerTime => ClientGameManager.ServerTime;
     public static ManualLogSource Log => Plugin.LogInstance;
 
-    static MonoBehaviour monoBehaviour;
+    static MonoBehaviour _monoBehaviour;
     public static byte[] NEW_SHARED_KEY { get; internal set; }
 
-    public static bool hasInitialized = false;
+    public static bool _hasInitialized = false;
     public static void Initialize(GameDataManager __instance)
     {
-        if (hasInitialized) return;
+        if (_hasInitialized) return;
 
-        Client = __instance.World;
+        _client = __instance.World;
         _ = new Localization();
 
-        PrefabCollectionSystem = Client.GetExistingSystemManaged<PrefabCollectionSystem>();
-        ManagedDataSystem = Client.GetExistingSystemManaged<ManagedDataSystem>();
-        GameDataSystem = Client.GetExistingSystemManaged<GameDataSystem>();
-        ClientScriptMapper = Client.GetExistingSystemManaged<ClientScriptMapper>();    
+        PrefabCollectionSystem = _client.GetExistingSystemManaged<PrefabCollectionSystem>();
+        ManagedDataSystem = _client.GetExistingSystemManaged<ManagedDataSystem>();
+        GameDataSystem = _client.GetExistingSystemManaged<GameDataSystem>();
+        ClientScriptMapper = _client.GetExistingSystemManaged<ClientScriptMapper>();
 
         /*
         foreach (var kvp in Client.m_SystemLookup)
@@ -64,7 +64,7 @@ internal class Core
 
         NEW_SHARED_KEY = Convert.FromBase64String(SecretManager.GetNewSharedKey());
 
-        hasInitialized = true;
+        _hasInitialized = true;
     }
     public static void SetCanvas(UICanvasBase canvas)
     {
@@ -72,13 +72,13 @@ internal class Core
     }
     public static void StartCoroutine(IEnumerator routine)
     {
-        if (monoBehaviour == null)
+        if (_monoBehaviour == null)
         {
             var go = new GameObject("Eclipse");
-            monoBehaviour = go.AddComponent<IgnorePhysicsDebugSystem>();
+            _monoBehaviour = go.AddComponent<IgnorePhysicsDebugSystem>();
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
 
-        monoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
+        _monoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
     }
 }

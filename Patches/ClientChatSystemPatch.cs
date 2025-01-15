@@ -25,7 +25,7 @@ internal static class ClientChatSystemPatch
     static readonly Regex regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex regexMAC = new(@";mac([^;]+)$");
 
-    static readonly WaitForSeconds RegistrationDelay = new(4f);
+    static readonly WaitForSeconds RegistrationDelay = new(5f);
 
     static readonly ComponentType[] NetworkEventComponents =
     [
@@ -56,7 +56,7 @@ internal static class ClientChatSystemPatch
     [HarmonyPrefix]
     static void OnUpdatePrefix(ClientChatSystem __instance)
     {
-        if (!Core.hasInitialized || !ShouldInitialize) return;
+        if (!Core._hasInitialized || !ShouldInitialize) return;
 
         if (!UserRegistered && localCharacter != Entity.Null && localUser != Entity.Null)
         {
@@ -65,7 +65,7 @@ internal static class ClientChatSystemPatch
             try
             {
                 string modVersion = MyPluginInfo.PLUGIN_VERSION;
-                string stringId = localUser.Read<User>().PlatformId.ToString();
+                string stringId = localUser.ReadRO<User>().PlatformId.ToString();
 
                 string message = $"{modVersion};{stringId}";
                 Core.StartCoroutine(DelayedSendMessage(message));
@@ -78,16 +78,15 @@ internal static class ClientChatSystemPatch
 
         //NativeArray<Entity> entities = __instance.EntityQueries[1].ToEntityArray(Allocator.Temp);
         NativeArray<Entity> entities = __instance._ReceiveChatMessagesQuery.ToEntityArray(Allocator.Temp);
+
         try
         {
             foreach (Entity entity in entities)
             {
                 if (entity.Has<ChatMessageServerEvent>())
                 {
-                    ChatMessageServerEvent chatMessage = entity.Read<ChatMessageServerEvent>();
+                    ChatMessageServerEvent chatMessage = entity.ReadRO<ChatMessageServerEvent>();
                     string message = chatMessage.MessageText.Value;
-
-                    //Core.Log.LogInfo($"Received message: {message}");
 
                     if (VerifyMAC(message, out string originalMessage))
                     {
@@ -117,7 +116,7 @@ internal static class ClientChatSystemPatch
         {
             MessageText = new FixedString512Bytes(messageWithMAC),
             MessageType = ChatMessageType.Local,
-            ReceiverEntity = localUser.Read<NetworkId>()
+            ReceiverEntity = localUser.ReadRO<NetworkId>()
         };
 
         Entity networkEntity = EntityManager.CreateEntity(NetworkEventComponents);
@@ -134,16 +133,14 @@ internal static class ClientChatSystemPatch
                 List<string> playerData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
                 DataService.ParsePlayerData(playerData);
 
-                if (CanvasService.KillSwitch) CanvasService.KillSwitch = false;
-                if (!CanvasService.Active) CanvasService.Active = true;
+                if (CanvasService._killSwitch) CanvasService._killSwitch = false;
+                if (!CanvasService._active) CanvasService._active = true;
 
                 Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
-
                 break;
             case (int)NetworkEventSubType.ConfigsToClient:
                 List<string> configData = DataService.ParseMessageString(regexExtract.Replace(message, ""));
                 DataService.ParseConfigData(configData);
-
                 break;
                 /*
             case (int)NetworkEventSubType.UpdateShiftSlot:
@@ -186,5 +183,5 @@ internal static class ClientChatSystemPatch
         byte[] messageBytes = Encoding.UTF8.GetBytes(message);
         byte[] hashBytes = hmac.ComputeHash(messageBytes);
         return Convert.ToBase64String(hashBytes);
-    } 
+    }
 }

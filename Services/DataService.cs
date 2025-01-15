@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using Stunlock.Core;
+using System.Globalization;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.InputSystem.Utilities;
 
@@ -55,10 +57,10 @@ internal static class DataService
         FishingPole
     }
 
-    public static Dictionary<WeaponStatType, float> WeaponStatValues = [];
+    public static Dictionary<WeaponStatType, float> _weaponStatValues = [];
     public enum WeaponStatType
     {
-        None, 
+        None,
         MaxHealth,
         MovementSpeed,
         PrimaryAttackSpeed,
@@ -69,8 +71,8 @@ internal static class DataService
         SpellPower,
         PhysicalCritChance,
         PhysicalCritDamage,
-        SpellCritChance, 
-        SpellCritDamage 
+        SpellCritChance,
+        SpellCritDamage
     }
 
     public static readonly Dictionary<WeaponStatType, string> WeaponStatTypeAbbreviations = new()
@@ -121,7 +123,7 @@ internal static class DataService
         { WeaponStatType.SpellCritDamage, "percentage" }
     };
 
-    public static Dictionary<BloodStatType, float> BloodStatValues = [];
+    public static Dictionary<BloodStatType, float> _bloodStatValues = [];
     public enum BloodStatType
     {
         None, // 0
@@ -130,7 +132,7 @@ internal static class DataService
         PhysicalResistance, // 2
         SpellResistance, // 3
         ResourceYield, // 4
-        CCReduction, // 5
+        BloodDrain, // 5
         SpellCooldownRecoveryRate, // 6
         WeaponCooldownRecoveryRate, // 7
         UltimateCooldownRecoveryRate, // 8
@@ -146,7 +148,7 @@ internal static class DataService
         { BloodStatType.PhysicalResistance, "PR" },
         { BloodStatType.SpellResistance, "SR" },
         { BloodStatType.ResourceYield, "RY" },
-        { BloodStatType.CCReduction, "CCR" },
+        { BloodStatType.BloodDrain, "BD" },
         { BloodStatType.SpellCooldownRecoveryRate, "SCR" },
         { BloodStatType.WeaponCooldownRecoveryRate, "WCR" },
         { BloodStatType.UltimateCooldownRecoveryRate, "UCR" },
@@ -162,7 +164,7 @@ internal static class DataService
         { "PhysicalResistance", "PR" },
         { "SpellResistance", "SR" },
         { "ResourceYield", "RY" },
-        { "CCReduction", "CCR" },
+        { "BloodDrain", "BD" },
         { "SpellCooldownRecoveryRate", "SCR" },
         { "WeaponCooldownRecoveryRate", "WCR" },
         { "UltimateCooldownRecoveryRate", "UCR" },
@@ -197,16 +199,16 @@ internal static class DataService
     {
         { Profession.Enchanting,    new Color(0.494f, 0.133f, 0.808f) },
         { Profession.Alchemy,       new Color(0.071f, 0.831f, 0.635f) },
-        { Profession.Harvesting,    new Color(0.0f,    0.502f, 0.0f) },
+        { Profession.Harvesting,    new Color(0.0f, 0.502f, 0.0f) },
         { Profession.Blacksmithing, new Color(0.208f, 0.212f, 0.255f) },
         { Profession.Tailoring,     new Color(0.976f, 0.871f, 0.741f) },
         { Profession.Woodcutting,   new Color(0.545f, 0.271f, 0.075f) },
         { Profession.Mining,        new Color(0.502f, 0.502f, 0.502f) },
         { Profession.Fishing,       new Color(0.0f, 0.7f, 0.9f) }
     };
-    internal class ProfessionData(string enchantingProgress, string enchantingLevel, string alchemyProgress, string alchemyLevel, 
-        string harvestingProgress, string harvestingLevel, string blacksmithingProgress, string blacksmithingLevel, 
-        string tailoringProgress, string tailoringLevel, string woodcuttingProgress, string woodcuttingLevel, string miningProgress, 
+    internal class ProfessionData(string enchantingProgress, string enchantingLevel, string alchemyProgress, string alchemyLevel,
+        string harvestingProgress, string harvestingLevel, string blacksmithingProgress, string blacksmithingLevel,
+        string tailoringProgress, string tailoringLevel, string woodcuttingProgress, string woodcuttingLevel, string miningProgress,
         string miningLevel, string fishingProgress, string fishingLevel)
     {
         public float EnchantingProgress { get; set; } = float.Parse(enchantingProgress, CultureInfo.InvariantCulture) / 100f;
@@ -339,7 +341,7 @@ internal static class DataService
         {
             return [];
         }
-        return [..configString.Split(',')];
+        return [.. configString.Split(',')];
     }
     public static void ParseConfigData(List<string> configData)
     {
@@ -361,15 +363,15 @@ internal static class DataService
         PrestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
         ClassStatMultiplier = parsedConfigData.ClassStatMultiplier;
 
-        CanvasService.ExperienceMaxLevel = parsedConfigData.MaxPlayerLevel;
-        CanvasService.LegacyMaxLevel = parsedConfigData.MaxLegacyLevel;
-        CanvasService.ExpertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
-        CanvasService.FamiliarMaxLevel = parsedConfigData.MaxFamiliarLevel;
-        CanvasService.ProfessionMaxLevel = parsedConfigData.MaxProfessionLevel;
+        CanvasService._experienceMaxLevel = parsedConfigData.MaxPlayerLevel;
+        CanvasService._legacyMaxLevel = parsedConfigData.MaxLegacyLevel;
+        CanvasService._expertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
+        CanvasService._familiarMaxLevel = parsedConfigData.MaxFamiliarLevel;
+        CanvasService._professionMaxLevel = parsedConfigData.MaxProfessionLevel;
 
-        WeaponStatValues = parsedConfigData.WeaponStatValues;
+        _weaponStatValues = parsedConfigData.WeaponStatValues;
 
-        BloodStatValues = parsedConfigData.BloodStatValues;
+        _bloodStatValues = parsedConfigData.BloodStatValues;
 
         ClassStatSynergies = parsedConfigData.ClassStatSynergies;
     }
@@ -385,56 +387,68 @@ internal static class DataService
         QuestData dailyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         QuestData weeklyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index]);
 
-        CanvasService.ExperienceProgress = experienceData.Progress;
-        CanvasService.ExperienceLevel = experienceData.Level;
-        CanvasService.ExperiencePrestige = experienceData.Prestige;
-        CanvasService.ClassType = experienceData.Class;
+        CanvasService._experienceProgress = experienceData.Progress;
+        CanvasService._experienceLevel = experienceData.Level;
+        CanvasService._experiencePrestige = experienceData.Prestige;
+        CanvasService._classType = experienceData.Class;
 
-        CanvasService.LegacyProgress = legacyData.Progress;
-        CanvasService.LegacyLevel = legacyData.Level;
-        CanvasService.LegacyPrestige = legacyData.Prestige;
-        CanvasService.LegacyType = legacyData.LegacyType;
-        CanvasService.LegacyBonusStats = legacyData.BonusStats;
+        CanvasService._legacyProgress = legacyData.Progress;
+        CanvasService._legacyLevel = legacyData.Level;
+        CanvasService._legacyPrestige = legacyData.Prestige;
+        CanvasService._legacyType = legacyData.LegacyType;
+        CanvasService._legacyBonusStats = legacyData.BonusStats;
 
-        CanvasService.ExpertiseProgress = expertiseData.Progress;
-        CanvasService.ExpertiseLevel = expertiseData.Level;
-        CanvasService.ExpertisePrestige = expertiseData.Prestige;
-        CanvasService.ExpertiseType = expertiseData.ExpertiseType;
-        CanvasService.ExpertiseBonusStats = expertiseData.BonusStats;
+        CanvasService._expertiseProgress = expertiseData.Progress;
+        CanvasService._expertiseLevel = expertiseData.Level;
+        CanvasService._expertisePrestige = expertiseData.Prestige;
+        CanvasService._expertiseType = expertiseData.ExpertiseType;
+        CanvasService._expertiseBonusStats = expertiseData.BonusStats;
 
-        CanvasService.FamiliarProgress = familiarData.Progress;
-        CanvasService.FamiliarLevel = familiarData.Level;
-        CanvasService.FamiliarPrestige = familiarData.Prestige;
-        CanvasService.FamiliarName = familiarData.FamiliarName;
-        CanvasService.FamiliarStats = familiarData.FamiliarStats;
+        CanvasService._familiarProgress = familiarData.Progress;
+        CanvasService._familiarLevel = familiarData.Level;
+        CanvasService._familiarPrestige = familiarData.Prestige;
+        CanvasService._familiarName = familiarData.FamiliarName;
+        CanvasService._familiarStats = familiarData.FamiliarStats;
 
-        CanvasService.EnchantingProgress = professionData.EnchantingProgress;
-        CanvasService.EnchantingLevel = professionData.EnchantingLevel;
-        CanvasService.AlchemyProgress = professionData.AlchemyProgress;
-        CanvasService.AlchemyLevel = professionData.AlchemyLevel;
-        CanvasService.HarvestingProgress = professionData.HarvestingProgress;
-        CanvasService.HarvestingLevel = professionData.HarvestingLevel;
-        CanvasService.BlacksmithingProgress = professionData.BlacksmithingProgress;
-        CanvasService.BlacksmithingLevel = professionData.BlacksmithingLevel;
-        CanvasService.TailoringProgress = professionData.TailoringProgress;
-        CanvasService.TailoringLevel = professionData.TailoringLevel;
-        CanvasService.WoodcuttingProgress = professionData.WoodcuttingProgress;
-        CanvasService.WoodcuttingLevel = professionData.WoodcuttingLevel;
-        CanvasService.MiningProgress = professionData.MiningProgress;
-        CanvasService.MiningLevel = professionData.MiningLevel;
-        CanvasService.FishingProgress = professionData.FishingProgress;
-        CanvasService.FishingLevel = professionData.FishingLevel;
+        CanvasService._enchantingProgress = professionData.EnchantingProgress;
+        CanvasService._enchantingLevel = professionData.EnchantingLevel;
+        CanvasService._alchemyProgress = professionData.AlchemyProgress;
+        CanvasService._alchemyLevel = professionData.AlchemyLevel;
+        CanvasService._harvestingProgress = professionData.HarvestingProgress;
+        CanvasService._harvestingLevel = professionData.HarvestingLevel;
+        CanvasService._blacksmithingProgress = professionData.BlacksmithingProgress;
+        CanvasService._blacksmithingLevel = professionData.BlacksmithingLevel;
+        CanvasService._tailoringProgress = professionData.TailoringProgress;
+        CanvasService._tailoringLevel = professionData.TailoringLevel;
+        CanvasService._woodcuttingProgress = professionData.WoodcuttingProgress;
+        CanvasService._woodcuttingLevel = professionData.WoodcuttingLevel;
+        CanvasService._miningProgress = professionData.MiningProgress;
+        CanvasService._miningLevel = professionData.MiningLevel;
+        CanvasService._fishingProgress = professionData.FishingProgress;
+        CanvasService._fishingLevel = professionData.FishingLevel;
 
-        CanvasService.DailyTargetType = dailyQuestData.TargetType;
-        CanvasService.DailyProgress = dailyQuestData.Progress;
-        CanvasService.DailyGoal = dailyQuestData.Goal;
-        CanvasService.DailyTarget = dailyQuestData.Target;
-        CanvasService.DailyVBlood = dailyQuestData.IsVBlood;
+        CanvasService._dailyTargetType = dailyQuestData.TargetType;
+        CanvasService._dailyProgress = dailyQuestData.Progress;
+        CanvasService._dailyGoal = dailyQuestData.Goal;
+        CanvasService._dailyTarget = dailyQuestData.Target;
+        CanvasService._dailyVBlood = dailyQuestData.IsVBlood;
 
-        CanvasService.WeeklyTargetType = weeklyQuestData.TargetType;
-        CanvasService.WeeklyProgress = weeklyQuestData.Progress;
-        CanvasService.WeeklyGoal = weeklyQuestData.Goal;
-        CanvasService.WeeklyTarget = weeklyQuestData.Target;
-        CanvasService.WeeklyVBlood = weeklyQuestData.IsVBlood;
+        CanvasService._weeklyTargetType = weeklyQuestData.TargetType;
+        CanvasService._weeklyProgress = weeklyQuestData.Progress;
+        CanvasService._weeklyGoal = weeklyQuestData.Goal;
+        CanvasService._weeklyTarget = weeklyQuestData.Target;
+        CanvasService._weeklyVBlood = weeklyQuestData.IsVBlood;
+    }
+    public static WeaponType GetWeaponTypeFromWeaponEntity(Entity weaponEntity)
+    {
+        if (weaponEntity == Entity.Null) return WeaponType.Unarmed;
+        string weaponCheck = weaponEntity.ReadRO<PrefabGUID>().GetPrefabName();
+
+        return Enum.GetValues(typeof(WeaponType))
+            .Cast<WeaponType>()
+            .FirstOrDefault(type =>
+            weaponCheck.Contains(type.ToString(), StringComparison.OrdinalIgnoreCase) &&
+            !(type == WeaponType.Sword && weaponCheck.Contains("GreatSword", StringComparison.OrdinalIgnoreCase))
+            );
     }
 }

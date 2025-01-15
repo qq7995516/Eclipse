@@ -21,18 +21,17 @@ internal class CanvasService
 {
     static EntityManager EntityManager => Core.EntityManager;
     static ClientGameManager ClientGameManager => Core.ClientGameManager;
-    static GameDataSystem GameDataSystem => Core.GameDataSystem;
     static ManagedDataRegistry ManagedDataRegistry => Core.ManagedDataSystem.ManagedDataRegistry;
     static PrefabCollectionSystem PrefabCollectionSystem => Core.PrefabCollectionSystem;
 
-    static readonly bool ExperienceBar = Plugin.Leveling;
-    static readonly bool ShowPrestige = Plugin.Prestige;
-    static readonly bool LegacyBar = Plugin.Legacies;
-    static readonly bool ExpertiseBar = Plugin.Expertise;
-    static readonly bool FamiliarBar = Plugin.Familiars;
-    static readonly bool ProfessionBars = Plugin.Professions;
-    static readonly bool QuestTracker = Plugin.Quests;
-    static readonly bool ShiftSlot = Plugin.ShiftSlot;
+    static readonly bool _experienceBar = Plugin.Leveling;
+    static readonly bool _showPrestige = Plugin.Prestige;
+    static readonly bool _legacyBar = Plugin.Legacies;
+    static readonly bool _expertiseBar = Plugin.Expertise;
+    static readonly bool _familiarBar = Plugin.Familiars;
+    static readonly bool _professionBars = Plugin.Professions;
+    static readonly bool _questTracker = Plugin.Quests;
+    static readonly bool _shiftSlot = Plugin.ShiftSlot;
     public enum UIElement
     {
         Experience,
@@ -45,14 +44,14 @@ internal class CanvasService
         ShiftSlot
     }
 
-    static readonly Dictionary<int, string> RomanNumerals = new()
+    static readonly Dictionary<int, string> _romanNumerals = new()
     {
         {100, "C"}, {90, "XC"}, {50, "L"}, {40, "XL"},
         {10, "X"}, {9, "IX"}, {5, "V"}, {4, "IV"},
         {1, "I"}
     };
 
-    static readonly List<string> SpriteNames = 
+    static readonly List<string> _spriteNames =
     [
         "BloodIcon_Cursed",
         "BloodIcon_Small_Cursed",
@@ -71,10 +70,10 @@ internal class CanvasService
     public static readonly Dictionary<string, Sprite> SpriteMap = [];
     public static readonly Dictionary<string, Sprite> AbilityIconMap = [];
 
-    static readonly Regex ClassNameRegex = new("(?<!^)([A-Z])");
+    static readonly Regex _classNameRegex = new("(?<!^)([A-Z])");
     public static readonly Regex AbilitySpellRegex = new(@"(?<=AB_).*(?=_Group)");
 
-    static readonly Dictionary<PlayerClass, Color> ClassColorHexMap = new()
+    static readonly Dictionary<PlayerClass, Color> _classColorHexMap = new()
     {
         { PlayerClass.ShadowBlade, new Color(0.63f, 0.13f, 0.94f) },  // ignite purple
         { PlayerClass.DemonHunter, new Color(1f, 0.84f, 0f) },        // static yellow
@@ -84,193 +83,191 @@ internal class CanvasService
         { PlayerClass.DeathMage, new Color(0f, 1f, 0f) }              // condemn green
     };
 
-    static readonly WaitForSeconds Delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable
-    static readonly WaitForSeconds ShiftDelay = new(0.1f);
-    static readonly WaitForSeconds FillDelay = new(0.05f);
+    static readonly WaitForSeconds _delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable
+    static readonly WaitForSeconds _shiftDelay = new(0.1f);
 
-    // object & component references for UI elements
-    static UICanvasBase UICanvasBase;
-    static Canvas Canvas;
+    // object & component references for UI elements... these should probably all be custom classes, note for later
+    static UICanvasBase _uiCanvasBase;
+    static Canvas _canvas;
 
-    static GameObject ExperienceBarGameObject;
-    static GameObject ExperienceInformationPanel;
-    static LocalizedText ExperienceHeader;
-    static LocalizedText ExperienceText;
-    static LocalizedText ExperienceFirstText;
-    static LocalizedText ExperienceClassText;
-    static LocalizedText ExperienceSecondText;
-    static Image ExperienceFill;
-    public static float ExperienceProgress = 0f;
-    public static int ExperienceLevel = 0;
-    public static int ExperiencePrestige = 0;
-    public static int ExperienceMaxLevel = 90;
-    public static PlayerClass ClassType = PlayerClass.None;
+    static GameObject _experienceBarGameObject;
+    static GameObject _experienceInformationPanel;
+    static LocalizedText _experienceHeader;
+    static LocalizedText _experienceText;
+    static LocalizedText _experienceFirstText;
+    static LocalizedText _experienceClassText;
+    static LocalizedText _experienceSecondText;
+    static Image _experienceFill;
+    public static float _experienceProgress = 0f;
+    public static int _experienceLevel = 0;
+    public static int _experiencePrestige = 0;
+    public static int _experienceMaxLevel = 90;
+    public static PlayerClass _classType = PlayerClass.None;
 
-    static GameObject LegacyBarGameObject;
-    static GameObject LegacyInformationPanel;
-    static LocalizedText FirstLegacyStat;
-    static LocalizedText SecondLegacyStat;
-    static LocalizedText ThirdLegacyStat;
-    static LocalizedText LegacyHeader;
-    static LocalizedText LegacyText;
-    static Image LegacyFill;
-    public static string LegacyType;
-    public static float LegacyProgress = 0f;
-    public static int LegacyLevel = 0;
-    public static int LegacyPrestige = 0;
-    public static int LegacyMaxLevel = 100;
-    public static List<string> LegacyBonusStats = ["","",""];
+    static GameObject _legacyBarGameObject;
+    static GameObject _legacyInformationPanel;
+    static LocalizedText _firstLegacyStat;
+    static LocalizedText _secondLegacyStat;
+    static LocalizedText _thirdLegacyStat;
+    static LocalizedText _legacyHeader;
+    static LocalizedText _legacyText;
+    static Image _legacyFill;
+    public static string _legacyType;
+    public static float _legacyProgress = 0f;
+    public static int _legacyLevel = 0;
+    public static int _legacyPrestige = 0;
+    public static int _legacyMaxLevel = 100;
+    public static List<string> _legacyBonusStats = ["", "", ""];
 
-    static GameObject ExpertiseBarGameObject;
-    static GameObject ExpertiseInformationPanel;
-    static LocalizedText FirstExpertiseStat;
-    static LocalizedText SecondExpertiseStat;
-    static LocalizedText ThirdExpertiseStat;
-    static LocalizedText ExpertiseHeader;
-    static LocalizedText ExpertiseText;
-    static Image ExpertiseFill;
-    public static string ExpertiseType;
-    public static float ExpertiseProgress = 0f;
-    public static int ExpertiseLevel = 0;
-    public static int ExpertisePrestige = 0;
-    public static int ExpertiseMaxLevel = 100;
-    public static List<string> ExpertiseBonusStats = ["", "", ""];
+    static GameObject _expertiseBarGameObject;
+    static GameObject _expertiseInformationPanel;
+    static LocalizedText _firstExpertiseStat;
+    static LocalizedText _secondExpertiseStat;
+    static LocalizedText _thirdExpertiseStat;
+    static LocalizedText _expertiseHeader;
+    static LocalizedText _expertiseText;
+    static Image _expertiseFill;
+    public static string _expertiseType;
+    public static float _expertiseProgress = 0f;
+    public static int _expertiseLevel = 0;
+    public static int _expertisePrestige = 0;
+    public static int _expertiseMaxLevel = 100;
+    public static List<string> _expertiseBonusStats = ["", "", ""];
 
-    static GameObject FamiliarBarGameObject;
-    static GameObject FamiliarInformationPanel;
-    static LocalizedText FamiliarMaxHealth;
-    static LocalizedText FamiliarPhysicalPower;
-    static LocalizedText FamiliarSpellPower;
-    static LocalizedText FamiliarHeader;
-    static LocalizedText FamiliarText;
-    static Image FamiliarFill;
-    public static float FamiliarProgress = 0f;
-    public static int FamiliarLevel = 1;
-    public static int FamiliarPrestige = 0;
-    public static int FamiliarMaxLevel = 90;
-    public static string FamiliarName = "";
-    public static List<string> FamiliarStats = ["", "", ""];
+    static GameObject _familiarBarGameObject;
+    static GameObject _familiarInformationPanel;
+    static LocalizedText _familiarMaxHealth;
+    static LocalizedText _familiarPhysicalPower;
+    static LocalizedText _familiarSpellPower;
+    static LocalizedText _familiarHeader;
+    static LocalizedText _familiarText;
+    static Image _familiarFill;
+    public static float _familiarProgress = 0f;
+    public static int _familiarLevel = 1;
+    public static int _familiarPrestige = 0;
+    public static int _familiarMaxLevel = 90;
+    public static string _familiarName = "";
+    public static List<string> _familiarStats = ["", "", ""];
+    static float _headerFontSize;
 
-    public static int ProfessionMaxLevel = 100;
-    static float FontSize = 0f;
+    public static int _professionMaxLevel = 100;
+    static float _fontSize = 0f;
 
-    static GameObject EnchantingBarGameObject;
-    static LocalizedText EnchantingLevelText;
-    static Image EnchantingFill;
-    public static float EnchantingProgress = 0f;
-    public static int EnchantingLevel = 0;
+    static GameObject _enchantingBarGameObject;
+    static LocalizedText _enchantingLevelText;
+    static Image _enchantingFill;
+    public static float _enchantingProgress = 0f;
+    public static int _enchantingLevel = 0;
 
-    static GameObject AlchemyBarGameObject;
-    static LocalizedText AlchemyLevelText;
-    static Image AlchemyFill;
-    public static float AlchemyProgress = 0f;
-    public static int AlchemyLevel = 0;
+    static GameObject _alchemyBarGameObject;
+    static LocalizedText _alchemyLevelText;
+    static Image _alchemyFill;
+    public static float _alchemyProgress = 0f;
+    public static int _alchemyLevel = 0;
 
-    static GameObject HarvestingGameObject;
-    static LocalizedText HarvestingLevelText;
-    static Image HarvestingFill;
-    public static float HarvestingProgress = 0f;
-    public static int HarvestingLevel = 0;
+    static GameObject _harvestingGameObject;
+    static LocalizedText _harvestingLevelText;
+    static Image _harvestingFill;
+    public static float _harvestingProgress = 0f;
+    public static int _harvestingLevel = 0;
 
-    static GameObject BlacksmithingBarGameObject;
-    static LocalizedText BlacksmithingLevelText;
-    static Image BlacksmithingFill;
-    public static float BlacksmithingProgress = 0f;
-    public static int BlacksmithingLevel = 0;
+    static GameObject _blacksmithingBarGameObject;
+    static LocalizedText _blacksmithingLevelText;
+    static Image _blacksmithingFill;
+    public static float _blacksmithingProgress = 0f;
+    public static int _blacksmithingLevel = 0;
 
-    static GameObject TailoringBarGameObject;
-    static LocalizedText TailoringLevelText;
-    static Image TailoringFill;
-    public static float TailoringProgress = 0f;
-    public static int TailoringLevel = 0;
+    static GameObject _tailoringBarGameObject;
+    static LocalizedText _tailoringLevelText;
+    static Image _tailoringFill;
+    public static float _tailoringProgress = 0f;
+    public static int _tailoringLevel = 0;
 
-    static GameObject WoodcuttingBarGameObject;
-    static LocalizedText WoodcuttingLevelText;
-    static Image WoodcuttingFill;
-    public static float WoodcuttingProgress = 0f;
-    public static int WoodcuttingLevel = 0;
+    static GameObject _woodcuttingBarGameObject;
+    static LocalizedText _woodcuttingLevelText;
+    static Image _woodcuttingFill;
+    public static float _woodcuttingProgress = 0f;
+    public static int _woodcuttingLevel = 0;
 
-    static GameObject MiningBarGameObject;
-    static LocalizedText MiningLevelText;
-    static Image MiningFill;
-    public static float MiningProgress = 0f;
-    public static int MiningLevel = 0;
+    static GameObject _miningBarGameObject;
+    static LocalizedText _miningLevelText;
+    static Image _miningFill;
+    public static float _miningProgress = 0f;
+    public static int _miningLevel = 0;
 
-    static GameObject FishingBarGameObject;
-    static LocalizedText FishingLevelText;
-    static Image FishingFill;
-    public static float FishingProgress = 0f;
-    public static int FishingLevel = 0;
+    static GameObject _fishingBarGameObject;
+    static LocalizedText _fishingLevelText;
+    static Image _fishingFill;
+    public static float _fishingProgress = 0f;
+    public static int _fishingLevel = 0;
 
-    static GameObject DailyQuestObject;
-    static LocalizedText DailyQuestHeader;
-    static LocalizedText DailyQuestSubHeader;
-    static Image DailyQuestIcon;
-    public static TargetType DailyTargetType = TargetType.Kill;
-    public static int DailyProgress = 0;
-    public static int DailyGoal = 0;
-    public static string DailyTarget = "";
-    public static bool DailyVBlood = false;
+    static GameObject _dailyQuestObject;
+    static LocalizedText _dailyQuestHeader;
+    static LocalizedText _dailyQuestSubHeader;
+    static Image _dailyQuestIcon;
+    public static TargetType _dailyTargetType = TargetType.Kill;
+    public static int _dailyProgress = 0;
+    public static int _dailyGoal = 0;
+    public static string _dailyTarget = "";
+    public static bool _dailyVBlood = false;
 
-    static GameObject WeeklyQuestObject;
-    static LocalizedText WeeklyQuestHeader;
-    static LocalizedText WeeklyQuestSubHeader;
-    static Image WeeklyQuestIcon;
-    public static TargetType WeeklyTargetType = TargetType.Kill;
-    public static int WeeklyProgress = 0;
-    public static int WeeklyGoal = 0;
-    public static string WeeklyTarget = "";
-    public static bool WeeklyVBlood = false;
+    static GameObject _weeklyQuestObject;
+    static LocalizedText _weeklyQuestHeader;
+    static LocalizedText _weeklyQuestSubHeader;
+    static Image _weeklyQuestIcon;
+    public static TargetType _weeklyTargetType = TargetType.Kill;
+    public static int _weeklyProgress = 0;
+    public static int _weeklyGoal = 0;
+    public static string _weeklyTarget = "";
+    public static bool _weeklyVBlood = false;
 
-    public static Entity playerCharacter;
-    static PrefabGUID AbilityGroupPrefabGUID;
-    static Entity AbilityGroupEntity;
+    public static Entity _playerCharacter;
+    static PrefabGUID _abilityGroupPrefabGUID;
 
-    static AbilityTooltipData AbilityTooltipData;
-    static readonly ComponentType AbilityTooltipDataComponent = ComponentType.ReadOnly(Il2CppType.Of<AbilityTooltipData>());
+    public static AbilityTooltipData _abilityTooltipData;
+    static readonly ComponentType _abilityTooltipDataComponent = ComponentType.ReadOnly(Il2CppType.Of<AbilityTooltipData>());
 
-    public static GameObject AbilityDummyGroupObject;
-    public static AbilityBarEntry AbilityBarEntry;
-    public static AbilityBarEntry.UIState UIState;
+    public static GameObject _abilityDummyGroupObject;
+    public static AbilityBarEntry _abilityBarEntry;
+    public static AbilityBarEntry.UIState _uiState;
 
-    public static GameObject CooldownParentObject;
-    public static TextMeshProUGUI CooldownText;
-    public static GameObject ChargeCooldownImageObject;
-    public static GameObject ChargesTextObject;
-    public static TextMeshProUGUI ChargesText;
-    public static Image CooldownFillImage;
-    public static Image ChargeCooldownFillImage;
+    public static GameObject _cooldownParentObject;
+    public static TextMeshProUGUI _cooldownText;
+    public static GameObject _chargeCooldownImageObject;
+    public static GameObject _chargesTextObject;
+    public static TextMeshProUGUI _chargesText;
+    public static Image _cooldownFillImage;
+    public static Image _chargeCooldownFillImage;
 
-    static GameObject AbilityEmptyIcon;
-    static GameObject AbilityIcon;
+    static GameObject _abilityEmptyIcon;
+    static GameObject _abilityIcon;
 
-    static GameObject KeybindObject;
-    //static GameObject KeybindImageLayout;
-    //static Image KeybindImage;
-    //static GameObject KeybindImageObject;
+    static GameObject _keybindObject;
 
-    public static double CooldownEndTime = 0;
-    public static float CooldownRemaining = 0f;
-    public static float CooldownTime = 0f;
-    public static int CurrentCharges = 0;
-    public static int MaxCharges = 0;
-    public static double ChargeUpEndTime = 0;
-    public static float ChargeUpTime = 0f;
-    public static float ChargeUpTimeRemaining = 0f;
-    public static float ChargeCooldownTime = 0f;
+    public static double _cooldownEndTime = 0;
+    public static float _cooldownRemaining = 0f;
+    public static float _cooldownTime = 0f;
+    public static int _currentCharges = 0;
+    public static int _maxCharges = 0;
+    public static double _chargeUpEndTime = 0;
+    public static float _chargeUpTime = 0f;
+    public static float _chargeUpTimeRemaining = 0f;
+    public static float _chargeCooldownTime = 0f;
 
-    static int Layer;
-    static int BarNumber;
-    static int GraphBarNumber;
-    static float WindowOffset;
+    static int _layer;
+    static int _barNumber;
+    static int _graphBarNumber;
+    static float _windowOffset;
 
     const float BAR_HEIGHT_SPACING = 0.075f;
     const float BAR_WIDTH_SPACING = 0.065f;
 
     public static readonly Dictionary<GameObject, bool> UIObjectStates = [];
-    static readonly List<GameObject> ProfessionObjects = [];
+    static readonly List<GameObject> _professionObjects = [];
 
-    static readonly Dictionary<int, Action> ActionToggles = new()
+    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _weaponStatCache = [];
+
+    static readonly Dictionary<int, Action> _actionToggles = new()
     {
         {0, ExperienceToggle},
         {1, LegacyToggle},
@@ -282,7 +279,7 @@ internal class CanvasService
         {7, ShiftSlotToggle}
     };
 
-    static readonly Dictionary<UIElement, string> AbilitySlotNamePaths = new()
+    static readonly Dictionary<UIElement, string> _abilitySlotNamePaths = new()
     {
         { UIElement.Experience, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Primary/" },
         { UIElement.Legacy, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_WeaponSkill1/" },
@@ -293,19 +290,19 @@ internal class CanvasService
         { UIElement.Daily, "HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/AbilityBarEntry_Ultimate/" },
     };
 
-    static readonly Dictionary<UIElement, bool> UIElementsConfigured = new()
+    static readonly Dictionary<UIElement, bool> _uiElementsConfigured = new()
     {
-        { UIElement.Experience, ExperienceBar },
-        { UIElement.Legacy, LegacyBar },
-        { UIElement.Expertise, ExpertiseBar },
-        { UIElement.Familiars, FamiliarBar },
-        { UIElement.Professions, ProfessionBars },
-        { UIElement.Daily, QuestTracker },
-        { UIElement.Weekly, QuestTracker },
-        { UIElement.ShiftSlot, ShiftSlot }
+        { UIElement.Experience, _experienceBar },
+        { UIElement.Legacy, _legacyBar },
+        { UIElement.Expertise, _expertiseBar },
+        { UIElement.Familiars, _familiarBar },
+        { UIElement.Professions, _professionBars },
+        { UIElement.Daily, _questTracker },
+        { UIElement.Weekly, _questTracker },
+        { UIElement.ShiftSlot, _shiftSlot }
     };
 
-    static readonly Dictionary<UIElement, int> UIElementIndices = new()
+    static readonly Dictionary<UIElement, int> _uiElementIndices = new()
     {
         { UIElement.Experience, 0 },
         { UIElement.Legacy, 1 },
@@ -329,19 +326,19 @@ internal class CanvasService
     const string SHIFT_SPRITE = "KeyboardGlyphs_Smaller_36";
     const string SHIFT_TEXTURE = "KeyboardGlyphs_Smaller";
 
-    public static bool Active = false;
-    public static bool ShiftActive = false;
-    public static bool KillSwitch = false;
+    public static bool _active = false;
+    public static bool _shiftActive = false;
+    public static bool _killSwitch = false;
     public CanvasService(UICanvasBase canvas)
     {
-        UICanvasBase = canvas;
-        Canvas = GameObject.Find("HUDCanvas(Clone)/BottomBarCanvas").GetComponent<Canvas>();
+        _uiCanvasBase = canvas;
+        _canvas = GameObject.Find("HUDCanvas(Clone)/BottomBarCanvas").GetComponent<Canvas>();
 
-        Layer = Canvas.gameObject.layer;
-        BarNumber = 0;
-        GraphBarNumber = 0;
-        WindowOffset = 0f;
-        
+        _layer = _canvas.gameObject.layer;
+        _barNumber = 0;
+        _graphBarNumber = 0;
+        _windowOffset = 0f;
+
         FindSprites();
         InitializeBloodButton();
         InitializeAbilitySlotButtons();
@@ -349,54 +346,54 @@ internal class CanvasService
     }
     static void InitializeUI()
     {
-        if (ExperienceBar) ConfigureHorizontalProgressBar(ref ExperienceBarGameObject, ref ExperienceInformationPanel, ref ExperienceFill, ref ExperienceText, ref ExperienceHeader, UIElement.Experience, Color.green, ref ExperienceFirstText, ref ExperienceClassText, ref ExperienceSecondText);
+        if (_experienceBar) ConfigureHorizontalProgressBar(ref _experienceBarGameObject, ref _experienceInformationPanel, ref _experienceFill, ref _experienceText, ref _experienceHeader, UIElement.Experience, Color.green, ref _experienceFirstText, ref _experienceClassText, ref _experienceSecondText);
 
-        if (LegacyBar) ConfigureHorizontalProgressBar(ref LegacyBarGameObject, ref LegacyInformationPanel, ref LegacyFill, ref LegacyText, ref LegacyHeader, UIElement.Legacy, Color.red, ref FirstLegacyStat, ref SecondLegacyStat, ref ThirdLegacyStat);
+        if (_legacyBar) ConfigureHorizontalProgressBar(ref _legacyBarGameObject, ref _legacyInformationPanel, ref _legacyFill, ref _legacyText, ref _legacyHeader, UIElement.Legacy, Color.red, ref _firstLegacyStat, ref _secondLegacyStat, ref _thirdLegacyStat);
 
-        if (ExpertiseBar) ConfigureHorizontalProgressBar(ref ExpertiseBarGameObject, ref ExpertiseInformationPanel, ref ExpertiseFill, ref ExpertiseText, ref ExpertiseHeader, UIElement.Expertise, Color.grey, ref FirstExpertiseStat, ref SecondExpertiseStat, ref ThirdExpertiseStat);
+        if (_expertiseBar) ConfigureHorizontalProgressBar(ref _expertiseBarGameObject, ref _expertiseInformationPanel, ref _expertiseFill, ref _expertiseText, ref _expertiseHeader, UIElement.Expertise, Color.grey, ref _firstExpertiseStat, ref _secondExpertiseStat, ref _thirdExpertiseStat);
 
-        if (FamiliarBar) ConfigureHorizontalProgressBar(ref FamiliarBarGameObject, ref FamiliarInformationPanel, ref FamiliarFill, ref FamiliarText, ref FamiliarHeader, UIElement.Familiars, Color.yellow, ref FamiliarMaxHealth, ref FamiliarPhysicalPower, ref FamiliarSpellPower);
+        if (_familiarBar) ConfigureHorizontalProgressBar(ref _familiarBarGameObject, ref _familiarInformationPanel, ref _familiarFill, ref _familiarText, ref _familiarHeader, UIElement.Familiars, Color.yellow, ref _familiarMaxHealth, ref _familiarPhysicalPower, ref _familiarSpellPower);
 
-        if (QuestTracker)
+        if (_questTracker)
         {
-            ConfigureQuestWindow(ref DailyQuestObject, UIElement.Daily, Color.green, ref DailyQuestHeader, ref DailyQuestSubHeader, ref DailyQuestIcon);
-            ConfigureQuestWindow(ref WeeklyQuestObject, UIElement.Weekly, Color.magenta, ref WeeklyQuestHeader, ref WeeklyQuestSubHeader, ref WeeklyQuestIcon);
+            ConfigureQuestWindow(ref _dailyQuestObject, UIElement.Daily, Color.green, ref _dailyQuestHeader, ref _dailyQuestSubHeader, ref _dailyQuestIcon);
+            ConfigureQuestWindow(ref _weeklyQuestObject, UIElement.Weekly, Color.magenta, ref _weeklyQuestHeader, ref _weeklyQuestSubHeader, ref _weeklyQuestIcon);
         }
 
-        if (ProfessionBars)
+        if (_professionBars)
         {
-            ConfigureVerticalProgressBar(ref EnchantingBarGameObject, ref EnchantingFill, ref EnchantingLevelText, ProfessionColors[Profession.Enchanting]);
-            ConfigureVerticalProgressBar(ref AlchemyBarGameObject, ref AlchemyFill, ref AlchemyLevelText, ProfessionColors[Profession.Alchemy]);
-            ConfigureVerticalProgressBar(ref HarvestingGameObject, ref HarvestingFill, ref HarvestingLevelText, ProfessionColors[Profession.Harvesting]);
-            ConfigureVerticalProgressBar(ref BlacksmithingBarGameObject, ref BlacksmithingFill, ref BlacksmithingLevelText, ProfessionColors[Profession.Blacksmithing]);
-            ConfigureVerticalProgressBar(ref TailoringBarGameObject, ref TailoringFill, ref TailoringLevelText, ProfessionColors[Profession.Tailoring]);
-            ConfigureVerticalProgressBar(ref WoodcuttingBarGameObject, ref WoodcuttingFill, ref WoodcuttingLevelText, ProfessionColors[Profession.Woodcutting]);
-            ConfigureVerticalProgressBar(ref MiningBarGameObject, ref MiningFill, ref MiningLevelText, ProfessionColors[Profession.Mining]);
-            ConfigureVerticalProgressBar(ref FishingBarGameObject, ref FishingFill, ref FishingLevelText, ProfessionColors[Profession.Fishing]);
+            ConfigureVerticalProgressBar(ref _enchantingBarGameObject, ref _enchantingFill, ref _enchantingLevelText, ProfessionColors[Profession.Enchanting]);
+            ConfigureVerticalProgressBar(ref _alchemyBarGameObject, ref _alchemyFill, ref _alchemyLevelText, ProfessionColors[Profession.Alchemy]);
+            ConfigureVerticalProgressBar(ref _harvestingGameObject, ref _harvestingFill, ref _harvestingLevelText, ProfessionColors[Profession.Harvesting]);
+            ConfigureVerticalProgressBar(ref _blacksmithingBarGameObject, ref _blacksmithingFill, ref _blacksmithingLevelText, ProfessionColors[Profession.Blacksmithing]);
+            ConfigureVerticalProgressBar(ref _tailoringBarGameObject, ref _tailoringFill, ref _tailoringLevelText, ProfessionColors[Profession.Tailoring]);
+            ConfigureVerticalProgressBar(ref _woodcuttingBarGameObject, ref _woodcuttingFill, ref _woodcuttingLevelText, ProfessionColors[Profession.Woodcutting]);
+            ConfigureVerticalProgressBar(ref _miningBarGameObject, ref _miningFill, ref _miningLevelText, ProfessionColors[Profession.Mining]);
+            ConfigureVerticalProgressBar(ref _fishingBarGameObject, ref _fishingFill, ref _fishingLevelText, ProfessionColors[Profession.Fishing]);
         }
 
-        if (ShiftSlot)
+        if (_shiftSlot)
         {
-            ConfigureShiftSlot(ref AbilityDummyGroupObject, ref AbilityBarEntry, ref UIState, ref CooldownParentObject, ref CooldownText,
-                ref ChargesTextObject, ref CooldownFillImage, ref ChargesText, ref ChargeCooldownFillImage, ref ChargeCooldownImageObject, 
-                ref AbilityEmptyIcon, ref AbilityIcon, ref KeybindObject);
+            ConfigureShiftSlot(ref _abilityDummyGroupObject, ref _abilityBarEntry, ref _uiState, ref _cooldownParentObject, ref _cooldownText,
+                ref _chargesTextObject, ref _cooldownFillImage, ref _chargesText, ref _chargeCooldownFillImage, ref _chargeCooldownImageObject,
+                ref _abilityEmptyIcon, ref _abilityIcon, ref _keybindObject);
         }
     }
     static void InitializeAbilitySlotButtons()
     {
-        foreach (var keyValuePair in UIElementsConfigured)
+        foreach (var keyValuePair in _uiElementsConfigured)
         {
-            if (keyValuePair.Value && AbilitySlotNamePaths.ContainsKey(keyValuePair.Key))
+            if (keyValuePair.Value && _abilitySlotNamePaths.ContainsKey(keyValuePair.Key))
             {
-                int index = UIElementIndices[keyValuePair.Key];
-                GameObject abilitySlotObject = GameObject.Find(AbilitySlotNamePaths[keyValuePair.Key]);
+                int index = _uiElementIndices[keyValuePair.Key];
+                GameObject abilitySlotObject = GameObject.Find(_abilitySlotNamePaths[keyValuePair.Key]);
 
                 if (abilitySlotObject != null)
                 {
                     //UIGameObjects.Add(abilitySlotObject);
                     SimpleStunButton stunButton = abilitySlotObject.AddComponent<SimpleStunButton>();
 
-                    if (ActionToggles.TryGetValue(index, out var toggleAction))
+                    if (_actionToggles.TryGetValue(index, out var toggleAction))
                     {
                         stunButton.onClick.AddListener(new Action(toggleAction));
                     }
@@ -406,37 +403,37 @@ internal class CanvasService
     }
     static void ExperienceToggle()
     {
-        bool active = !ExperienceBarGameObject.activeSelf;
+        bool active = !_experienceBarGameObject.activeSelf;
 
-        ExperienceBarGameObject.SetActive(active);
-        UIObjectStates[ExperienceBarGameObject] = active;
+        _experienceBarGameObject.SetActive(active);
+        UIObjectStates[_experienceBarGameObject] = active;
     }
     static void LegacyToggle()
     {
-        bool active = !LegacyBarGameObject.activeSelf;
+        bool active = !_legacyBarGameObject.activeSelf;
 
-        LegacyBarGameObject.SetActive(active);
-        UIObjectStates[LegacyBarGameObject] = active;
+        _legacyBarGameObject.SetActive(active);
+        UIObjectStates[_legacyBarGameObject] = active;
     }
     static void ExpertiseToggle()
     {
-        bool active = !ExpertiseBarGameObject.activeSelf;
+        bool active = !_expertiseBarGameObject.activeSelf;
 
-        ExpertiseBarGameObject.SetActive(active);
-        UIObjectStates[ExpertiseBarGameObject] = active;
+        _expertiseBarGameObject.SetActive(active);
+        UIObjectStates[_expertiseBarGameObject] = active;
     }
     static void FamiliarToggle()
     {
-        bool active = !FamiliarBarGameObject.activeSelf;
+        bool active = !_familiarBarGameObject.activeSelf;
 
-        FamiliarBarGameObject.SetActive(active);
-        UIObjectStates[FamiliarBarGameObject] = active;
+        _familiarBarGameObject.SetActive(active);
+        UIObjectStates[_familiarBarGameObject] = active;
     }
     static void ProfessionToggle()
     {
         foreach (GameObject professionObject in UIObjectStates.Keys)
         {
-            if (ProfessionObjects.Contains(professionObject))
+            if (_professionObjects.Contains(professionObject))
             {
                 bool active = !professionObject.activeSelf;
 
@@ -451,24 +448,24 @@ internal class CanvasService
     }
     static void DailyQuestToggle()
     {
-        bool active = !DailyQuestObject.activeSelf;
+        bool active = !_dailyQuestObject.activeSelf;
 
-        DailyQuestObject.SetActive(active);
-        UIObjectStates[DailyQuestObject] = active;
+        _dailyQuestObject.SetActive(active);
+        UIObjectStates[_dailyQuestObject] = active;
     }
     static void WeeklyQuestToggle()
     {
-        bool active = !WeeklyQuestObject.activeSelf;
+        bool active = !_weeklyQuestObject.activeSelf;
 
-        WeeklyQuestObject.SetActive(active);
-        UIObjectStates[WeeklyQuestObject] = active;
+        _weeklyQuestObject.SetActive(active);
+        UIObjectStates[_weeklyQuestObject] = active;
     }
     static void ShiftSlotToggle()
     {
-        bool active = !AbilityDummyGroupObject.activeSelf;
+        bool active = !_abilityDummyGroupObject.activeSelf;
 
-        AbilityDummyGroupObject.SetActive(active);
-        UIObjectStates[AbilityDummyGroupObject] = active;
+        _abilityDummyGroupObject.SetActive(active);
+        UIObjectStates[_abilityDummyGroupObject] = active;
     }
     static void InitializeBloodButton()
     {
@@ -484,276 +481,271 @@ internal class CanvasService
     }
     static void ToggleAllObjects()
     {
-        Active = !Active;
+        _active = !_active;
 
         foreach (GameObject gameObject in UIObjectStates.Keys)
         {
-            gameObject.active = Active;
-            UIObjectStates[gameObject] = Active;
+            gameObject.active = _active;
+            UIObjectStates[gameObject] = _active;
         }
     }
     public static IEnumerator CanvasUpdateLoop()
     {
         while (true)
         {
-            if (KillSwitch) // stop running if player leaves game
+            if (_killSwitch) // stop running if player leaves game
             {
-                Active = false;
+                _active = false;
+
                 break;
             }
-            else if (!Active) // don't update if not active from blood orb click
+            else if (!_active) // don't update if not active from blood orb click
             {
-                yield return Delay;
+                yield return _delay;
+
                 continue;
             }
 
-            if (ExperienceBar)
+            if (_experienceBar)
             {
-                UpdateBar(ExperienceProgress, ExperienceLevel, ExperienceMaxLevel, ExperiencePrestige, ExperienceText, ExperienceHeader, ExperienceFill, UIElement.Experience);
-                UpdateClass(ClassType, ExperienceClassText);
+                UpdateBar(_experienceProgress, _experienceLevel, _experienceMaxLevel, _experiencePrestige, _experienceText, _experienceHeader, _experienceFill, UIElement.Experience);
+                UpdateClass(_classType, _experienceClassText);
             }
 
-            if (LegacyBar)
+            if (_legacyBar)
             {
-                UpdateBar(LegacyProgress, LegacyLevel, LegacyMaxLevel, LegacyPrestige, LegacyText, LegacyHeader, LegacyFill, UIElement.Legacy, LegacyType);
-                UpdateStats(LegacyBonusStats, [FirstLegacyStat, SecondLegacyStat, ThirdLegacyStat], GetBloodStatInfo);
+                UpdateBar(_legacyProgress, _legacyLevel, _legacyMaxLevel, _legacyPrestige, _legacyText, _legacyHeader, _legacyFill, UIElement.Legacy, _legacyType);
+                UpdateBloodStats(_legacyBonusStats, [_firstLegacyStat, _secondLegacyStat, _thirdLegacyStat], GetBloodStatInfo);
             }
 
-            if (ExpertiseBar)
+            if (_expertiseBar)
             {
-                UpdateBar(ExpertiseProgress, ExpertiseLevel, ExpertiseMaxLevel, ExpertisePrestige, ExpertiseText, ExpertiseHeader, ExpertiseFill, UIElement.Expertise, ExpertiseType);
-                UpdateStats(ExpertiseBonusStats, [FirstExpertiseStat, SecondExpertiseStat, ThirdExpertiseStat], GetWeaponStatInfo);
+                UpdateBar(_expertiseProgress, _expertiseLevel, _expertiseMaxLevel, _expertisePrestige, _expertiseText, _expertiseHeader, _expertiseFill, UIElement.Expertise, _expertiseType);
+                UpdateWeaponStats(_expertiseBonusStats, [_firstExpertiseStat, _secondExpertiseStat, _thirdExpertiseStat], GetWeaponStatInfo);
             }
 
-            if (FamiliarBar)
+            if (_familiarBar)
             {
-                UpdateBar(FamiliarProgress, FamiliarLevel, FamiliarMaxLevel, FamiliarPrestige, FamiliarText, FamiliarHeader, FamiliarFill, UIElement.Familiars, FamiliarName);
-                UpdateFamiliarStats(FamiliarStats, [FamiliarMaxHealth, FamiliarPhysicalPower, FamiliarSpellPower]);
+                UpdateBar(_familiarProgress, _familiarLevel, _familiarMaxLevel, _familiarPrestige, _familiarText, _familiarHeader, _familiarFill, UIElement.Familiars, _familiarName);
+                UpdateFamiliarStats(_familiarStats, [_familiarMaxHealth, _familiarPhysicalPower, _familiarSpellPower]);
             }
 
-            if (QuestTracker)
+            if (_questTracker)
             {
-                UpdateQuests(DailyQuestObject, DailyQuestSubHeader, DailyQuestIcon, DailyTargetType, DailyTarget, DailyProgress, DailyGoal, DailyVBlood);
-                UpdateQuests(WeeklyQuestObject, WeeklyQuestSubHeader, WeeklyQuestIcon, WeeklyTargetType, WeeklyTarget, WeeklyProgress, WeeklyGoal, WeeklyVBlood);
+                UpdateQuests(_dailyQuestObject, _dailyQuestSubHeader, _dailyQuestIcon, _dailyTargetType, _dailyTarget, _dailyProgress, _dailyGoal, _dailyVBlood);
+                UpdateQuests(_weeklyQuestObject, _weeklyQuestSubHeader, _weeklyQuestIcon, _weeklyTargetType, _weeklyTarget, _weeklyProgress, _weeklyGoal, _weeklyVBlood);
             }
 
-            if (ProfessionBars)
+            if (_professionBars)
             {
-                UpdateProfessions(EnchantingProgress, EnchantingLevel, ProfessionMaxLevel, EnchantingLevelText, EnchantingFill);
-                UpdateProfessions(AlchemyProgress, AlchemyLevel, ProfessionMaxLevel, AlchemyLevelText, AlchemyFill);
-                UpdateProfessions(HarvestingProgress, HarvestingLevel, ProfessionMaxLevel, HarvestingLevelText, HarvestingFill);
-                UpdateProfessions(BlacksmithingProgress, BlacksmithingLevel, ProfessionMaxLevel, BlacksmithingLevelText, BlacksmithingFill);
-                UpdateProfessions(TailoringProgress, TailoringLevel, ProfessionMaxLevel, TailoringLevelText, TailoringFill);
-                UpdateProfessions(WoodcuttingProgress, WoodcuttingLevel, ProfessionMaxLevel, WoodcuttingLevelText, WoodcuttingFill);
-                UpdateProfessions(MiningProgress, MiningLevel, ProfessionMaxLevel, MiningLevelText, MiningFill);
-                UpdateProfessions(FishingProgress, FishingLevel, ProfessionMaxLevel, FishingLevelText, FishingFill);
+                UpdateProfessions(_enchantingProgress, _enchantingLevel, _professionMaxLevel, _enchantingLevelText, _enchantingFill);
+                UpdateProfessions(_alchemyProgress, _alchemyLevel, _professionMaxLevel, _alchemyLevelText, _alchemyFill);
+                UpdateProfessions(_harvestingProgress, _harvestingLevel, _professionMaxLevel, _harvestingLevelText, _harvestingFill);
+                UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _professionMaxLevel, _blacksmithingLevelText, _blacksmithingFill);
+                UpdateProfessions(_tailoringProgress, _tailoringLevel, _professionMaxLevel, _tailoringLevelText, _tailoringFill);
+                UpdateProfessions(_woodcuttingProgress, _woodcuttingLevel, _professionMaxLevel, _woodcuttingLevelText, _woodcuttingFill);
+                UpdateProfessions(_miningProgress, _miningLevel, _professionMaxLevel, _miningLevelText, _miningFill);
+                UpdateProfessions(_fishingProgress, _fishingLevel, _professionMaxLevel, _fishingLevelText, _fishingFill);
             }
 
-            if (!ShiftActive && playerCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
+            if (!_shiftActive && _playerCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
             {
                 Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
 
                 if (abilityGroupEntity.TryGetComponent(out AbilityGroupState abilityGroupState) && abilityGroupState.SlotIndex == 3) // if ability found on slot 3, activate shift loop
                 {
-                    ShiftActive = true;
+                    _shiftActive = true;
 
                     Core.StartCoroutine(ShiftUpdateLoop());
                 }
             }
 
-            yield return Delay;
+            yield return _delay;
         }
     }
     static void UpdateAbilityData(AbilityTooltipData abilityTooltipData, Entity abilityGroupEntity, Entity abilityCastEntity, PrefabGUID abilityGroupPrefabGUID)
     {
-        if (!AbilityDummyGroupObject.active) AbilityDummyGroupObject.SetActive(true);
-        if (!KeybindObject.active) KeybindObject.SetActive(true);
+        if (!_abilityDummyGroupObject.active) _abilityDummyGroupObject.SetActive(true);
+        if (!_keybindObject.active) _keybindObject.SetActive(true);
 
-        CooldownFillImage.fillAmount = 0f;
-        ChargeCooldownFillImage.fillAmount = 0f;
+        _cooldownFillImage.fillAmount = 0f;
+        _chargeCooldownFillImage.fillAmount = 0f;
 
-        AbilityGroupPrefabGUID = abilityGroupPrefabGUID;
-        AbilityGroupEntity = abilityGroupEntity;
+        _abilityGroupPrefabGUID = abilityGroupPrefabGUID;
 
-        AbilityBarEntry.AbilityEntity = abilityGroupEntity;
-        AbilityBarEntry.AbilityId = abilityGroupPrefabGUID;
-        AbilityBarEntry.AbilityIconImage.sprite = abilityTooltipData.Icon;
+        _abilityBarEntry.AbilityEntity = abilityGroupEntity;
+        _abilityBarEntry.AbilityId = abilityGroupPrefabGUID;
+        _abilityBarEntry.AbilityIconImage.sprite = abilityTooltipData.Icon;
 
-        AbilityBarEntry._CurrentUIState.AbilityIconImageActive = true;
-        AbilityBarEntry._CurrentUIState.AbilityIconImageSprite = abilityTooltipData.Icon;
+        _abilityBarEntry._CurrentUIState.AbilityIconImageActive = true;
+        _abilityBarEntry._CurrentUIState.AbilityIconImageSprite = abilityTooltipData.Icon;
 
         if (abilityGroupEntity.TryGetComponent(out AbilityChargesData abilityChargesData))
         {
-            MaxCharges = abilityChargesData.MaxCharges;
+            _maxCharges = abilityChargesData.MaxCharges;
         }
         else
         {
-            MaxCharges = 0;
-            CurrentCharges = 0;
-            ChargesText.SetText("");
+            _maxCharges = 0;
+            _currentCharges = 0;
+            _chargesText.SetText("");
         }
 
         if (abilityCastEntity.TryGetComponent(out AbilityCooldownData abilityCooldownData))
         {
-            CooldownTime = abilityCooldownData.Cooldown._Value;
-            CooldownEndTime = Core.ServerTime.TimeOnServer + (double)CooldownTime; // see if this fixes not appearing till second use
+            _cooldownTime = abilityCooldownData.Cooldown._Value;
+            _cooldownEndTime = Core.ServerTime.TimeOnServer + _cooldownTime; // see if this fixes not appearing till second use
+
+            if (!abilityGroupEntity.Has<VBloodAbilityData>() && abilityCastEntity.TryGetComponent(out AbilityCooldownState abilityCooldownState))
+            {
+                _cooldownTime = abilityCooldownState.CurrentCooldown;
+            }
         }
     }
     static void UpdateAbilityState(Entity abilityGroupEntity, Entity abilityCastEntity)
     {
         PrefabGUID prefabGUID = abilityGroupEntity.GetPrefabGUID();
-        if (prefabGUID.HasValue() && !prefabGUID.Equals(AbilityGroupPrefabGUID)) return;
+        if (prefabGUID.HasValue() && !prefabGUID.Equals(_abilityGroupPrefabGUID)) return;
 
         if (abilityCastEntity.TryGetComponent(out AbilityCooldownState abilityCooldownState))
         {
-            CooldownEndTime = abilityCooldownState.CooldownEndTime;
+            _cooldownEndTime = abilityCooldownState.CooldownEndTime;
         }
 
-        ChargeUpTimeRemaining = (float)(ChargeUpEndTime - Core.ServerTime.TimeOnServer);
-        CooldownRemaining = (float)(CooldownEndTime - Core.ServerTime.TimeOnServer);
+        _chargeUpTimeRemaining = (float)(_chargeUpEndTime - Core.ServerTime.TimeOnServer);
+        _cooldownRemaining = (float)(_cooldownEndTime - Core.ServerTime.TimeOnServer);
 
         if (abilityGroupEntity.TryGetComponent(out AbilityChargesState abilityChargesState))
         {
-            CurrentCharges = abilityChargesState.CurrentCharges;
-            ChargeUpTime = abilityChargesState.ChargeTime;
-            ChargeUpEndTime = Core.ServerTime.TimeOnServer + (double)ChargeUpTime;
+            _currentCharges = abilityChargesState.CurrentCharges;
+            _chargeUpTime = abilityChargesState.ChargeTime;
+            _chargeUpEndTime = Core.ServerTime.TimeOnServer + _chargeUpTime;
 
-            if (CurrentCharges == 0)
+            if (_currentCharges == 0)
             {
-                AbilityBarEntry._CurrentUIState.ChargesTextActive = false;
-                ChargeCooldownFillImage.fillAmount = 0f;
-                ChargeCooldownImageObject.SetActive(false);
+                _abilityBarEntry._CurrentUIState.ChargesTextActive = false;
+                _chargeCooldownFillImage.fillAmount = 0f;
+                _chargeCooldownImageObject.SetActive(false);
 
-                ChargesText.SetText("");
-                CooldownText.SetText($"{(int)ChargeUpTime}");
-                
-                //CooldownFillImage.fillAmount = CooldownRemaining / CooldownTime;
-                CooldownFillImage.fillAmount = ChargeUpTime / CooldownTime;
-                //Core.Log.LogInfo($"(1) Charges: {CurrentCharges}/{MaxCharges} - CooldownRemaining: {CooldownRemaining}, CooldownTime: {CooldownTime} ({CooldownRemaining / CooldownTime}%), ChargeTime: {ChargeUpTime} ({1 - (ChargeUpTimeRemaining / ChargeUpTime)}%)");
+                _chargesText.SetText("");
+                _cooldownText.SetText($"{(int)_chargeUpTime}");
+
+                _cooldownFillImage.fillAmount = _chargeUpTime / _cooldownTime;
             }
             else
             {
-                AbilityBarEntry._CurrentUIState.ChargesTextActive = true;
-                CooldownFillImage.fillAmount = 0f;
+                _abilityBarEntry._CurrentUIState.ChargesTextActive = true;
+                _cooldownFillImage.fillAmount = 0f;
 
-                ChargesTextObject.SetActive(true);
-                ChargeCooldownImageObject.SetActive(true);
+                _chargesTextObject.SetActive(true);
+                _chargeCooldownImageObject.SetActive(true);
 
-                CooldownText.SetText("");
-                ChargesText.SetText($"{CurrentCharges}");
-                
-                ChargeCooldownFillImage.fillAmount = 1 - (CooldownRemaining / CooldownTime);
+                _cooldownText.SetText("");
+                _chargesText.SetText($"{_currentCharges}");
 
-                if (CurrentCharges == MaxCharges) ChargeCooldownFillImage.fillAmount = 0f;
-                //Core.Log.LogInfo($"(2) Charges: {CurrentCharges}/{MaxCharges} - CooldownRemaining: {CooldownRemaining}, CooldownTime: {CooldownTime} ({CooldownRemaining / CooldownTime}%), ChargeTime: {ChargeUpTime} ({1 - (ChargeUpTimeRemaining / ChargeUpTime)}%)");
+                _chargeCooldownFillImage.fillAmount = 1 - (_cooldownRemaining / _cooldownTime);
+
+                if (_currentCharges == _maxCharges) _chargeCooldownFillImage.fillAmount = 0f;
             }
         }
-        else if (MaxCharges > 0)
+        else if (_maxCharges > 0)
         {
-            if (CurrentCharges == 0)
+            if (_currentCharges == 0)
             {
-                AbilityBarEntry._CurrentUIState.ChargesTextActive = true;
-                ChargeCooldownFillImage.fillAmount = 0f;
-                ChargeCooldownImageObject.SetActive(false);
+                _abilityBarEntry._CurrentUIState.ChargesTextActive = true;
+                _chargeCooldownFillImage.fillAmount = 0f;
+                _chargeCooldownImageObject.SetActive(false);
 
-                if (ChargeUpTimeRemaining < 0f)
+                if (_chargeUpTimeRemaining < 0f)
                 {
-                    CooldownText.SetText("");
-                    ChargesText.SetText("1");
+                    _cooldownText.SetText("");
+                    _chargesText.SetText("1");
                 }
                 else
                 {
-                    ChargesText.SetText("");
-                    CooldownText.SetText($"{(int)ChargeUpTimeRemaining}");
+                    _chargesText.SetText("");
+                    _cooldownText.SetText($"{(int)_chargeUpTimeRemaining}");
                 }
 
-                CooldownFillImage.fillAmount = ChargeUpTimeRemaining / CooldownTime;
+                _cooldownFillImage.fillAmount = _chargeUpTimeRemaining / _cooldownTime;
 
-                //if (Core.ServerTime.TimeOnServer >= CooldownEndTime)
-                if (ChargeUpTimeRemaining < 0f)
+                if (_chargeUpTimeRemaining < 0f)
                 {
-                    ++CurrentCharges;
-                    CooldownEndTime = Core.ServerTime.TimeOnServer + (double)CooldownTime;
+                    ++_currentCharges;
+                    _cooldownEndTime = Core.ServerTime.TimeOnServer + _cooldownTime;
                 }
-
-                //Core.Log.LogInfo($"(3) Charges: {CurrentCharges}/{MaxCharges} - CooldownRemaining: {CooldownRemaining}, CooldownTime: {CooldownTime} ({CooldownRemaining / CooldownTime}%), ChargeTime: {ChargeUpTime} ({ChargeUpTimeRemaining / ChargeUpTime}%)");
             }
-            else if (CurrentCharges < MaxCharges && CurrentCharges > 0)
+            else if (_currentCharges < _maxCharges && _currentCharges > 0)
             {
-                CooldownText.SetText("");
-                AbilityBarEntry._CurrentUIState.ChargesTextActive = true;
-                CooldownFillImage.fillAmount = 0f;
+                _cooldownText.SetText("");
+                _abilityBarEntry._CurrentUIState.ChargesTextActive = true;
+                _cooldownFillImage.fillAmount = 0f;
 
-                ChargesTextObject.SetActive(true);
-                ChargeCooldownImageObject.SetActive(true);
+                _chargesTextObject.SetActive(true);
+                _chargeCooldownImageObject.SetActive(true);
 
-                ChargesText.SetText($"{CurrentCharges}");
+                _chargesText.SetText($"{_currentCharges}");
 
-                ChargeCooldownFillImage.fillAmount = 1f - (CooldownRemaining / CooldownTime);
+                _chargeCooldownFillImage.fillAmount = 1f - (_cooldownRemaining / _cooldownTime);
 
-                //if (Core.ServerTime.TimeOnServer >= CooldownEndTime)
-                if (CooldownRemaining < 0f)
+                if (_cooldownRemaining < 0f)
                 {
-                    ++CurrentCharges;
-                    CooldownEndTime = Core.ServerTime.TimeOnServer + (double)CooldownTime;
+                    ++_currentCharges;
+                    _cooldownEndTime = Core.ServerTime.TimeOnServer + _cooldownTime;
                 }
-
-                //Core.Log.LogInfo($"(4) Charges: {CurrentCharges}/{MaxCharges} - CooldownRemaining: {CooldownRemaining}, CooldownTime: {CooldownTime} ({CooldownRemaining / CooldownTime}%), ChargeTime: {ChargeUpTime} ({ChargeUpTimeRemaining / ChargeUpTime}%)");
             }
-            else if (CurrentCharges == MaxCharges)
+            else if (_currentCharges == _maxCharges)
             {
-                ChargeCooldownImageObject.SetActive(false);
+                _chargeCooldownImageObject.SetActive(false);
 
-                CooldownText.SetText("");
-                AbilityBarEntry._CurrentUIState.ChargesTextActive = true;
+                _cooldownText.SetText("");
+                _abilityBarEntry._CurrentUIState.ChargesTextActive = true;
 
-                CooldownFillImage.fillAmount = 0f;
-                ChargeCooldownFillImage.fillAmount = 0f;
+                _cooldownFillImage.fillAmount = 0f;
+                _chargeCooldownFillImage.fillAmount = 0f;
 
-                ChargesTextObject.SetActive(true);
-                ChargesText.SetText($"{CurrentCharges}");
-
-                //Core.Log.LogInfo($"(5) Charges: {CurrentCharges}/{MaxCharges} - CooldownRemaining: {CooldownRemaining}, CooldownTime: {CooldownTime} ({CooldownRemaining / CooldownTime}%), ChargeTime: {ChargeUpTime} ({ChargeUpTimeRemaining / ChargeUpTime}%)");
+                _chargesTextObject.SetActive(true);
+                _chargesText.SetText($"{_currentCharges}");
             }
         }
         else
         {
-            CurrentCharges = 0;
-            AbilityBarEntry._CurrentUIState.ChargesTextActive = false;
+            _currentCharges = 0;
+            _abilityBarEntry._CurrentUIState.ChargesTextActive = false;
 
-            ChargeCooldownImageObject.SetActive(false);
-            ChargeCooldownFillImage.fillAmount = 0f;
+            _chargeCooldownImageObject.SetActive(false);
+            _chargeCooldownFillImage.fillAmount = 0f;
 
-            if (CooldownRemaining < 0f)
+            if (_cooldownRemaining < 0f)
             {
-                CooldownText.SetText($"");
+                _cooldownText.SetText($"");
             }
             else
             {
-                CooldownText.SetText($"{(int)CooldownRemaining}");
+                _cooldownText.SetText($"{(int)_cooldownRemaining}");
             }
 
-            CooldownFillImage.fillAmount = CooldownRemaining / CooldownTime;
-
-            //Core.Log.LogInfo($"(6) Charges: {CurrentCharges}/{MaxCharges} - CooldownRemaining: {CooldownRemaining}, CooldownTime: {CooldownTime} ({CooldownRemaining / CooldownTime}%), ChargeTime: {ChargeUpTime} ({ChargeUpTimeRemaining / ChargeUpTime}%)");
+            _cooldownFillImage.fillAmount = _cooldownRemaining / _cooldownTime;
         }
     }
     public static IEnumerator ShiftUpdateLoop()
     {
         while (true)
         {
-            if (KillSwitch) // stop running when player leaves game
+            if (_killSwitch) // stop running when player leaves game
             {
-                ShiftActive = false;
+                _shiftActive = false;
+
                 break;
             }
-            else if (!ShiftActive) // don't update if not active
+            else if (!_shiftActive) // don't update if not active
             {
-                yield return Delay;
+                yield return _delay;
+
                 continue;
             }
 
-            if (playerCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
+            if (_playerCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
             {
                 Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
                 Entity abilityCastEntity = abilityBar_Shared.CastAbility.GetEntityOnServer();
@@ -764,34 +756,34 @@ internal class CanvasService
 
                     if (TryUpdateTooltipData(abilityGroupEntity, currentPrefabGUID))
                     {
-                        UpdateAbilityData(AbilityTooltipData, abilityGroupEntity, abilityCastEntity, currentPrefabGUID);
+                        UpdateAbilityData(_abilityTooltipData, abilityGroupEntity, abilityCastEntity, currentPrefabGUID);
                     }
-                    else if (AbilityTooltipData != null)
+                    else if (_abilityTooltipData != null)
                     {
-                        UpdateAbilityData(AbilityTooltipData, abilityGroupEntity, abilityCastEntity, currentPrefabGUID);
+                        UpdateAbilityData(_abilityTooltipData, abilityGroupEntity, abilityCastEntity, currentPrefabGUID);
                     }
                 }
-                
-                if (AbilityTooltipData != null)
+
+                if (_abilityTooltipData != null)
                 {
                     UpdateAbilityState(abilityGroupEntity, abilityCastEntity);
                 }
             }
 
-            yield return ShiftDelay;
+            yield return _shiftDelay;
         }
     }
     static bool TryUpdateTooltipData(Entity abilityGroupEntity, PrefabGUID abilityGroupPrefabGUID)
     {
-        if (AbilityTooltipData == null || AbilityGroupPrefabGUID != abilityGroupPrefabGUID)
+        if (_abilityTooltipData == null || _abilityGroupPrefabGUID != abilityGroupPrefabGUID)
         {
-            if (abilityGroupEntity.TryGetComponentObject(out AbilityTooltipData))
+            if (abilityGroupEntity.TryGetComponentObject(EntityManager, out _abilityTooltipData))
             {
-                AbilityTooltipData ??= EntityManager.GetComponentObject<AbilityTooltipData>(abilityGroupEntity, AbilityTooltipDataComponent);        
+                _abilityTooltipData ??= EntityManager.GetComponentObject<AbilityTooltipData>(abilityGroupEntity, _abilityTooltipDataComponent);
             }
         }
 
-        return AbilityTooltipData != null;
+        return _abilityTooltipData != null;
     }
     static void UpdateProfessions(float progress, int level, int maxLevel, LocalizedText levelText, Image fill)
     {
@@ -808,11 +800,11 @@ internal class CanvasService
 
         if (level >= 100)
         {
-            levelText.Text.fontSize = FontSize * 0.7f;
+            levelText.Text.fontSize = _fontSize * 0.7f;
         }
         else
         {
-            levelText.Text.fontSize = FontSize * 0.9f;
+            levelText.Text.fontSize = _fontSize * 0.9f;
         }
 
         if (levelText.GetText() != levelString)
@@ -843,7 +835,7 @@ internal class CanvasService
             levelText.ForceSet(levelString);
         }
 
-        if (ShowPrestige && prestiges != 0)
+        if (_showPrestige && prestiges != 0)
         {
             string header = "";
 
@@ -883,7 +875,7 @@ internal class CanvasService
             string formattedClassName = FormatClassName(classType);
             classText.ForceSet(formattedClassName);
 
-            if (ClassColorHexMap.TryGetValue(classType, out Color classColor))
+            if (_classColorHexMap.TryGetValue(classType, out Color classColor))
             {
                 classText.Text.color = classColor;
             }
@@ -896,9 +888,175 @@ internal class CanvasService
     }
     static string FormatClassName(PlayerClass classType)
     {
-        return ClassNameRegex.Replace(classType.ToString(), " $1");
+        return _classNameRegex.Replace(classType.ToString(), " $1");
     }
-    static void UpdateStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, string> getStatInfo)
+    static void UpdateWeaponStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, Dictionary<UnitStatType, float>, string> getStatInfo)
+    {
+        Dictionary<UnitStatType, float> weaponStats = [];
+
+        for (int i = 0; i < 3; i++) // hard coding this for now
+        {
+            if (bonusStats[i] != "None")
+            {
+                if (!statTexts[i].enabled) statTexts[i].enabled = true;
+                string statInfo = getStatInfo(bonusStats[i], weaponStats);
+                statTexts[i].ForceSet(statInfo);
+            }
+            else if (bonusStats[i] == "None" && statTexts[i].enabled)
+            {
+                statTexts[i].ForceSet("");
+                statTexts[i].enabled = false;
+            }
+        }
+
+        if (!weaponStats.Any()) return;
+        else if (_playerCharacter.TryGetComponent(out Equipment equipment))
+        {
+            Entity weaponEntity = equipment.WeaponSlot.SlotEntity.GetEntityOnServer();
+
+            if (!weaponEntity.Exists()) return;
+            DataService.WeaponType weaponType = GetWeaponTypeFromWeaponEntity(weaponEntity);
+
+            if (weaponType.ToString() != _expertiseType) return;
+            else if (weaponEntity.TryGetComponent(out PrefabGUID prefabGuid))
+            {
+                if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out Entity prefabEntity) && prefabEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer))
+                {
+                    if (!_weaponStatCache.TryGetValue(prefabGuid, out var previousWeaponStats))
+                    {
+                        _weaponStatCache[prefabGuid] = [];
+                    }
+
+                    // Update existing entries in the buffer
+                    for (int i = 0; i < buffer.Length; i++)
+                    {
+                        ModifyUnitStatBuff_DOTS entry = buffer[i];
+
+                        if (previousWeaponStats.TryGetValue(entry.StatType, out var previousValue) &&
+                            weaponStats.TryGetValue(entry.StatType, out var updatedValue))
+                        {
+                            // Calculate delta and update buffer
+                            float delta = updatedValue - previousValue;
+
+                            entry.Value += delta;
+                            buffer[i] = entry;
+
+                            // Update tracked values
+                            previousWeaponStats[entry.StatType] = updatedValue;
+                            weaponStats.Remove(entry.StatType);
+                        }
+                    }
+
+                    // Add new stats from weaponStats
+                    if (weaponStats.Any())
+                    {
+                        foreach (var kvp in weaponStats)
+                        {
+                            ModifyUnitStatBuff_DOTS newEntry = new()
+                            {
+                                StatType = kvp.Key,
+                                ModificationType = !kvp.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
+                                Value = kvp.Value - (previousWeaponStats.TryGetValue(kvp.Key, out var previousValue) ? previousValue : 0f),
+                                Modifier = 1,
+                                IncreaseByStacks = false,
+                                ValueByStacks = 0,
+                                Priority = 0,
+                                Id = ModificationIDs.Create().NewModificationId()
+                            };
+
+                            buffer.Insert(1, newEntry);
+                            previousWeaponStats[kvp.Key] = kvp.Value; // Track the new value
+                        }
+                    }
+
+                    /*
+                    if (_weaponStatValues.ContainsKey(prefabGuid))
+                    {
+                        Dictionary<UnitStatType, float> previousWeaponStats = _weaponStatValues[prefabGuid];
+
+                        for (int i = 0; i < buffer.Length; i++)
+                        {
+                            ModifyUnitStatBuff_DOTS entry = buffer[i];
+
+                            if (previousWeaponStats.TryGetValue(entry.StatType, out float previousValue) && weaponStats.TryGetValue(entry.StatType, out float updatedValue))
+                            {
+                                entry.Value = updatedValue - previousValue;
+                                buffer[i] = entry;
+
+                                previousWeaponStats[entry.StatType] = entry.Value;
+                                weaponStats.Remove(entry.StatType);
+                            }
+                        }
+
+                        if (weaponStats.Any())
+                        {
+                            foreach (var kvp in weaponStats)
+                            {
+                                ModifyUnitStatBuff_DOTS entry = new()
+                                {
+                                    StatType = kvp.Key,
+                                    ModificationType = ModificationType.AddToBase,
+                                    Value = kvp.Value - (previousWeaponStats.TryGetValue(kvp.Key, out float previousValue) ? previousValue : 0f),
+                                    Modifier = 1,
+                                    IncreaseByStacks = false,
+                                    ValueByStacks = 0,
+                                    Priority = 0,
+                                    Id = ModificationIDs.Create().NewModificationId()
+                                };
+
+                                previousWeaponStats[entry.StatType] = entry.Value;
+                                buffer.Add(entry);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _weaponStatValues.TryAdd(prefabGuid, []);
+                        Dictionary<UnitStatType, float> previousWeaponStats = [];
+
+                        for (int i = 0; i < buffer.Length; i++)
+                        {
+                            ModifyUnitStatBuff_DOTS entry = buffer[i];
+
+                            if (weaponStats.TryGetValue(entry.StatType, out float value))
+                            {
+                                previousWeaponStats[entry.StatType] = entry.Value;
+
+                                entry.Value += value;
+                                buffer[i] = entry;
+
+                                weaponStats.Remove(entry.StatType);
+                            }
+                        }
+
+                        if (weaponStats.Any())
+                        {
+                            foreach (var kvp in weaponStats)
+                            {
+                                previousWeaponStats[kvp.Key] = kvp.Value;
+
+                                ModifyUnitStatBuff_DOTS entry = new()
+                                {
+                                    StatType = kvp.Key,
+                                    ModificationType = ModificationType.AddToBase,
+                                    Value = kvp.Value,
+                                    Modifier = 1,
+                                    IncreaseByStacks = false,
+                                    ValueByStacks = 0,
+                                    Priority = 0,
+                                    Id = ModificationIDs.Create().NewModificationId()
+                                };
+
+                                buffer.Add(entry);
+                            }
+                        }
+                    }
+                    */
+                }
+            }
+        }
+    }
+    static void UpdateBloodStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, string> getStatInfo)
     {
         for (int i = 0; i < 3; i++) // hard coding this for now
         {
@@ -955,7 +1113,7 @@ internal class CanvasService
             else if (targetType.Equals(TargetType.Craft))
             {
                 if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
-                
+
                 PrefabGUID targetPrefabGUID = Localization.GetPrefabGUIDFromLocalizedName(target);
                 ManagedItemData managedItemData = ManagedDataRegistry.GetOrDefault<ManagedItemData>(targetPrefabGUID);
 
@@ -995,29 +1153,34 @@ internal class CanvasService
             questIcon.gameObject.active = false;
         }
     }
-    static string GetWeaponStatInfo(string statType)
+    static string GetWeaponStatInfo(string statType, Dictionary<UnitStatType, float> weaponStats)
     {
         if (Enum.TryParse(statType, out WeaponStatType weaponStat))
         {
-            if (WeaponStatValues.TryGetValue(weaponStat, out float statValue))
+            if (_weaponStatValues.TryGetValue(weaponStat, out float statValue))
             {
-                float classMultiplier = ClassSynergy(weaponStat, ClassType, ClassStatSynergies);
-                statValue *= ((1 + (PrestigeStatMultiplier * ExpertisePrestige)) * classMultiplier * ((float)ExpertiseLevel / ExpertiseMaxLevel));
+                float classMultiplier = ClassSynergy(weaponStat, _classType, ClassStatSynergies);
+                statValue *= ((1 + (PrestigeStatMultiplier * _expertisePrestige)) * classMultiplier * ((float)_expertiseLevel / _expertiseMaxLevel));
+
+                if (Enum.TryParse(weaponStat.ToString(), out UnitStatType result) && statValue != 0f)
+                {
+                    weaponStats.TryAdd(result, statValue);
+                }
 
                 return FormatWeaponStat(weaponStat, statValue);
             }
         }
 
-        return "";
+        return string.Empty;
     }
     static string GetBloodStatInfo(string statType)
     {
         if (Enum.TryParse(statType, out BloodStatType bloodStat))
         {
-            if (BloodStatValues.TryGetValue(bloodStat, out float statValue))
+            if (_bloodStatValues.TryGetValue(bloodStat, out float statValue))
             {
-                float classMultiplier = ClassSynergy(bloodStat, ClassType, ClassStatSynergies);
-                statValue *= ((1 + (PrestigeStatMultiplier * LegacyPrestige)) * classMultiplier * ((float)LegacyLevel / LegacyMaxLevel));
+                float classMultiplier = ClassSynergy(bloodStat, _classType, ClassStatSynergies);
+                statValue *= ((1 + (PrestigeStatMultiplier * _legacyPrestige)) * classMultiplier * ((float)_legacyLevel / _legacyMaxLevel));
 
                 string displayString = $"<color=#00FFFF>{BloodStatTypeAbbreviations[bloodStat]}</color>: <color=#90EE90>{(statValue * 100).ToString("F0") + "%"}</color>";
                 return displayString;
@@ -1031,7 +1194,7 @@ internal class CanvasService
     ref GameObject abilityEmptyIcon, ref GameObject abilityIcon, ref GameObject keybindObject)
     {
         GameObject AbilityDummyObject = GameObject.Find("HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/Abilities/AbilityBarEntry_Dummy/");
-        
+
         if (AbilityDummyObject != null)
         {
             shiftSlotObject = GameObject.Instantiate(AbilityDummyObject);
@@ -1095,10 +1258,10 @@ internal class CanvasService
             //keybindImageObject.SetActive(false);
 
             UIObjectStates.Add(shiftSlotObject, true);
-          
+
             SimpleStunButton stunButton = shiftSlotObject.AddComponent<SimpleStunButton>();
 
-            if (ActionToggles.TryGetValue(SHIFT_SLOT, out var toggleAction))
+            if (_actionToggles.TryGetValue(SHIFT_SLOT, out var toggleAction))
             {
                 stunButton.onClick.AddListener(new Action(toggleAction));
             }
@@ -1111,7 +1274,7 @@ internal class CanvasService
     static void ConfigureQuestWindow(ref GameObject questObject, UIElement questType, Color headerColor, ref LocalizedText header, ref LocalizedText subHeader, ref Image questIcon)
     {
         // Instantiate quest tooltip
-        questObject = GameObject.Instantiate(UICanvasBase.BottomBarParentPrefab.FakeTooltip.gameObject);
+        questObject = GameObject.Instantiate(_uiCanvasBase.BottomBarParentPrefab.FakeTooltip.gameObject);
         RectTransform questTransform = questObject.GetComponent<RectTransform>();
 
         // Prevent quest window from being destroyed on scene load and move to scene
@@ -1119,8 +1282,8 @@ internal class CanvasService
         SceneManager.MoveGameObjectToScene(questObject, SceneManager.GetSceneByName("VRisingWorld"));
 
         // Set parent and activate quest window
-        questTransform.SetParent(Canvas.transform, false);
-        questTransform.gameObject.layer = Layer;
+        questTransform.SetParent(_canvas.transform, false);
+        questTransform.gameObject.layer = _layer;
         questObject.SetActive(true);
 
         // Deactivate unwanted objects in quest tooltips
@@ -1187,10 +1350,10 @@ internal class CanvasService
 
         // Size window and set anchors
         questTransform.sizeDelta = new Vector2(questTransform.sizeDelta.x * 0.65f, questTransform.sizeDelta.y);
-        questTransform.anchorMin = new Vector2(1, WindowOffset); // Anchored to bottom-right
-        questTransform.anchorMax = new Vector2(1, WindowOffset);
-        questTransform.pivot = new Vector2(1, WindowOffset);
-        questTransform.anchoredPosition = new Vector2(0, WindowOffset);
+        questTransform.anchorMin = new Vector2(1, _windowOffset); // Anchored to bottom-right
+        questTransform.anchorMax = new Vector2(1, _windowOffset);
+        questTransform.pivot = new Vector2(1, _windowOffset);
+        questTransform.anchoredPosition = new Vector2(0, _windowOffset);
 
         // Set header text
         header.ForceSet(questType.ToString() + " Quest");
@@ -1198,23 +1361,23 @@ internal class CanvasService
 
         // Add to active objects
         UIObjectStates.Add(questObject, true);
-        WindowOffset += 0.075f;
+        _windowOffset += 0.075f;
     }
     static void ConfigureHorizontalProgressBar(ref GameObject barGameObject, ref GameObject informationPanelObject, ref Image fill, ref LocalizedText level, ref LocalizedText header, UIElement element, Color fillColor, ref LocalizedText firstText, ref LocalizedText secondText, ref LocalizedText thirdText)
     {
         // Instantiate the bar object from the prefab
-        barGameObject = GameObject.Instantiate(UICanvasBase.TargetInfoParent.gameObject);
+        barGameObject = GameObject.Instantiate(_uiCanvasBase.TargetInfoParent.gameObject);
 
         // DontDestroyOnLoad, change scene
         GameObject.DontDestroyOnLoad(barGameObject);
         SceneManager.MoveGameObjectToScene(barGameObject, SceneManager.GetSceneByName("VRisingWorld"));
 
         RectTransform barRectTransform = barGameObject.GetComponent<RectTransform>();
-        barRectTransform.SetParent(Canvas.transform, false);
-        barRectTransform.gameObject.layer = Layer;
+        barRectTransform.SetParent(_canvas.transform, false);
+        barRectTransform.gameObject.layer = _layer;
 
         // Set anchor and pivot to middle-upper-right
-        float offsetY = BAR_HEIGHT_SPACING * BarNumber;
+        float offsetY = BAR_HEIGHT_SPACING * _barNumber;
         float offsetX = 1f - BAR_WIDTH_SPACING;
         barRectTransform.anchorMin = new Vector2(offsetX, 0.6f - offsetY);
         barRectTransform.anchorMax = new Vector2(offsetX, 0.6f - offsetY);
@@ -1234,6 +1397,9 @@ internal class CanvasService
         level.ForceSet("0");
         header.ForceSet(element.ToString());
         header.Text.fontSize *= 1.5f;
+        _headerFontSize = header.Text.fontSize;
+
+        // if (element.Equals(UIElement.Familiars)) header.Text.enableAutoSizing = true; // maybe will just work? >_>
 
         // Set these to 0 so don't appear, deactivating instead seemed funky
         FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
@@ -1244,33 +1410,33 @@ internal class CanvasService
         ConfigureInformationPanel(ref informationPanelObject, ref firstText, ref secondText, ref thirdText, element);
 
         // Increment for spacing
-        BarNumber++;
+        _barNumber++;
         barGameObject.SetActive(true);
         UIObjectStates.Add(barGameObject, true);
     }
     static void ConfigureVerticalProgressBar(ref GameObject barGameObject, ref Image fill, ref LocalizedText level, Color fillColor)
     {
         // Instantiate the bar object from the prefab
-        barGameObject = GameObject.Instantiate(UICanvasBase.TargetInfoParent.gameObject);
+        barGameObject = GameObject.Instantiate(_uiCanvasBase.TargetInfoParent.gameObject);
 
         // Don't destroy on load, move to the correct scene
         GameObject.DontDestroyOnLoad(barGameObject);
         SceneManager.MoveGameObjectToScene(barGameObject, SceneManager.GetSceneByName("VRisingWorld"));
 
         RectTransform barRectTransform = barGameObject.GetComponent<RectTransform>();
-        barRectTransform.SetParent(Canvas.transform, false);
-        barRectTransform.gameObject.layer = Layer;
+        barRectTransform.SetParent(_canvas.transform, false);
+        barRectTransform.gameObject.layer = _layer;
 
         // Define the number of professions (bars)
         int totalBars = 8;
 
         // Calculate the total width and height for the bars
         float totalBarAreaWidth = 0.215f; // previous 0.185f
-        float barWidth = totalBarAreaWidth / (float)totalBars; // Width of each bar
+        float barWidth = totalBarAreaWidth / totalBars; // Width of each bar
 
         // Calculate the starting X position to center the bar graph and position added bars appropriately
         float padding = 1f - (0.075f * 2.45f); // BAR_WIDTH_SPACING previously 0.075f
-        float offsetX = padding + (barWidth * GraphBarNumber / 1.4f); // previously used 1.5f
+        float offsetX = padding + (barWidth * _graphBarNumber / 1.4f); // previously used 1.5f
 
         // scale size
         Vector3 updatedScale = new(0.4f, 1f, 1f);
@@ -1293,13 +1459,19 @@ internal class CanvasService
         barRectTransform.localRotation = Quaternion.Euler(0, 0, 90);
 
         // Assign and adjust the level text component
+        
         level = FindTargetUIObject(barRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
-        FontSize = level.Text.fontSize;
-        RectTransform levelRectTransform = level.GetComponent<RectTransform>();
+        _fontSize = level.Text.fontSize;
 
         // **Rotate the level text back by -90 degrees to keep it upright**
+        RectTransform levelRectTransform = level.GetComponent<RectTransform>();
         levelRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
         levelRectTransform.localScale = Vector3.one * 1.25f;
+
+        // Get text container and rotate back
+        // GameObject levelTextContainer = FindTargetUIObject(barRectTransform.transform, "LevelDiff");
+        // RectTransform levelRectTransform = levelTextContainer.GetComponent<RectTransform>();
+        // levelRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
 
         // LevelBackground scale set back
         RectTransform levelBackgroundRectTransform = FindTargetUIObject(barRectTransform.transform, "LevelBackground").GetComponent<RectTransform>();
@@ -1318,13 +1490,13 @@ internal class CanvasService
 
         // Set the level text to display the profession level
         level.ForceSet("0");
-        
+
         // Increment GraphBarNumber for horizontal spacing within the bar graph
-        GraphBarNumber++;
+        _graphBarNumber++;
 
         barGameObject.SetActive(true);
         UIObjectStates.Add(barGameObject, true);
-        ProfessionObjects.Add(barGameObject);
+        _professionObjects.Add(barGameObject);
     }
     static void ConfigureInformationPanel(ref GameObject informationPanelObject, ref LocalizedText firstText, ref LocalizedText secondText, ref LocalizedText thirdText, UIElement element)
     {
@@ -1404,7 +1576,7 @@ internal class CanvasService
     {
         string result = string.Empty;
 
-        foreach (var item in RomanNumerals)
+        foreach (var item in _romanNumerals)
         {
             while (num >= item.Key)
             {
@@ -1461,11 +1633,12 @@ internal class CanvasService
                     }
                 }
             }
+
             return null;
         }
         public static void FindLoadedObjects<T>() where T : UnityEngine.Object
         {
-            Il2CppReferenceArray<UnityEngine.Object> resources = Resources.FindObjectsOfTypeAll(Il2CppType.Of<T>());
+            Il2CppReferenceArray<UnityEngine.Object> resources = UnityEngine.Resources.FindObjectsOfTypeAll(Il2CppType.Of<T>());
             Core.Log.LogInfo($"Found {resources.Length} {Il2CppType.Of<T>().FullName}'s!");
             foreach (UnityEngine.Object resource in resources)
             {
@@ -1516,7 +1689,7 @@ internal class CanvasService
             HashSet<Transform> visited = [];
 
             Il2CppArrayBase<Transform> children = root.GetComponentsInChildren<Transform>(includeInactive);
-            List<Transform> transforms = [..children];
+            List<Transform> transforms = [.. children];
 
             if (string.IsNullOrEmpty(filePath))
             {
@@ -1594,11 +1767,11 @@ internal class CanvasService
         }
         public static void FindSprites()
         {
-            Il2CppArrayBase<Sprite> sprites = Resources.FindObjectsOfTypeAll<Sprite>();
+            Il2CppArrayBase<Sprite> sprites = UnityEngine.Resources.FindObjectsOfTypeAll<Sprite>();
 
             foreach (Sprite sprite in sprites)
             {
-                if (SpriteNames.Contains(sprite.name) && !SpriteMap.ContainsKey(sprite.name))
+                if (_spriteNames.Contains(sprite.name) && !SpriteMap.ContainsKey(sprite.name))
                 {
                     SpriteMap[sprite.name] = sprite;
                 }

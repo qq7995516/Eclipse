@@ -14,8 +14,8 @@ internal static class InitializationPatches
 {
     static EntityManager EntityManager => Core.EntityManager;
 
-    static readonly bool ShouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests; // will use operators with other bools as options are added in the future
-    static bool SetCanvas = false;
+    static readonly bool _shouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Familiars || Plugin.Quests; // will use operators with other bools as options are added in the future
+    static bool _setCanvas = false;
 
     [HarmonyPatch(typeof(GameDataManager), nameof(GameDataManager.OnUpdate))]
     [HarmonyPostfix]
@@ -23,11 +23,11 @@ internal static class InitializationPatches
     {
         try
         {
-            if (ShouldInitialize && __instance.GameDataInitialized && !Core.hasInitialized)
+            if (_shouldInitialize && __instance.GameDataInitialized && !Core._hasInitialized)
             {
                 Core.Initialize(__instance);
 
-                if (Core.hasInitialized)
+                if (Core._hasInitialized)
                 {
                     Core.Log.LogInfo($"|{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] initialized on client!");
                 }
@@ -43,9 +43,9 @@ internal static class InitializationPatches
     [HarmonyPostfix]
     static void OnUpdatePostfix(UICanvasBase canvas)
     {
-        if (!SetCanvas && Core.hasInitialized)
+        if (!_setCanvas && Core._hasInitialized)
         {
-            SetCanvas = true;
+            _setCanvas = true;
             Core.SetCanvas(canvas);
         }
     }
@@ -54,7 +54,7 @@ internal static class InitializationPatches
     [HarmonyPostfix]
     static void OnUpdatePostfix(CommonClientDataSystem __instance)
     {
-        if (Core.hasInitialized)
+        if (Core._hasInitialized)
         {
             NativeArray<Entity> entities = __instance.__query_1840110765_0.ToEntityArray(Allocator.Temp);
             try
@@ -77,7 +77,7 @@ internal static class InitializationPatches
                 foreach (Entity entity in entities)
                 {
                     if (entity.Has<LocalCharacter>()) ClientChatSystemPatch.localCharacter = entity;
-                    CanvasService.playerCharacter = entity;
+                    CanvasService._playerCharacter = entity;
 
                     break;
                 }
@@ -93,24 +93,27 @@ internal static class InitializationPatches
     [HarmonyPrefix]
     static void OnUpdatePrefix(ClientBootstrapSystem __instance)
     {
-        CanvasService.KillSwitch = true;
-        CanvasService.Active = false;
+        CanvasService._killSwitch = true;
+        CanvasService._active = false;
+        CanvasService._shiftActive = false;
 
         ClientChatSystemPatch.UserRegistered = false;
         ClientChatSystemPatch.localCharacter = Entity.Null;
         ClientChatSystemPatch.localUser = Entity.Null;
 
-        SetCanvas = false;
-        Core.hasInitialized = false;
+        _setCanvas = false;
+        Core._hasInitialized = false;
 
-        foreach(GameObject gameObject in CanvasService.UIObjectStates.Keys) // destroy to let resolution be changed and elements get recreated to match new scaling?
+        foreach (GameObject gameObject in CanvasService.UIObjectStates.Keys) // destroy to let resolution be changed and elements get recreated to match new scaling?
         {
             if (gameObject != null)
             {
                 GameObject.Destroy(gameObject);
             }
         }
-        
+
+        CanvasService._abilityTooltipData = null;
+
         CanvasService.UIObjectStates.Clear();
         CanvasService.SpriteMap.Clear();
     }

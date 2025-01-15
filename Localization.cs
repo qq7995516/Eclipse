@@ -57,7 +57,7 @@ internal class Localization
 
         var nodesDict = localizationFile.Nodes
             .ToDictionary(x => x.Guid, x => x.Text);
-            //.ForEach(kvp => GuidStringsToLocalizedNames[kvp.Key] = kvp.Value);
+        //.ForEach(kvp => GuidStringsToLocalizedNames[kvp.Key] = kvp.Value);
 
         nodesDict.ForEach(kvp => GuidStringsToLocalizedNames[kvp.Key] = kvp.Value);
         nodesDict.ForEach(kvp => LocalizedNamesToGuidStrings[kvp.Value] = kvp.Key);
@@ -98,7 +98,7 @@ internal class Localization
             return GetLocalization(itemLocalizationHash);
         }
 
-        return prefabGUID.LookupName();
+        return prefabGUID.GetPrefabName();
     }
     public static string GetLocalization(string Guid)
     {
@@ -113,7 +113,7 @@ internal class Localization
     {
         if (PrefabHashesToGuidStrings.TryGetValue(prefabGUID.GuidHash, out var itemLocalizationHash))
         {
-            return new LocalizationKey { Key = AssetGuid.FromString(itemLocalizationHash)};
+            return new LocalizationKey { Key = AssetGuid.FromString(itemLocalizationHash) };
         }
 
         return LocalizationKey.Empty; // Or handle appropriately

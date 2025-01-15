@@ -2,8 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Bloodcraft.Resources;
-
+namespace Eclipse.Resources;
 internal class Secrets
 {
     [JsonPropertyName("NEW_SHARED_KEY")]
