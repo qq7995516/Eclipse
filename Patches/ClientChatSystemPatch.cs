@@ -136,7 +136,7 @@ internal static class ClientChatSystemPatch
                 if (CanvasService._killSwitch) CanvasService._killSwitch = false;
                 if (!CanvasService._active) CanvasService._active = true;
 
-                Core.StartCoroutine(CanvasService.CanvasUpdateLoop());
+                CanvasService.CanvasUpdateLoop().Start();
                 break;
             case (int)NetworkEventSubType.ConfigsToClient:
                 List<string> configData = DataService.ParseMessageString(regexExtract.Replace(message, ""));

@@ -173,7 +173,7 @@ internal static class DataService
         { "BloodEfficiency", "BE" }
     };
 
-    public static Dictionary<FamiliarStatType, float> FamiliarStatValues = [];
+    public static Dictionary<FamiliarStatType, float> _familiarStatValues = [];
     public enum FamiliarStatType
     {
         MaxHealth,
@@ -239,10 +239,10 @@ internal static class DataService
         DeathMage
     }
 
-    public static Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> BloodStats)> ClassStatSynergies = [];
+    public static Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> BloodStats)> _classStatSynergies = [];
 
-    public static float PrestigeStatMultiplier;
-    public static float ClassStatMultiplier;
+    public static float _prestigeStatMultiplier;
+    public static float _classStatMultiplier;
     internal class ExperienceData(string percent, string level, string prestige, string playerClass)
     {
         public float Progress { get; set; } = float.Parse(percent, CultureInfo.InvariantCulture) / 100f;
@@ -277,6 +277,10 @@ internal static class DataService
         public List<string> FamiliarStats { get; set; } = !string.IsNullOrEmpty(familiarStats) ? new List<string> { familiarStats[..4], familiarStats[4..7], familiarStats[7..] }
                 .Select(stat => int.Parse(stat).ToString())
                 .ToList() : ["", "", ""];
+    }
+    internal class ShiftSpellData(string index)
+    {
+        public int ShiftSpellIndex { get; set; } = int.Parse(index);
     }
     internal class ConfigData
     {
@@ -341,7 +345,7 @@ internal static class DataService
         {
             return [];
         }
-        return [.. configString.Split(',')];
+        return [..configString.Split(',')];
     }
     public static void ParseConfigData(List<string> configData)
     {
@@ -360,8 +364,8 @@ internal static class DataService
             string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
         );
 
-        PrestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
-        ClassStatMultiplier = parsedConfigData.ClassStatMultiplier;
+        _prestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
+        _classStatMultiplier = parsedConfigData.ClassStatMultiplier;
 
         CanvasService._experienceMaxLevel = parsedConfigData.MaxPlayerLevel;
         CanvasService._legacyMaxLevel = parsedConfigData.MaxLegacyLevel;
@@ -373,7 +377,7 @@ internal static class DataService
 
         _bloodStatValues = parsedConfigData.BloodStatValues;
 
-        ClassStatSynergies = parsedConfigData.ClassStatSynergies;
+        _classStatSynergies = parsedConfigData.ClassStatSynergies;
     }
     public static void ParsePlayerData(List<string> playerData)
     {
@@ -385,7 +389,8 @@ internal static class DataService
         FamiliarData familiarData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         ProfessionData professionData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
         QuestData dailyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
-        QuestData weeklyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index]);
+        QuestData weeklyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+        ShiftSpellData shiftSpellData = new(playerData[index]);
 
         CanvasService._experienceProgress = experienceData.Progress;
         CanvasService._experienceLevel = experienceData.Level;
@@ -438,6 +443,8 @@ internal static class DataService
         CanvasService._weeklyGoal = weeklyQuestData.Goal;
         CanvasService._weeklyTarget = weeklyQuestData.Target;
         CanvasService._weeklyVBlood = weeklyQuestData.IsVBlood;
+
+        CanvasService._shiftSpellIndex = shiftSpellData.ShiftSpellIndex;
     }
     public static WeaponType GetWeaponTypeFromWeaponEntity(Entity weaponEntity)
     {

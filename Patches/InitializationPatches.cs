@@ -77,7 +77,7 @@ internal static class InitializationPatches
                 foreach (Entity entity in entities)
                 {
                     if (entity.Has<LocalCharacter>()) ClientChatSystemPatch.localCharacter = entity;
-                    CanvasService._playerCharacter = entity;
+                    CanvasService._localCharacter = entity;
 
                     break;
                 }

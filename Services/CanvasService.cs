@@ -20,7 +20,7 @@ namespace Eclipse.Services;
 internal class CanvasService
 {
     static EntityManager EntityManager => Core.EntityManager;
-    static ClientGameManager ClientGameManager => Core.ClientGameManager;
+    // static ClientGameManager ClientGameManager => Core.ClientGameManager;
     static ManagedDataRegistry ManagedDataRegistry => Core.ManagedDataSystem.ManagedDataRegistry;
     static PrefabCollectionSystem PrefabCollectionSystem => Core.PrefabCollectionSystem;
 
@@ -221,7 +221,7 @@ internal class CanvasService
     public static string _weeklyTarget = "";
     public static bool _weeklyVBlood = false;
 
-    public static Entity _playerCharacter;
+    public static Entity _localCharacter;
     static PrefabGUID _abilityGroupPrefabGUID;
 
     public static AbilityTooltipData _abilityTooltipData;
@@ -243,6 +243,9 @@ internal class CanvasService
     static GameObject _abilityIcon;
 
     static GameObject _keybindObject;
+
+    public static int _shiftSpellIndex = -1;
+    static bool _isVBloodAbility = true;
 
     public static double _cooldownEndTime = 0;
     public static float _cooldownRemaining = 0f;
@@ -548,7 +551,7 @@ internal class CanvasService
                 UpdateProfessions(_fishingProgress, _fishingLevel, _professionMaxLevel, _fishingLevelText, _fishingFill);
             }
 
-            if (!_shiftActive && _playerCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
+            if (!_shiftActive && _localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
             {
                 Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
 
@@ -556,7 +559,7 @@ internal class CanvasService
                 {
                     _shiftActive = true;
 
-                    Core.StartCoroutine(ShiftUpdateLoop());
+                    ShiftUpdateLoop().Start();
                 }
             }
 
@@ -580,6 +583,8 @@ internal class CanvasService
         _abilityBarEntry._CurrentUIState.AbilityIconImageActive = true;
         _abilityBarEntry._CurrentUIState.AbilityIconImageSprite = abilityTooltipData.Icon;
 
+        _isVBloodAbility = abilityGroupEntity.Has<VBloodAbilityData>();
+
         if (abilityGroupEntity.TryGetComponent(out AbilityChargesData abilityChargesData))
         {
             _maxCharges = abilityChargesData.MaxCharges;
@@ -593,13 +598,15 @@ internal class CanvasService
 
         if (abilityCastEntity.TryGetComponent(out AbilityCooldownData abilityCooldownData))
         {
-            _cooldownTime = abilityCooldownData.Cooldown._Value;
+            _cooldownTime = _isVBloodAbility ? abilityCooldownData.Cooldown._Value : (!_shiftSpellIndex.Equals(-1) ? _shiftSpellIndex * 15 : abilityCooldownData.Cooldown._Value);
             _cooldownEndTime = Core.ServerTime.TimeOnServer + _cooldownTime; // see if this fixes not appearing till second use
 
+            /*
             if (!abilityGroupEntity.Has<VBloodAbilityData>() && abilityCastEntity.TryGetComponent(out AbilityCooldownState abilityCooldownState))
             {
                 _cooldownTime = abilityCooldownState.CurrentCooldown;
             }
+            */
         }
     }
     static void UpdateAbilityState(Entity abilityGroupEntity, Entity abilityCastEntity)
@@ -745,7 +752,7 @@ internal class CanvasService
                 continue;
             }
 
-            if (_playerCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
+            if (_localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
             {
                 Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
                 Entity abilityCastEntity = abilityBar_Shared.CastAbility.GetEntityOnServer();
@@ -910,7 +917,7 @@ internal class CanvasService
         }
 
         if (!weaponStats.Any()) return;
-        else if (_playerCharacter.TryGetComponent(out Equipment equipment))
+        else if (_localCharacter.TryGetComponent(out Equipment equipment))
         {
             Entity weaponEntity = equipment.WeaponSlot.SlotEntity.GetEntityOnServer();
 
@@ -918,7 +925,7 @@ internal class CanvasService
             DataService.WeaponType weaponType = GetWeaponTypeFromWeaponEntity(weaponEntity);
 
             if (weaponType.ToString() != _expertiseType) return;
-            else if (weaponEntity.TryGetComponent(out PrefabGUID prefabGuid))
+            else if (weaponEntity.TryGetComponent(out PrefabGUID prefabGuid) && _localCharacter.TryGetComponent(out Movement movement))
             {
                 if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out Entity prefabEntity) && prefabEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer))
                 {
@@ -926,6 +933,8 @@ internal class CanvasService
                     {
                         _weaponStatCache[prefabGuid] = [];
                     }
+
+                    float movementSpeed = movement.Speed._Value;
 
                     // Update existing entries in the buffer
                     for (int i = 0; i < buffer.Length; i++)
@@ -938,7 +947,18 @@ internal class CanvasService
                             // Calculate delta and update buffer
                             float delta = updatedValue - previousValue;
 
-                            entry.Value += delta;
+                            // entry.Value += delta;
+                            if (entry.StatType == UnitStatType.MovementSpeed)
+                            {
+                                // Movement speed should be stored as a fraction for MultiplyBaseAdd
+                                entry.Value += delta / movementSpeed;
+                            }
+                            else
+                            {
+                                // Other stats stay purely additive
+                                entry.Value += delta;
+                            }
+
                             buffer[i] = entry;
 
                             // Update tracked values
@@ -952,11 +972,14 @@ internal class CanvasService
                     {
                         foreach (var kvp in weaponStats)
                         {
+                            float previousValue = previousWeaponStats.TryGetValue(kvp.Key, out var value) ? value : 0f;
+                            float valueDelta = kvp.Value - previousValue;
+
                             ModifyUnitStatBuff_DOTS newEntry = new()
                             {
                                 StatType = kvp.Key,
                                 ModificationType = !kvp.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
-                                Value = kvp.Value - (previousWeaponStats.TryGetValue(kvp.Key, out var previousValue) ? previousValue : 0f),
+                                Value = kvp.Key.Equals(UnitStatType.MovementSpeed) ? valueDelta / movementSpeed : valueDelta,
                                 Modifier = 1,
                                 IncreaseByStacks = false,
                                 ValueByStacks = 0,
@@ -968,90 +991,6 @@ internal class CanvasService
                             previousWeaponStats[kvp.Key] = kvp.Value; // Track the new value
                         }
                     }
-
-                    /*
-                    if (_weaponStatValues.ContainsKey(prefabGuid))
-                    {
-                        Dictionary<UnitStatType, float> previousWeaponStats = _weaponStatValues[prefabGuid];
-
-                        for (int i = 0; i < buffer.Length; i++)
-                        {
-                            ModifyUnitStatBuff_DOTS entry = buffer[i];
-
-                            if (previousWeaponStats.TryGetValue(entry.StatType, out float previousValue) && weaponStats.TryGetValue(entry.StatType, out float updatedValue))
-                            {
-                                entry.Value = updatedValue - previousValue;
-                                buffer[i] = entry;
-
-                                previousWeaponStats[entry.StatType] = entry.Value;
-                                weaponStats.Remove(entry.StatType);
-                            }
-                        }
-
-                        if (weaponStats.Any())
-                        {
-                            foreach (var kvp in weaponStats)
-                            {
-                                ModifyUnitStatBuff_DOTS entry = new()
-                                {
-                                    StatType = kvp.Key,
-                                    ModificationType = ModificationType.AddToBase,
-                                    Value = kvp.Value - (previousWeaponStats.TryGetValue(kvp.Key, out float previousValue) ? previousValue : 0f),
-                                    Modifier = 1,
-                                    IncreaseByStacks = false,
-                                    ValueByStacks = 0,
-                                    Priority = 0,
-                                    Id = ModificationIDs.Create().NewModificationId()
-                                };
-
-                                previousWeaponStats[entry.StatType] = entry.Value;
-                                buffer.Add(entry);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        _weaponStatValues.TryAdd(prefabGuid, []);
-                        Dictionary<UnitStatType, float> previousWeaponStats = [];
-
-                        for (int i = 0; i < buffer.Length; i++)
-                        {
-                            ModifyUnitStatBuff_DOTS entry = buffer[i];
-
-                            if (weaponStats.TryGetValue(entry.StatType, out float value))
-                            {
-                                previousWeaponStats[entry.StatType] = entry.Value;
-
-                                entry.Value += value;
-                                buffer[i] = entry;
-
-                                weaponStats.Remove(entry.StatType);
-                            }
-                        }
-
-                        if (weaponStats.Any())
-                        {
-                            foreach (var kvp in weaponStats)
-                            {
-                                previousWeaponStats[kvp.Key] = kvp.Value;
-
-                                ModifyUnitStatBuff_DOTS entry = new()
-                                {
-                                    StatType = kvp.Key,
-                                    ModificationType = ModificationType.AddToBase,
-                                    Value = kvp.Value,
-                                    Modifier = 1,
-                                    IncreaseByStacks = false,
-                                    ValueByStacks = 0,
-                                    Priority = 0,
-                                    Id = ModificationIDs.Create().NewModificationId()
-                                };
-
-                                buffer.Add(entry);
-                            }
-                        }
-                    }
-                    */
                 }
             }
         }
@@ -1159,8 +1098,8 @@ internal class CanvasService
         {
             if (_weaponStatValues.TryGetValue(weaponStat, out float statValue))
             {
-                float classMultiplier = ClassSynergy(weaponStat, _classType, ClassStatSynergies);
-                statValue *= ((1 + (PrestigeStatMultiplier * _expertisePrestige)) * classMultiplier * ((float)_expertiseLevel / _expertiseMaxLevel));
+                float classMultiplier = ClassSynergy(weaponStat, _classType, _classStatSynergies);
+                statValue *= ((1 + (_prestigeStatMultiplier * _expertisePrestige)) * classMultiplier * ((float)_expertiseLevel / _expertiseMaxLevel));
 
                 if (Enum.TryParse(weaponStat.ToString(), out UnitStatType result) && statValue != 0f)
                 {
@@ -1179,8 +1118,8 @@ internal class CanvasService
         {
             if (_bloodStatValues.TryGetValue(bloodStat, out float statValue))
             {
-                float classMultiplier = ClassSynergy(bloodStat, _classType, ClassStatSynergies);
-                statValue *= ((1 + (PrestigeStatMultiplier * _legacyPrestige)) * classMultiplier * ((float)_legacyLevel / _legacyMaxLevel));
+                float classMultiplier = ClassSynergy(bloodStat, _classType, _classStatSynergies);
+                statValue *= ((1 + (_prestigeStatMultiplier * _legacyPrestige)) * classMultiplier * ((float)_legacyLevel / _legacyMaxLevel));
 
                 string displayString = $"<color=#00FFFF>{BloodStatTypeAbbreviations[bloodStat]}</color>: <color=#90EE90>{(statValue * 100).ToString("F0") + "%"}</color>";
                 return displayString;
@@ -1550,11 +1489,11 @@ internal class CanvasService
         // Check if the stat type exists in the class synergies for the current class
         if (typeof(T) == typeof(WeaponStatType) && classStatSynergy[classType].WeaponStatTypes.Contains((WeaponStatType)(object)statType))
         {
-            return ClassStatMultiplier;
+            return _classStatMultiplier;
         }
         else if (typeof(T) == typeof(BloodStatType) && classStatSynergy[classType].BloodStatTypes.Contains((BloodStatType)(object)statType))
         {
-            return ClassStatMultiplier;
+            return _classStatMultiplier;
         }
 
         return 1f; // Return default multiplier if stat is not present in the class synergy

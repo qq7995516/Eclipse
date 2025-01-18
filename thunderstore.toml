@@ -11,7 +11,7 @@ v-rising = ["1-0-update", "mods", "client"]
 [package]
 namespace = "zfolmt"
 name = "Eclipse"
-versionNumber = "1.2.2"
+versionNumber = "1.3.2"
 description = "Client companion mod for Bloodcraft!"
 websiteUrl = "https://github.com/mfoltz/Eclipse"
 containsNsfwContent = false

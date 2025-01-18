@@ -5,6 +5,7 @@ using ProjectM.Network;
 using ProjectM.Scripting;
 using ProjectM.Shared;
 using Stunlock.Core;
+using System.Collections;
 using System.Runtime.InteropServices;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -444,5 +445,9 @@ internal static class Extensions
     public static bool IsAllied(this Entity entity, Entity player)
     {
         return ClientGameManager.IsAllies(entity, player);
+    }
+    public static void Start(this IEnumerator routine)
+    {
+        Core.StartCoroutine(routine);
     }
 }
