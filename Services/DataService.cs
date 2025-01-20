@@ -445,6 +445,9 @@ internal static class DataService
         CanvasService._weeklyVBlood = weeklyQuestData.IsVBlood;
 
         CanvasService._shiftSpellIndex = shiftSpellData.ShiftSpellIndex;
+
+        // Core.Log.LogInfo(string.Join(",", playerData));
+        //Core.Log.LogInfo($"ShiftSpellIndex: {shiftSpellData.ShiftSpellIndex}");
     }
     public static WeaponType GetWeaponTypeFromWeaponEntity(Entity weaponEntity)
     {

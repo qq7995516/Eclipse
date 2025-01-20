@@ -1,7 +1,6 @@
 ﻿using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using ProjectM;
-using ProjectM.Scripting;
 using ProjectM.UI;
 using Stunlock.Core;
 using System.Collections;
@@ -245,6 +244,7 @@ internal class CanvasService
     static GameObject _keybindObject;
 
     public static int _shiftSpellIndex = -1;
+    const float COOLDOWN_FACTOR = 8f;
     static bool _isVBloodAbility = true;
 
     public static double _cooldownEndTime = 0;
@@ -269,6 +269,7 @@ internal class CanvasService
     static readonly List<GameObject> _professionObjects = [];
 
     static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _weaponStatCache = [];
+    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _originalWeaponStatsCache = [];
 
     static readonly Dictionary<int, Action> _actionToggles = new()
     {
@@ -583,8 +584,6 @@ internal class CanvasService
         _abilityBarEntry._CurrentUIState.AbilityIconImageActive = true;
         _abilityBarEntry._CurrentUIState.AbilityIconImageSprite = abilityTooltipData.Icon;
 
-        _isVBloodAbility = abilityGroupEntity.Has<VBloodAbilityData>();
-
         if (abilityGroupEntity.TryGetComponent(out AbilityChargesData abilityChargesData))
         {
             _maxCharges = abilityChargesData.MaxCharges;
@@ -598,8 +597,10 @@ internal class CanvasService
 
         if (abilityCastEntity.TryGetComponent(out AbilityCooldownData abilityCooldownData))
         {
-            _cooldownTime = _isVBloodAbility ? abilityCooldownData.Cooldown._Value : (!_shiftSpellIndex.Equals(-1) ? _shiftSpellIndex * 15 : abilityCooldownData.Cooldown._Value);
+            _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : _shiftSpellIndex * COOLDOWN_FACTOR;
             _cooldownEndTime = Core.ServerTime.TimeOnServer + _cooldownTime; // see if this fixes not appearing till second use
+
+            // Core.Log.LogInfo($"UpdateAbilityData _cooldownTime - {_cooldownTime}");
 
             /*
             if (!abilityGroupEntity.Has<VBloodAbilityData>() && abilityCastEntity.TryGetComponent(out AbilityCooldownState abilityCooldownState))
@@ -616,11 +617,13 @@ internal class CanvasService
 
         if (abilityCastEntity.TryGetComponent(out AbilityCooldownState abilityCooldownState))
         {
-            _cooldownEndTime = abilityCooldownState.CooldownEndTime;
+            _cooldownEndTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownState.CooldownEndTime : _cooldownEndTime;
         }
 
         _chargeUpTimeRemaining = (float)(_chargeUpEndTime - Core.ServerTime.TimeOnServer);
         _cooldownRemaining = (float)(_cooldownEndTime - Core.ServerTime.TimeOnServer);
+        
+        // Core.Log.LogInfo($"UpdateAbilityState _cooldownRemaining - {_cooldownRemaining}");
 
         if (abilityGroupEntity.TryGetComponent(out AbilityChargesState abilityChargesState))
         {
@@ -916,8 +919,7 @@ internal class CanvasService
             }
         }
 
-        if (!weaponStats.Any()) return;
-        else if (_localCharacter.TryGetComponent(out Equipment equipment))
+        if (_localCharacter.TryGetComponent(out Equipment equipment))
         {
             Entity weaponEntity = equipment.WeaponSlot.SlotEntity.GetEntityOnServer();
 
@@ -932,54 +934,32 @@ internal class CanvasService
                     if (!_weaponStatCache.TryGetValue(prefabGuid, out var previousWeaponStats))
                     {
                         _weaponStatCache[prefabGuid] = [];
+                        previousWeaponStats = _weaponStatCache[prefabGuid];
+                    }
+
+                    if (!_originalWeaponStatsCache.TryGetValue(prefabGuid, out var originalWeaponStats))
+                    {
+                        _originalWeaponStatsCache[prefabGuid] = [];
+
+                        foreach (var entry in buffer)
+                        {
+                            _originalWeaponStatsCache[prefabGuid][entry.StatType] = entry.Value;
+                        }
                     }
 
                     float movementSpeed = movement.Speed._Value;
 
-                    // Update existing entries in the buffer
-                    for (int i = 0; i < buffer.Length; i++)
+                    if (previousWeaponStats.Any() && !weaponStats.Any())
                     {
-                        ModifyUnitStatBuff_DOTS entry = buffer[i];
+                        buffer.Clear();
 
-                        if (previousWeaponStats.TryGetValue(entry.StatType, out var previousValue) &&
-                            weaponStats.TryGetValue(entry.StatType, out var updatedValue))
+                        foreach (var keyValuePair in originalWeaponStats)
                         {
-                            // Calculate delta and update buffer
-                            float delta = updatedValue - previousValue;
-
-                            // entry.Value += delta;
-                            if (entry.StatType == UnitStatType.MovementSpeed)
-                            {
-                                // Movement speed should be stored as a fraction for MultiplyBaseAdd
-                                entry.Value += delta / movementSpeed;
-                            }
-                            else
-                            {
-                                // Other stats stay purely additive
-                                entry.Value += delta;
-                            }
-
-                            buffer[i] = entry;
-
-                            // Update tracked values
-                            previousWeaponStats[entry.StatType] = updatedValue;
-                            weaponStats.Remove(entry.StatType);
-                        }
-                    }
-
-                    // Add new stats from weaponStats
-                    if (weaponStats.Any())
-                    {
-                        foreach (var kvp in weaponStats)
-                        {
-                            float previousValue = previousWeaponStats.TryGetValue(kvp.Key, out var value) ? value : 0f;
-                            float valueDelta = kvp.Value - previousValue;
-
                             ModifyUnitStatBuff_DOTS newEntry = new()
                             {
-                                StatType = kvp.Key,
-                                ModificationType = !kvp.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
-                                Value = kvp.Key.Equals(UnitStatType.MovementSpeed) ? valueDelta / movementSpeed : valueDelta,
+                                StatType = keyValuePair.Key,
+                                ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
+                                Value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? keyValuePair.Value / movementSpeed : keyValuePair.Value,
                                 Modifier = 1,
                                 IncreaseByStacks = false,
                                 ValueByStacks = 0,
@@ -987,8 +967,66 @@ internal class CanvasService
                                 Id = ModificationIDs.Create().NewModificationId()
                             };
 
-                            buffer.Insert(1, newEntry);
-                            previousWeaponStats[kvp.Key] = kvp.Value; // Track the new value
+                            buffer.Add(newEntry);
+                        }
+
+                        previousWeaponStats.Clear();
+                    }
+                    else if (!weaponStats.Any())
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        // Update existing entries in the buffer
+                        for (int i = 0; i < buffer.Length; i++)
+                        {
+                            ModifyUnitStatBuff_DOTS entry = buffer[i];
+
+                            if (previousWeaponStats.TryGetValue(entry.StatType, out var previousValue) &&
+                                weaponStats.TryGetValue(entry.StatType, out var updatedValue))
+                            {
+                                float delta = updatedValue - previousValue;
+
+                                if (entry.StatType == UnitStatType.MovementSpeed)
+                                {
+                                    entry.Value += delta / movementSpeed;
+                                }
+                                else
+                                {
+                                    entry.Value += delta;
+                                }
+
+                                buffer[i] = entry;
+
+                                previousWeaponStats[entry.StatType] = updatedValue;
+                                weaponStats.Remove(entry.StatType);
+                            }
+                        }
+
+                        // Add new entries in the buffer
+                        if (weaponStats.Any())
+                        {
+                            foreach (var keyValuePair in weaponStats)
+                            {
+                                float previousValue = previousWeaponStats.TryGetValue(keyValuePair.Key, out var value) ? value : 0f;
+                                float valueDelta = keyValuePair.Value - previousValue;
+
+                                ModifyUnitStatBuff_DOTS newEntry = new()
+                                {
+                                    StatType = keyValuePair.Key,
+                                    ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
+                                    Value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? valueDelta / movementSpeed : valueDelta,
+                                    Modifier = 1,
+                                    IncreaseByStacks = false,
+                                    ValueByStacks = 0,
+                                    Priority = 0,
+                                    Id = ModificationIDs.Create().NewModificationId()
+                                };
+
+                                buffer.Insert(1, newEntry);
+                                previousWeaponStats[keyValuePair.Key] = keyValuePair.Value; // Track the new value
+                            }
                         }
                     }
                 }
@@ -1504,7 +1542,7 @@ internal class CanvasService
         {
             "integer" => ((int)statValue).ToString(),
             "decimal" => statValue.ToString("F2"),
-            "percentage" => (statValue * 100f).ToString("F0") + "%",
+            "percentage" => (statValue * 100f).ToString("F1") + "%",
             _ => statValue.ToString(),
         };
 
