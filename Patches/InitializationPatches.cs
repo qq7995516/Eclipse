@@ -23,11 +23,11 @@ internal static class InitializationPatches
     {
         try
         {
-            if (_shouldInitialize && __instance.GameDataInitialized && !Core._hasInitialized)
+            if (_shouldInitialize && __instance.GameDataInitialized && !Core._initialized)
             {
                 Core.Initialize(__instance);
 
-                if (Core._hasInitialized)
+                if (Core._initialized)
                 {
                     Core.Log.LogInfo($"|{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] initialized on client!");
                 }
@@ -43,7 +43,7 @@ internal static class InitializationPatches
     [HarmonyPostfix]
     static void OnUpdatePostfix(UICanvasBase canvas)
     {
-        if (!_setCanvas && Core._hasInitialized)
+        if (!_setCanvas && Core._initialized)
         {
             _setCanvas = true;
             Core.SetCanvas(canvas);
@@ -54,14 +54,14 @@ internal static class InitializationPatches
     [HarmonyPostfix]
     static void OnUpdatePostfix(CommonClientDataSystem __instance)
     {
-        if (Core._hasInitialized)
+        if (Core._initialized)
         {
             NativeArray<Entity> entities = __instance.__query_1840110765_0.ToEntityArray(Allocator.Temp);
             try
             {
                 foreach (Entity entity in entities)
                 {
-                    if (entity.Has<LocalUser>()) ClientChatSystemPatch.localUser = entity;
+                    if (entity.Has<LocalUser>()) ClientChatSystemPatch._localUser = entity;
                     break;
                 }
             }
@@ -76,7 +76,7 @@ internal static class InitializationPatches
             {
                 foreach (Entity entity in entities)
                 {
-                    if (entity.Has<LocalCharacter>()) ClientChatSystemPatch.localCharacter = entity;
+                    if (entity.Has<LocalCharacter>()) ClientChatSystemPatch._localCharacter = entity;
                     CanvasService._localCharacter = entity;
 
                     break;
@@ -97,12 +97,12 @@ internal static class InitializationPatches
         CanvasService._active = false;
         CanvasService._shiftActive = false;
 
-        ClientChatSystemPatch.UserRegistered = false;
-        ClientChatSystemPatch.localCharacter = Entity.Null;
-        ClientChatSystemPatch.localUser = Entity.Null;
+        ClientChatSystemPatch._userRegistered = false;
+        ClientChatSystemPatch._localCharacter = Entity.Null;
+        ClientChatSystemPatch._localUser = Entity.Null;
 
         _setCanvas = false;
-        Core._hasInitialized = false;
+        Core._initialized = false;
 
         foreach (GameObject gameObject in CanvasService.UIObjectStates.Keys) // destroy to let resolution be changed and elements get recreated to match new scaling?
         {

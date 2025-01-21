@@ -82,12 +82,16 @@ internal class CanvasService
         { PlayerClass.DeathMage, new Color(0f, 1f, 0f) }              // condemn green
     };
 
+    public const string V1_2_2 = "1.2.2";
+    public const string V1_3_2 = "1.3.2";
+
     static readonly WaitForSeconds _delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable
     static readonly WaitForSeconds _shiftDelay = new(0.1f);
 
     // object & component references for UI elements... these should probably all be custom classes, note for later
     static UICanvasBase _uiCanvasBase;
     static Canvas _canvas;
+    public static string _version = string.Empty;
 
     static GameObject _experienceBarGameObject;
     static GameObject _experienceInformationPanel;
@@ -597,11 +601,24 @@ internal class CanvasService
 
         if (abilityCastEntity.TryGetComponent(out AbilityCooldownData abilityCooldownData))
         {
+            /*
+            _cooldownTime = float.NaN;
+
+            if (_version.Equals(V1_2_2))
+            {
+                _cooldownTime = abilityCooldownData.Cooldown._Value;
+            }
+            else if (_version.Equals(V1_3_2))
+            {
+                _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : _shiftSpellIndex * COOLDOWN_FACTOR;
+            }
+            */
+
             _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : _shiftSpellIndex * COOLDOWN_FACTOR;
             _cooldownEndTime = Core.ServerTime.TimeOnServer + _cooldownTime; // see if this fixes not appearing till second use
 
+            // _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : _shiftSpellIndex * COOLDOWN_FACTOR;
             // Core.Log.LogInfo($"UpdateAbilityData _cooldownTime - {_cooldownTime}");
-
             /*
             if (!abilityGroupEntity.Has<VBloodAbilityData>() && abilityCastEntity.TryGetComponent(out AbilityCooldownState abilityCooldownState))
             {

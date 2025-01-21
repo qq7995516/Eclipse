@@ -28,10 +28,10 @@ internal class Core
     static MonoBehaviour _monoBehaviour;
     public static byte[] NEW_SHARED_KEY { get; internal set; }
 
-    public static bool _hasInitialized = false;
+    public static bool _initialized = false;
     public static void Initialize(GameDataManager __instance)
     {
-        if (_hasInitialized) return;
+        if (_initialized) return;
 
         _client = __instance.World;
         _ = new Localization();
@@ -64,7 +64,7 @@ internal class Core
 
         NEW_SHARED_KEY = Convert.FromBase64String(SecretManager.GetNewSharedKey());
 
-        _hasInitialized = true;
+        _initialized = true;
     }
     public static void SetCanvas(UICanvasBase canvas)
     {

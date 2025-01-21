@@ -72,7 +72,7 @@ internal static class Extensions
         void* componentData = EntityManager.GetComponentDataRawRW(entity, typeIndex);
         return Marshal.PtrToStructure<T>(new IntPtr(componentData));
     }
-    public unsafe static T ReadRO<T>(this Entity entity) where T : struct
+    public unsafe static T Read<T>(this Entity entity) where T : struct
     {
         ComponentType componentType = new(Il2CppType.Of<T>());
         TypeIndex typeIndex = componentType.TypeIndex;
@@ -120,7 +120,7 @@ internal static class Extensions
 
         if (entity.Has<T>())
         {
-            componentData = entity.ReadRO<T>();
+            componentData = entity.Read<T>();
 
             return true;
         }
@@ -248,7 +248,7 @@ internal static class Extensions
     }
     public static Entity GetPrefabEntity(this Entity entity)
     {
-        return ClientGameManager.GetPrefabEntity(entity.ReadRO<PrefabGUID>());
+        return ClientGameManager.GetPrefabEntity(entity.Read<PrefabGUID>());
     }
     public static Entity GetSpellTarget(this Entity entity)
     {
@@ -288,7 +288,7 @@ internal static class Extensions
     {
         if (entity.TryGetComponent(out PlayerCharacter playerCharacter))
         {
-            return playerCharacter.UserEntity.ReadRO<User>().PlatformId;
+            return playerCharacter.UserEntity.Read<User>().PlatformId;
         }
         else if (entity.TryGetComponent(out User user))
         {
