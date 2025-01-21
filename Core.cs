@@ -141,33 +141,33 @@ internal class Core
 
         if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_copperWires, out prefabEntity))
         {
-            if (!prefabEntity.Has<RecipeRequirementBuffer>())
+            if (!prefabEntity.Has<Salvageable>())
             {
-                var recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
-                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _batteryCharge, Amount = 2 });
-
                 prefabEntity.AddWith((ref Salvageable salvageable) =>
                 {
-                    salvageable.RecipeGUID = _copperWiresRecipe;
-                    salvageable.SalvageFactor = 0.5f;
-                    salvageable.SalvageTimer = 10f;
+                    salvageable.RecipeGUID = PrefabGUID.Empty;
+                    salvageable.SalvageFactor = 1f;
+                    salvageable.SalvageTimer = 20f;
                 });
+
+                var recipeRequirementBuffer = prefabEntity.AddBuffer<RecipeRequirementBuffer>();
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _batteryCharge, Amount = 1 });
             }
         }
 
         if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_primalEssence, out prefabEntity))
         {
-            if (!prefabEntity.Has<RecipeRequirementBuffer>())
+            if (!prefabEntity.Has<Salvageable>())
             {
-                var recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
-                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _batteryCharge, Amount = 5 });
-
                 prefabEntity.AddWith((ref Salvageable salvageable) =>
                 {
                     salvageable.RecipeGUID = PrefabGUID.Empty;
                     salvageable.SalvageFactor = 1f;
-                    salvageable.SalvageTimer = 30f;
+                    salvageable.SalvageTimer = 5f;
                 });
+
+                var recipeRequirementBuffer = prefabEntity.AddBuffer<RecipeRequirementBuffer>();
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _batteryCharge, Amount = 5 });
             }
         }
     }
