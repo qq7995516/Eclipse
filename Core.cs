@@ -5,7 +5,9 @@ using Eclipse.Services;
 using ProjectM;
 using ProjectM.Physics;
 using ProjectM.Scripting;
+using ProjectM.Shared;
 using ProjectM.UI;
+using Stunlock.Core;
 using System.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -64,6 +66,15 @@ internal class Core
 
         NEW_SHARED_KEY = Convert.FromBase64String(SecretManager.GetNewSharedKey());
 
+        try
+        {
+            ModifyPrefabs();
+        }
+        catch (Exception ex)
+        {
+            Log.LogError($"Failed to modify prefabs: {ex}");
+        }
+
         _initialized = true;
     }
     public static void SetCanvas(UICanvasBase canvas)
@@ -80,5 +91,84 @@ internal class Core
         }
 
         _monoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
+    }
+
+    static readonly PrefabGUID _copperWires = new(-456161884);
+    static readonly PrefabGUID _primalEssence = new(1566989408);
+    static readonly PrefabGUID _extractShardRecipe = new(1743327679);
+    static readonly PrefabGUID _itemBuildingEMP = new(-1447213995);
+    static readonly PrefabGUID _depletedBattery = new(1270271716);
+    static readonly PrefabGUID _chargedBatteryRecipe = new(-40415372);
+    static readonly PrefabGUID _batteryCharge = new(-77555820);
+    static readonly PrefabGUID _itemJewelTemplate = new(1075994038);
+
+    static readonly PrefabGUID _copperWiresRecipe = new(-2031309726);
+    static void ModifyPrefabs()
+    {
+        if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_itemBuildingEMP, out Entity prefabEntity))
+        {
+            if (!prefabEntity.Has<Salvageable>())
+            {
+                prefabEntity.AddWith((ref Salvageable salvageable) =>
+                {
+                    salvageable.RecipeGUID = PrefabGUID.Empty;
+                    salvageable.SalvageFactor = 1f;
+                    salvageable.SalvageTimer = 60f;
+                });
+
+                var recipeRequirementBuffer = EntityManager.AddBuffer<RecipeRequirementBuffer>(prefabEntity);
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _depletedBattery, Amount = 5 });
+            }
+        }
+
+        if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_extractShardRecipe, out prefabEntity))
+        {
+            if (prefabEntity.Has<RecipeOutputBuffer>())
+            {
+                var recipeOutputBuffer = prefabEntity.ReadBuffer<RecipeOutputBuffer>();
+                recipeOutputBuffer.Add(new RecipeOutputBuffer { Guid = _itemJewelTemplate, Amount = 1 });
+            }
+        }
+
+        if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_chargedBatteryRecipe, out prefabEntity))
+        {
+            if (prefabEntity.Has<RecipeRequirementBuffer>())
+            {
+                var recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _batteryCharge, Amount = 1 });
+            }
+        }
+
+        if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_copperWires, out prefabEntity))
+        {
+            if (!prefabEntity.Has<RecipeRequirementBuffer>())
+            {
+                var recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _batteryCharge, Amount = 2 });
+
+                prefabEntity.AddWith((ref Salvageable salvageable) =>
+                {
+                    salvageable.RecipeGUID = _copperWiresRecipe;
+                    salvageable.SalvageFactor = 0.5f;
+                    salvageable.SalvageTimer = 10f;
+                });
+            }
+        }
+
+        if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_primalEssence, out prefabEntity))
+        {
+            if (!prefabEntity.Has<RecipeRequirementBuffer>())
+            {
+                var recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _batteryCharge, Amount = 5 });
+
+                prefabEntity.AddWith((ref Salvageable salvageable) =>
+                {
+                    salvageable.RecipeGUID = PrefabGUID.Empty;
+                    salvageable.SalvageFactor = 1f;
+                    salvageable.SalvageTimer = 30f;
+                });
+            }
+        }
     }
 }

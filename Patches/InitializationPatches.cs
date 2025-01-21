@@ -54,38 +54,37 @@ internal static class InitializationPatches
     [HarmonyPostfix]
     static void OnUpdatePostfix(CommonClientDataSystem __instance)
     {
-        if (Core._initialized)
+        if (!Core._initialized) return;
+
+        NativeArray<Entity> entities = __instance.__query_1840110765_0.ToEntityArray(Allocator.Temp);
+        try
         {
-            NativeArray<Entity> entities = __instance.__query_1840110765_0.ToEntityArray(Allocator.Temp);
-            try
+            foreach (Entity entity in entities)
             {
-                foreach (Entity entity in entities)
-                {
-                    if (entity.Has<LocalUser>()) ClientChatSystemPatch._localUser = entity;
-                    break;
-                }
+                if (entity.Has<LocalUser>()) ClientChatSystemPatch._localUser = entity;
+                break;
             }
-            finally
-            {
-                entities.Dispose();
-            }
+        }
+        finally
+        {
+            entities.Dispose();
+        }
 
-            entities = __instance.__query_1840110765_1.ToEntityArray(Allocator.Temp);
+        entities = __instance.__query_1840110765_1.ToEntityArray(Allocator.Temp);
 
-            try
+        try
+        {
+            foreach (Entity entity in entities)
             {
-                foreach (Entity entity in entities)
-                {
-                    if (entity.Has<LocalCharacter>()) ClientChatSystemPatch._localCharacter = entity;
-                    CanvasService._localCharacter = entity;
+                if (entity.Has<LocalCharacter>()) ClientChatSystemPatch._localCharacter = entity;
+                CanvasService._localCharacter = entity;
 
-                    break;
-                }
+                break;
             }
-            finally
-            {
-                entities.Dispose();
-            }
+        }
+        finally
+        {
+            entities.Dispose();
         }
     }
 
@@ -98,6 +97,7 @@ internal static class InitializationPatches
         CanvasService._shiftActive = false;
 
         ClientChatSystemPatch._userRegistered = false;
+        ClientChatSystemPatch._registrationPending = false;
         ClientChatSystemPatch._localCharacter = Entity.Null;
         ClientChatSystemPatch._localUser = Entity.Null;
 

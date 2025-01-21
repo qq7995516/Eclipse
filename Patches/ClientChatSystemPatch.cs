@@ -22,7 +22,7 @@ internal static class ClientChatSystemPatch
 
     static readonly bool _shouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests || Plugin.Familiars || Plugin.Professions;
     public static bool _userRegistered = false;
-    static bool _registrationPending = false;
+    public static bool _registrationPending = false;
 
     static readonly Regex _regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex _regexMAC = new(@";mac([^;]+)$");
