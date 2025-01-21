@@ -147,7 +147,7 @@ internal class Core
                 {
                     salvageable.RecipeGUID = PrefabGUID.Empty;
                     salvageable.SalvageFactor = 1f;
-                    salvageable.SalvageTimer = 20f;
+                    salvageable.SalvageTimer = 15f;
                 });
 
                 var recipeRequirementBuffer = prefabEntity.AddBuffer<RecipeRequirementBuffer>();
