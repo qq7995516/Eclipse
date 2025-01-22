@@ -101,7 +101,9 @@ internal class Core
     static readonly PrefabGUID _chargedBatteryRecipe = new(-40415372);
     static readonly PrefabGUID _batteryCharge = new(-77555820);
     static readonly PrefabGUID _itemJewelTemplate = new(1075994038);
-
+    static readonly PrefabGUID _lesserStygian = new(2103989354);
+    static readonly PrefabGUID _bloodEssence = new(862477668);
+    static readonly PrefabGUID _batHide = new(1262845777);
     static readonly PrefabGUID _copperWiresRecipe = new(-2031309726);
     static void ModifyPrefabs()
     {
@@ -169,6 +171,30 @@ internal class Core
                 var recipeRequirementBuffer = prefabEntity.AddBuffer<RecipeRequirementBuffer>();
                 recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _batteryCharge, Amount = 5 });
             }
+        }
+
+        if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_batHide, out prefabEntity))
+        {
+            if (!prefabEntity.Has<Salvageable>())
+            {
+                prefabEntity.Add<Salvageable>();
+            }
+
+            prefabEntity.With((ref Salvageable salvageable) =>
+            {
+                salvageable.RecipeGUID = PrefabGUID.Empty;
+                salvageable.SalvageFactor = 1f;
+                salvageable.SalvageTimer = 15f;
+            });
+
+            if (!prefabEntity.Has<RecipeRequirementBuffer>())
+            {
+                prefabEntity.AddBuffer<RecipeRequirementBuffer>();
+            }
+
+            var recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
+            recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _lesserStygian, Amount = 3 });
+            recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _bloodEssence, Amount = 5 });
         }
     }
 }
