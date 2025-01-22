@@ -104,6 +104,7 @@ internal class Core
     static readonly PrefabGUID _lesserStygian = new(2103989354);
     static readonly PrefabGUID _bloodEssence = new(862477668);
     static readonly PrefabGUID _batHide = new(1262845777);
+    static readonly PrefabGUID _techScrap = new(834864259);
     static readonly PrefabGUID _copperWiresRecipe = new(-2031309726);
     static void ModifyPrefabs()
     {
@@ -120,6 +121,7 @@ internal class Core
 
                 var recipeRequirementBuffer = EntityManager.AddBuffer<RecipeRequirementBuffer>(prefabEntity);
                 recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _depletedBattery, Amount = 5 });
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _techScrap, Amount = 25 });
             }
         }
 
