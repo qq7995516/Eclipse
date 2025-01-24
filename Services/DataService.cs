@@ -358,7 +358,7 @@ internal static class DataService
             configData[index++], // maxLegacyLevel
             configData[index++], // maxExpertiseLevel
             configData[index++], // maxFamiliarLevel
-            configData[index++], // maxProfessionLevel
+            configData[index++], // maxProfessionLevel no longer used and merits getting cut but that necessitates enough other changes leaving alone for the moment
             string.Join(",", configData.Skip(index).Take(12)), // Combine the next 11 elements for weaponStatValues
             string.Join(",", configData.Skip(index += 12).Take(12)), // Combine the following 11 elements for bloodStatValues
             string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
@@ -371,7 +371,6 @@ internal static class DataService
         _legacyMaxLevel = parsedConfigData.MaxLegacyLevel;
         _expertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
         _familiarMaxLevel = parsedConfigData.MaxFamiliarLevel;
-        _professionMaxLevel = parsedConfigData.MaxProfessionLevel;
 
         _weaponStatValues = parsedConfigData.WeaponStatValues;
 
@@ -389,6 +388,17 @@ internal static class DataService
             }
             else if (playerData.Count == 46)
             {
+                _equipmentBonus = true;
+
+                try
+                {
+                    Recipes.ModifyRecipes();
+                }
+                catch (Exception ex)
+                {
+                    Core.Log.LogWarning($"Failed to modify recipes: {ex}");
+                }
+
                 _version = V1_3_2;
             }
             else

@@ -4,6 +4,7 @@ using ProjectM;
 using ProjectM.UI;
 using Stunlock.Core;
 using System.Collections;
+using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using TMPro;
 using Unity.Entities;
@@ -19,9 +20,9 @@ namespace Eclipse.Services;
 internal class CanvasService
 {
     static EntityManager EntityManager => Core.EntityManager;
-    // static ClientGameManager ClientGameManager => Core.ClientGameManager;
-    static ManagedDataRegistry ManagedDataRegistry => Core.ManagedDataSystem.ManagedDataRegistry;
-    static PrefabCollectionSystem PrefabCollectionSystem => Core.PrefabCollectionSystem;
+    static SystemService SystemService => Core.SystemService;
+    static ManagedDataRegistry ManagedDataRegistry => SystemService.ManagedDataSystem.ManagedDataRegistry;
+    static PrefabCollectionSystem PrefabCollectionSystem => SystemService.PrefabCollectionSystem;
 
     static readonly bool _experienceBar = Plugin.Leveling;
     static readonly bool _showPrestige = Plugin.Prestige;
@@ -152,8 +153,16 @@ internal class CanvasService
     public static string _familiarName = "";
     public static List<string> _familiarStats = ["", "", ""];
     static float _headerFontSize;
+    static float _familiarHeaderSmall;
+    static float _familiarHeaderSmaller;
+    static float _familiarHeaderSmallest;
+    const int SMALL_HEADER_CHARS = 23;
+    const int SMALLER_HEADER_CHARS = 28;
+    const int SMALLEST_HEADER_CHARS = 33;
 
-    public static int _professionMaxLevel = 100;
+    public static bool _equipmentBonus = false;
+    const float MAX_PROFESSION_LEVEL = 100f;
+    const float EQUIPMENT_BONUS = 0.1f;
     static float _fontSize = 0f;
 
     static GameObject _enchantingBarGameObject;
@@ -273,7 +282,14 @@ internal class CanvasService
     static readonly List<GameObject> _professionObjects = [];
 
     static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _weaponStatCache = [];
+    // static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _blacksmithingStatCache = []; throwing in towel on this for now x_x
     static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _originalWeaponStatsCache = [];
+
+    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _grimoireStatCache = [];
+    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _originalGrimoireStatsCache = [];
+
+    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _armorStatCache = [];
+    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _originalArmorStatsCache = [];
 
     static readonly Dictionary<int, Action> _actionToggles = new()
     {
@@ -321,6 +337,14 @@ internal class CanvasService
         { UIElement.Weekly, 6 },
         { UIElement.ShiftSlot, 7 }
     };
+
+    static readonly List<EquipmentType> _equipmentTypes = 
+    [
+        EquipmentType.Chest,
+        EquipmentType.Gloves,
+        EquipmentType.Legs,
+        EquipmentType.Footgear
+    ];
 
     const int EXPERIENCE = 0;
     const int LEGACY = 1;
@@ -477,10 +501,8 @@ internal class CanvasService
     }
     static void InitializeBloodButton()
     {
-        // Find blood (the one with raycasting) to add button for UI toggling
         GameObject bloodObject = GameObject.Find("HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/BloodOrbParent/BloodOrb/BlackBackground/Blood");
 
-        // Add button
         if (bloodObject != null)
         {
             SimpleStunButton stunButton = bloodObject.AddComponent<SimpleStunButton>();
@@ -501,13 +523,13 @@ internal class CanvasService
     {
         while (true)
         {
-            if (_killSwitch) // stop running if player leaves game
+            if (_killSwitch)
             {
                 _active = false;
 
                 break;
             }
-            else if (!_active) // don't update if not active from blood orb click
+            else if (!_active)
             {
                 yield return _delay;
 
@@ -529,7 +551,9 @@ internal class CanvasService
             if (_expertiseBar)
             {
                 UpdateBar(_expertiseProgress, _expertiseLevel, _expertiseMaxLevel, _expertisePrestige, _expertiseText, _expertiseHeader, _expertiseFill, UIElement.Expertise, _expertiseType);
+               
                 UpdateWeaponStats(_expertiseBonusStats, [_firstExpertiseStat, _secondExpertiseStat, _thirdExpertiseStat], GetWeaponStatInfo);
+                yield return null;
             }
 
             if (_familiarBar)
@@ -546,14 +570,21 @@ internal class CanvasService
 
             if (_professionBars)
             {
-                UpdateProfessions(_enchantingProgress, _enchantingLevel, _professionMaxLevel, _enchantingLevelText, _enchantingFill);
-                UpdateProfessions(_alchemyProgress, _alchemyLevel, _professionMaxLevel, _alchemyLevelText, _alchemyFill);
-                UpdateProfessions(_harvestingProgress, _harvestingLevel, _professionMaxLevel, _harvestingLevelText, _harvestingFill);
-                UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _professionMaxLevel, _blacksmithingLevelText, _blacksmithingFill);
-                UpdateProfessions(_tailoringProgress, _tailoringLevel, _professionMaxLevel, _tailoringLevelText, _tailoringFill);
-                UpdateProfessions(_woodcuttingProgress, _woodcuttingLevel, _professionMaxLevel, _woodcuttingLevelText, _woodcuttingFill);
-                UpdateProfessions(_miningProgress, _miningLevel, _professionMaxLevel, _miningLevelText, _miningFill);
-                UpdateProfessions(_fishingProgress, _fishingLevel, _professionMaxLevel, _fishingLevelText, _fishingFill);
+                UpdateProfessions(_enchantingProgress, _enchantingLevel, _enchantingLevelText, _enchantingFill, Profession.Enchanting);
+                yield return null;
+
+                UpdateProfessions(_alchemyProgress, _alchemyLevel, _alchemyLevelText, _alchemyFill, Profession.Alchemy);
+                UpdateProfessions(_harvestingProgress, _harvestingLevel, _harvestingLevelText, _harvestingFill, Profession.Harvesting);
+               
+                UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _blacksmithingLevelText, _blacksmithingFill, Profession.Blacksmithing);
+                yield return null;
+
+                UpdateProfessions(_tailoringProgress, _tailoringLevel, _tailoringLevelText, _tailoringFill, Profession.Tailoring);
+                yield return null;
+
+                UpdateProfessions(_woodcuttingProgress, _woodcuttingLevel, _woodcuttingLevelText, _woodcuttingFill, Profession.Woodcutting);
+                UpdateProfessions(_miningProgress, _miningLevel, _miningLevelText, _miningFill, Profession.Mining);
+                UpdateProfessions(_fishingProgress, _fishingLevel, _fishingLevelText, _fishingFill, Profession.Fishing);
             }
 
             if (!_shiftActive && _localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
@@ -812,11 +843,11 @@ internal class CanvasService
 
         return _abilityTooltipData != null;
     }
-    static void UpdateProfessions(float progress, int level, int maxLevel, LocalizedText levelText, Image fill)
+    static void UpdateProfessions(float progress, int level, LocalizedText levelText, Image fill, Profession profession)
     {
         string levelString = level.ToString();
 
-        if (level == maxLevel)
+        if (level == MAX_PROFESSION_LEVEL)
         {
             fill.fillAmount = 1f;
         }
@@ -837,6 +868,131 @@ internal class CanvasService
         if (levelText.GetText() != levelString)
         {
             levelText.ForceSet(levelString);
+        }
+
+        if (_localCharacter.TryGetComponent(out Equipment equipment) && _localCharacter.TryGetComponent(out Movement movement))
+        {
+            switch (profession)
+            {
+                case Profession.Enchanting:
+                    HandleEquipment(equipment, EquipmentType.MagicSource, movement, level, _grimoireStatCache, _originalGrimoireStatsCache);
+                    break;
+                case Profession.Tailoring:
+                    foreach (EquipmentType equipmentType in _equipmentTypes) HandleEquipment(equipment, equipmentType, movement, level, _armorStatCache, _originalArmorStatsCache);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    static void HandleEquipment(Equipment equipment, EquipmentType equipmentType, Movement movement, float professionLevel, 
+        Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> equipmentStatCache, Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> originalEquipmentStatCache)
+    {
+        if (professionLevel <= 0 || !_equipmentBonus) return;
+        else if (equipment.GetEquipmentEntity(equipmentType).TryGetSyncedEntity(out Entity equipmentEntity)
+            && equipmentEntity.TryGetComponent(out PrefabGUID prefabGuid) && !prefabGuid.GetPrefabName().Contains("SoulShard"))
+        {
+            if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out Entity prefabEntity) && prefabEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer))
+            {
+                if (!equipmentStatCache.TryGetValue(prefabGuid, out var previousEquipmentStats))
+                {
+                    equipmentStatCache[prefabGuid] = [];
+                    previousEquipmentStats = equipmentStatCache[prefabGuid];
+                }
+
+                if (!originalEquipmentStatCache.TryGetValue(prefabGuid, out var originalEquipmentStats))
+                {
+                    originalEquipmentStatCache[prefabGuid] = [];
+
+                    foreach (var entry in buffer)
+                    {
+                        originalEquipmentStatCache[prefabGuid][entry.StatType] = entry.Value;
+                    }
+
+                    originalEquipmentStats = originalEquipmentStatCache[prefabGuid];
+                }
+
+                double bonusPercent = 1d + (professionLevel / MAX_PROFESSION_LEVEL) * (EQUIPMENT_BONUS);
+                float movementSpeed = movement.Speed._Value;
+
+                UpdateStatBuffer(previousEquipmentStats, originalEquipmentStats, movementSpeed, bonusPercent, ref buffer);
+            }
+        }
+    }
+    static void UpdateStatBuffer(Dictionary<UnitStatType, float> previousStats, Dictionary<UnitStatType, float> originalStats, float movementSpeed, double bonusPercent, ref DynamicBuffer<ModifyUnitStatBuff_DOTS> buffer)
+    {
+        if (bonusPercent == 1d)
+        {
+            buffer.Clear();
+
+            foreach (var keyValuePair in originalStats)
+            {
+                float value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? keyValuePair.Value / movementSpeed : keyValuePair.Value;
+
+                ModifyUnitStatBuff_DOTS newEntry = new()
+                {
+                    StatType = keyValuePair.Key,
+                    ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
+                    Value = value,
+                    Modifier = 1,
+                    IncreaseByStacks = false,
+                    ValueByStacks = 0,
+                    Priority = 0,
+                    Id = ModificationIDs.Create().NewModificationId()
+                };
+
+                buffer.Add(newEntry);
+            }
+
+            previousStats.Clear();
+        }
+        else if (!previousStats.Any())
+        {
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                ModifyUnitStatBuff_DOTS entry = buffer[i];
+
+                if (originalStats.TryGetValue(entry.StatType, out var originalValue))
+                {
+                    float delta = (float)((originalValue * bonusPercent) - originalValue);
+
+                    if (entry.StatType == UnitStatType.MovementSpeed)
+                    {
+                        entry.Value += delta / movementSpeed;
+                    }
+                    else
+                    {
+                        entry.Value += delta;
+                    }
+
+                    buffer[i] = entry;
+                    previousStats[entry.StatType] = entry.Value;
+                }
+            }
+        }
+        else if (previousStats.Any())
+        {
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                ModifyUnitStatBuff_DOTS entry = buffer[i];
+
+                if (previousStats.TryGetValue(entry.StatType, out var previousValue) && originalStats.TryGetValue(entry.StatType, out var originalValue))
+                {
+                    float delta = (float)((originalValue * bonusPercent) - previousValue);
+
+                    if (entry.StatType == UnitStatType.MovementSpeed)
+                    {
+                        entry.Value += delta / movementSpeed;
+                    }
+                    else
+                    {
+                        entry.Value += delta;
+                    }
+
+                    buffer[i] = entry;
+                    previousStats[entry.StatType] = entry.Value;
+                }
+            }
         }
     }
     static void UpdateBar(float progress, int level, int maxLevel, int prestiges, LocalizedText levelText, LocalizedText barHeader, Image fill, UIElement element, string type = "")
@@ -892,6 +1048,28 @@ internal class CanvasService
                 barHeader.ForceSet(type);
             }
         }
+
+        if (element.Equals(UIElement.Familiars))
+        {
+            int textLength = barHeader.Text.text.Length;
+
+            if (textLength >= SMALLEST_HEADER_CHARS)
+            {
+                barHeader.Text.fontSize = _familiarHeaderSmallest;
+            }
+            else if (textLength >= SMALLER_HEADER_CHARS)
+            {
+                barHeader.Text.fontSize = _familiarHeaderSmaller;
+            }
+            else if (textLength >= SMALL_HEADER_CHARS)
+            {
+                barHeader.Text.fontSize = _familiarHeaderSmall;
+            }
+            else
+            {
+                barHeader.Text.fontSize = _headerFontSize;
+            }
+        }
     }
     static void UpdateClass(PlayerClass classType, LocalizedText classText)
     {
@@ -921,7 +1099,7 @@ internal class CanvasService
     {
         Dictionary<UnitStatType, float> weaponStats = [];
 
-        for (int i = 0; i < 3; i++) // hard coding this for now
+        for (int i = 0; i < 3; i++)
         {
             if (bonusStats[i] != "None")
             {
@@ -989,13 +1167,8 @@ internal class CanvasService
 
                         previousWeaponStats.Clear();
                     }
-                    else if (!weaponStats.Any())
+                    else if (weaponStats.Any())
                     {
-                        return;
-                    }
-                    else
-                    {
-                        // Update existing entries in the buffer
                         for (int i = 0; i < buffer.Length; i++)
                         {
                             ModifyUnitStatBuff_DOTS entry = buffer[i];
@@ -1021,7 +1194,6 @@ internal class CanvasService
                             }
                         }
 
-                        // Add new entries in the buffer
                         if (weaponStats.Any())
                         {
                             foreach (var keyValuePair in weaponStats)
@@ -1046,13 +1218,156 @@ internal class CanvasService
                             }
                         }
                     }
+
+                    /*
+                    if (!_expertiseStatCache.TryGetValue(prefabGuid, out var previousExpertiseStats))
+                    {
+                        _expertiseStatCache[prefabGuid] = [];
+                        previousExpertiseStats = _expertiseStatCache[prefabGuid];
+                    }
+
+                    if (!_blacksmithingStatCache.TryGetValue(prefabGuid, out var previousBlacksmithingStats))
+                    {
+                        _blacksmithingStatCache[prefabGuid] = [];
+                        previousBlacksmithingStats = _blacksmithingStatCache[prefabGuid];
+                    }
+
+                    if (!_originalWeaponStatsCache.TryGetValue(prefabGuid, out var originalWeaponStats))
+                    {
+                        _originalWeaponStatsCache[prefabGuid] = [];
+
+                        foreach (var entry in buffer)
+                        {
+                            _originalWeaponStatsCache[prefabGuid][entry.StatType] = entry.Value;
+                        }
+
+                        originalWeaponStats = _originalWeaponStatsCache[prefabGuid];
+                    }
+
+                    float movementSpeed = movement.Speed._Value;
+
+                    if (previousExpertiseStats.Any() && !expertiseStats.Any()) // weapon expertise stats reset and add back blacksmithing if applicable
+                    {
+                        buffer.Clear();
+
+                        foreach (var keyValuePair in originalWeaponStats)
+                        {
+                            float value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? keyValuePair.Value / movementSpeed : keyValuePair.Value;
+                            value = _equipmentBonus ? value * (1f + (_blacksmithingLevel / MAX_PROFESSION_LEVEL) * (EQUIPMENT_BONUS)) : value;
+
+                            ModifyUnitStatBuff_DOTS newEntry = new()
+                            {
+                                StatType = keyValuePair.Key,
+                                ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
+                                Value = value,
+                                Modifier = 1,
+                                IncreaseByStacks = false,
+                                ValueByStacks = 0,
+                                Priority = 0,
+                                Id = ModificationIDs.Create().NewModificationId()
+                            };
+                                
+                            buffer.Add(newEntry);
+                        }
+
+                        previousExpertiseStats.Clear();
+                    }
+                    else if (!expertiseStats.Any()) // apply blacksmithing stats
+                    {
+                        foreach (var keyValuePair in originalWeaponStats)
+                        {
+                            float value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? keyValuePair.Value / movementSpeed : keyValuePair.Value;
+
+                            float previousBlacksmithingValue = previousBlacksmithingStats.TryGetValue(keyValuePair.Key, out var previousValue) ? previousValue : 0f;
+                            float blacksmithingValue = _equipmentBonus ? value * (1f + (_blacksmithingLevel / MAX_PROFESSION_LEVEL) * (EQUIPMENT_BONUS)) : 0f;
+
+                            float delta = blacksmithingValue - previousBlacksmithingValue;
+                            value += delta;
+
+                            ModifyUnitStatBuff_DOTS newEntry = new()
+                            {
+                                StatType = keyValuePair.Key,
+                                ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
+                                Value = value,
+                                Modifier = 1,
+                                IncreaseByStacks = false,
+                                ValueByStacks = 0,
+                                Priority = 0,
+                                Id = ModificationIDs.Create().NewModificationId()
+                            };
+
+                            buffer.Add(newEntry);
+                            previousBlacksmithingStats[keyValuePair.Key] = blacksmithingValue;
+                        }
+                    }
+                    else if (expertiseStats.Any())
+                    {
+                        for (int i = 0; i < buffer.Length; i++) // first, add to expertise stats that already exist as buffer entries
+                        {
+                            ModifyUnitStatBuff_DOTS entry = buffer[i];
+
+                            if (expertiseStats.TryGetValue(entry.StatType, out var updatedExpertiseValue) && originalWeaponStats.TryGetValue(entry.StatType, out var originalStatValue))
+                            {
+                                float updatedBlacksmithingValue = _equipmentBonus ? originalStatValue * (1 + (_blacksmithingLevel / MAX_PROFESSION_LEVEL) * (EQUIPMENT_BONUS)) : 0f;
+
+                                float previousExpertiseValue = previousExpertiseStats.TryGetValue(entry.StatType, out var previousValue) ? previousValue : 0f;
+                                float previousBlacksmithingValue = previousBlacksmithingStats.TryGetValue(entry.StatType, out previousValue) ? previousValue : 0f;
+
+                                float expertiseDelta = updatedExpertiseValue - previousExpertiseValue;
+                                float blacksmithingDelta = updatedBlacksmithingValue - previousBlacksmithingValue;
+
+                                float delta = expertiseDelta + blacksmithingDelta;
+
+                                if (entry.StatType == UnitStatType.MovementSpeed)
+                                {
+                                    entry.Value += delta / movementSpeed;
+                                }
+                                else
+                                {
+                                    entry.Value += delta;
+                                }
+
+                                buffer[i] = entry;
+
+                                previousExpertiseStats[entry.StatType] = updatedExpertiseValue;
+                                previousBlacksmithingStats[entry.StatType] = updatedBlacksmithingValue;
+
+                                expertiseStats.Remove(entry.StatType);
+                            }
+                        }
+
+                        if (expertiseStats.Any()) // second, add expertise stats that don't already exist as new buffer entries
+                        {
+                            foreach (var keyValuePair in expertiseStats)
+                            {
+                                float previousValue = previousExpertiseStats.TryGetValue(keyValuePair.Key, out var value) ? value : 0f;
+                                float valueDelta = keyValuePair.Value - previousValue;
+
+                                ModifyUnitStatBuff_DOTS newEntry = new()
+                                {
+                                    StatType = keyValuePair.Key,
+                                    ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
+                                    Value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? valueDelta / movementSpeed : valueDelta,
+                                    Modifier = 1,
+                                    IncreaseByStacks = false,
+                                    ValueByStacks = 0,
+                                    Priority = 0,
+                                    Id = ModificationIDs.Create().NewModificationId()
+                                };
+
+                                buffer.Insert(1, newEntry);
+                                previousExpertiseStats[keyValuePair.Key] = keyValuePair.Value;
+                            }
+                        }
+                    }
+                    */
                 }
             }
         }
     }
     static void UpdateBloodStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, string> getStatInfo)
     {
-        for (int i = 0; i < 3; i++) // hard coding this for now
+        for (int i = 0; i < 3; i++)
         {
             if (bonusStats[i] != "None")
             {
@@ -1111,15 +1426,9 @@ internal class CanvasService
                 PrefabGUID targetPrefabGUID = Localization.GetPrefabGUIDFromLocalizedName(target);
                 ManagedItemData managedItemData = ManagedDataRegistry.GetOrDefault<ManagedItemData>(targetPrefabGUID);
 
-                //Core.Log.LogInfo($"Target: {target}, TargetPrefabGUID: {targetPrefabGUID.GuidHash}");
-
                 if (managedItemData != null && questIcon.sprite.name != managedItemData.Icon.name)
                 {
                     questIcon.sprite = managedItemData.Icon;
-                }
-                //else if (questIcon.sprite.name != "Poneti_Icon_Hammer_30" && SpriteMap.TryGetValue("Poneti_Icon_Hammer_30", out Sprite craftingSprite))
-                {
-                    //questIcon.sprite = craftingSprite;
                 }
             }
             else if (targetType.Equals(TargetType.Gather))
@@ -1129,15 +1438,9 @@ internal class CanvasService
                 PrefabGUID targetPrefabGUID = Localization.GetPrefabGUIDFromLocalizedName(target);
                 ManagedItemData managedItemData = ManagedDataRegistry.GetOrDefault<ManagedItemData>(targetPrefabGUID);
 
-                //Core.Log.LogInfo($"Target: {target}, TargetPrefabGUID: {targetPrefabGUID.GuidHash}");
-
                 if (managedItemData != null && questIcon.sprite.name != managedItemData.Icon.name)
                 {
                     questIcon.sprite = managedItemData.Icon;
-                }
-                //else if (questIcon.sprite.name != "Poneti_Icon_Res_93" && SpriteMap.TryGetValue("Poneti_Icon_Res_93", out Sprite gatherSprite))
-                {
-                    //questIcon.sprite = gatherSprite;
                 }
             }
         }
@@ -1357,7 +1660,8 @@ internal class CanvasService
         UIObjectStates.Add(questObject, true);
         _windowOffset += 0.075f;
     }
-    static void ConfigureHorizontalProgressBar(ref GameObject barGameObject, ref GameObject informationPanelObject, ref Image fill, ref LocalizedText level, ref LocalizedText header, UIElement element, Color fillColor, ref LocalizedText firstText, ref LocalizedText secondText, ref LocalizedText thirdText)
+    static void ConfigureHorizontalProgressBar(ref GameObject barGameObject, ref GameObject informationPanelObject, ref Image fill, ref LocalizedText level, ref LocalizedText header, 
+        UIElement element, Color fillColor, ref LocalizedText firstText, ref LocalizedText secondText, ref LocalizedText thirdText)
     {
         // Instantiate the bar object from the prefab
         barGameObject = GameObject.Instantiate(_uiCanvasBase.TargetInfoParent.gameObject);
@@ -1391,7 +1695,12 @@ internal class CanvasService
         level.ForceSet("0");
         header.ForceSet(element.ToString());
         header.Text.fontSize *= 1.5f;
+
+        // set sizes for later reference
         _headerFontSize = header.Text.fontSize;
+        _familiarHeaderSmall = _headerFontSize * 0.9f;
+        _familiarHeaderSmaller = _headerFontSize * 0.8f;
+        _familiarHeaderSmallest = _headerFontSize * 0.7f;
 
         // if (element.Equals(UIElement.Familiars)) header.Text.enableAutoSizing = true; // maybe will just work? >_>
 
@@ -1460,12 +1769,13 @@ internal class CanvasService
         // **Rotate the level text back by -90 degrees to keep it upright**
         RectTransform levelRectTransform = level.GetComponent<RectTransform>();
         levelRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
-        levelRectTransform.localScale = Vector3.one * 1.25f;
+        // levelRectTransform.localScale = Vector3.one * 1.25f; CHECKING FUZZY TEXT FOR PROFESSIONS 1/23 @ 10:12 - debatably improved, took a screenshot and will take other one to compare maybe or just leave it god so tired
 
         // Get text container and rotate back
         // GameObject levelTextContainer = FindTargetUIObject(barRectTransform.transform, "LevelDiff");
-        // RectTransform levelRectTransform = levelTextContainer.GetComponent<RectTransform>();
-        // levelRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
+        // RectTransform levelTextContainerRectTransform = levelTextContainer.GetComponent<RectTransform>();
+        // levelTextContainerRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
+        // comment this back out if gets worse for fuzzy text or anything else weird 1/24 @ 01:57 - haha yeah fuck that
 
         // LevelBackground scale set back
         RectTransform levelBackgroundRectTransform = FindTargetUIObject(barRectTransform.transform, "LevelBackground").GetComponent<RectTransform>();

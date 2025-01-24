@@ -5,9 +5,7 @@ using Eclipse.Services;
 using ProjectM;
 using ProjectM.Physics;
 using ProjectM.Scripting;
-using ProjectM.Shared;
 using ProjectM.UI;
-using Stunlock.Core;
 using System.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -15,15 +13,12 @@ using UnityEngine;
 namespace Eclipse;
 internal class Core
 {
-    public static World _client;
+    static World _client;
+    static SystemService _systemService;
     public static EntityManager EntityManager => _client.EntityManager;
-    public static ClientScriptMapper ClientScriptMapper { get; internal set; }
-    public static ClientGameManager ClientGameManager => ClientScriptMapper._ClientGameManager;
+    public static SystemService SystemService => _systemService ??= new(_client);
+    public static ClientGameManager ClientGameManager => SystemService.ClientScriptMapper._ClientGameManager;
     public static CanvasService CanvasService { get; internal set; }
-    public static PrefabCollectionSystem PrefabCollectionSystem { get; internal set; }
-    public static GameDataSystem GameDataSystem { get; internal set; }
-    public static ManagedDataSystem ManagedDataSystem { get; internal set; }
-    public static UIDataSystem UIDataSystem { get; internal set; }
     public static ServerTime ServerTime => ClientGameManager.ServerTime;
     public static ManualLogSource Log => Plugin.LogInstance;
 
@@ -36,44 +31,10 @@ internal class Core
         if (_initialized) return;
 
         _client = __instance.World;
+
         _ = new Localization();
 
-        PrefabCollectionSystem = _client.GetExistingSystemManaged<PrefabCollectionSystem>();
-        ManagedDataSystem = _client.GetExistingSystemManaged<ManagedDataSystem>();
-        GameDataSystem = _client.GetExistingSystemManaged<GameDataSystem>();
-        ClientScriptMapper = _client.GetExistingSystemManaged<ClientScriptMapper>();
-
-        /*
-        foreach (var kvp in Client.m_SystemLookup)
-        {
-            Il2CppSystem.Type systemType = kvp.Key;
-            ComponentSystemBase systemBase = kvp.Value;
-            if (systemBase.EntityQueries.Length == 0) continue;
-
-            Core.Log.LogInfo("=============================");
-            Core.Log.LogInfo(systemType.FullName);
-            foreach (EntityQuery query in systemBase.EntityQueries)
-            {
-                EntityQueryDesc entityQueryDesc = query.GetEntityQueryDesc();
-                Core.Log.LogInfo($" All: {string.Join(",", entityQueryDesc.All)}");
-                Core.Log.LogInfo($" Any: {string.Join(",", entityQueryDesc.Any)}");
-                Core.Log.LogInfo($" Absent: {string.Join(",", entityQueryDesc.Absent)}");
-                Core.Log.LogInfo($" None: {string.Join(",", entityQueryDesc.None)}");
-            }
-            Core.Log.LogInfo("=============================");
-        }
-        */
-
         NEW_SHARED_KEY = Convert.FromBase64String(SecretManager.GetNewSharedKey());
-
-        try
-        {
-            ModifyPrefabs();
-        }
-        catch (Exception ex)
-        {
-            Log.LogError($"Failed to modify prefabs: {ex}");
-        }
 
         _initialized = true;
     }
@@ -93,6 +54,31 @@ internal class Core
         _monoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
     }
 
+    /*
+    static void LogSystems()
+    {
+    foreach (var kvp in Client.m_SystemLookup)
+    {
+    Il2CppSystem.Type systemType = kvp.Key;
+    ComponentSystemBase systemBase = kvp.Value;
+    if (systemBase.EntityQueries.Length == 0) continue;
+
+    Core.Log.LogInfo("=============================");
+    Core.Log.LogInfo(systemType.FullName);
+    foreach (EntityQuery query in systemBase.EntityQueries)
+    {
+    EntityQueryDesc entityQueryDesc = query.GetEntityQueryDesc();
+    Core.Log.LogInfo($" All: {string.Join(",", entityQueryDesc.All)}");
+    Core.Log.LogInfo($" Any: {string.Join(",", entityQueryDesc.Any)}");
+    Core.Log.LogInfo($" Absent: {string.Join(",", entityQueryDesc.Absent)}");
+    Core.Log.LogInfo($" None: {string.Join(",", entityQueryDesc.None)}");
+    }
+    Core.Log.LogInfo("=============================");
+    }
+    }
+    */
+
+    /*
     static readonly PrefabGUID _copperWires = new(-456161884);
     static readonly PrefabGUID _primalEssence = new(1566989408);
     static readonly PrefabGUID _extractShardRecipe = new(1743327679);
@@ -197,6 +183,7 @@ internal class Core
             var recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
             recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _lesserStygian, Amount = 3 });
             recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _bloodEssence, Amount = 5 });
-        }
+        }     
     }
+    */
 }

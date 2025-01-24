@@ -51,7 +51,7 @@ internal static class ClientChatSystemPatch
     static readonly List<string> _versions =
     [
         "1.3.2",
-        "1.2.2"   
+        "1.2.2"
     ];
     public enum NetworkEventSubType
     {
@@ -123,6 +123,8 @@ internal static class ClientChatSystemPatch
 
         if (_userRegistered)
         {
+            _registrationPending = false;
+
             yield break;
         }
 
@@ -185,27 +187,6 @@ internal static class ClientChatSystemPatch
     }
     public static bool CheckMAC(string receivedMessage, out string originalMessage)
     {
-        /*
-        Match match = regexMAC.Match(receivedMessage);
-        originalMessage = "";
-
-        if (match.Success)
-        {
-            string receivedMAC = match.Groups[1].Value;
-            string intermediateMessage = regexMAC.Replace(receivedMessage, "");
-            string recalculatedMAC = GenerateMAC(intermediateMessage);
-
-            if (CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(recalculatedMAC), Encoding.UTF8.GetBytes(receivedMAC)))
-            {
-                originalMessage = intermediateMessage;
-
-                return true;
-            }
-        }
-
-        return false;
-        */
-
         Match match = _regexMAC.Match(receivedMessage);
         originalMessage = "";
 

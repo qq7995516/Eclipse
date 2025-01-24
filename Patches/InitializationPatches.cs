@@ -3,6 +3,7 @@ using HarmonyLib;
 using ProjectM;
 using ProjectM.Network;
 using ProjectM.UI;
+using Stunlock.Core;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -21,9 +22,11 @@ internal static class InitializationPatches
     [HarmonyPostfix]
     static void OnUpdatePostfix(GameDataManager __instance)
     {
+        if (!__instance.GameDataInitialized || !__instance.World.IsCreated) return;
+
         try
         {
-            if (_shouldInitialize && __instance.GameDataInitialized && !Core._initialized)
+            if (_shouldInitialize && !Core._initialized)
             {
                 Core.Initialize(__instance);
 

@@ -1,3 +1,4 @@
+using Eclipse.Services;
 using Il2CppInterop.Runtime;
 using ProjectM;
 using ProjectM.Gameplay.Systems;
@@ -17,7 +18,8 @@ internal static class Extensions
 {
     static EntityManager EntityManager => Core.EntityManager;
     static ClientGameManager ClientGameManager => Core.ClientGameManager;
-    static PrefabCollectionSystem PrefabCollectionSystem => Core.PrefabCollectionSystem;
+    static SystemService SystemService => Core.SystemService;
+    static PrefabCollectionSystem PrefabCollectionSystem => SystemService.PrefabCollectionSystem;
 
     const string EMPTY_KEY = "LocalizationKey.Empty";
 
