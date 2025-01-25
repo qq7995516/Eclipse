@@ -1,7 +1,6 @@
 ﻿using Eclipse.Services;
 using HarmonyLib;
 using Il2CppInterop.Runtime;
-using ProjectM;
 using ProjectM.Network;
 using ProjectM.UI;
 using System.Collections;
@@ -28,7 +27,7 @@ internal static class ClientChatSystemPatch
     static readonly Regex _regexMAC = new(@";mac([^;]+)$");
 
     static readonly WaitForSeconds _registrationDelay = new(5f);
-    static readonly WaitForSeconds _pendingDelay = new(20f);
+    static readonly WaitForSeconds _pendingDelay = new(5f);
 
     static readonly ComponentType[] _networkEventComponents =
     [
@@ -96,7 +95,8 @@ internal static class ClientChatSystemPatch
                     ChatMessageServerEvent chatMessage = entity.Read<ChatMessageServerEvent>();
                     string message = chatMessage.MessageText.Value;
 
-                    if (CheckMAC(message, out string originalMessage))
+                    if (string.IsNullOrEmpty(message)) continue;
+                    else if (CheckMAC(message, out string originalMessage))
                     {
                         HandleServerMessage(originalMessage);
 
@@ -130,6 +130,8 @@ internal static class ClientChatSystemPatch
 
         int index = _versions.IndexOf(_versions.First());
         _versions.RemoveAt(index);
+
+        // (_versions[0], _versions[1]) = (_versions[1], _versions[0]);
 
         _registrationPending = false;
     }

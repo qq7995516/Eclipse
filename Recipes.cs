@@ -218,6 +218,7 @@ internal static class Recipes
             recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _goldJewelry, Amount = 2 });
         }
 
+        /*
         if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_refinementInventoryLarge, out prefabEntity))
         {
             prefabEntity.With((ref RestrictedInventory restrictedInventory) =>
@@ -232,6 +233,7 @@ internal static class Recipes
 
             inventoryBuffer[0] = inventoryInstanceElement;
         }
+        */
 
         if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_batteryCharge, out prefabEntity))
         {
@@ -275,6 +277,7 @@ internal static class Recipes
             recipeData.HideInStation = false;
             recipeData.HudSortingOrder = 0;
             recipeData.IgnoreServerSettings = false;
+            recipeData.CraftDuration = 10f;
         });
 
         recipeMap[_extractShardRecipe] = recipeEntity.Read<RecipeData>();
@@ -354,11 +357,9 @@ internal static class Recipes
         refinementBuffer.Add(new RefinementstationRecipesBuffer { RecipeGuid = _copperWiresRecipe, Disabled = false, Unlocked = true });
         refinementBuffer.Add(new RefinementstationRecipesBuffer { RecipeGuid = _chargedBatteryRecipe, Disabled = false, Unlocked = true });
 
-        /*
         stationEntity = PrefabCollectionSystem._PrefabGuidToEntityMap[_gemCuttingTable];
         refinementBuffer = stationEntity.ReadBuffer<RefinementstationRecipesBuffer>();
         refinementBuffer.Add(new RefinementstationRecipesBuffer { RecipeGuid = _extractShardRecipe, Disabled = false, Unlocked = true });
-        */
 
         // GameDataSystem.RegisterRecipes();
         // GameDataSystem.RegisterItems();
