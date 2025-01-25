@@ -243,15 +243,16 @@ internal static class Recipes
 
         Entity recipeEntity = PrefabCollectionSystem._PrefabGuidToEntityMap[_extractShardRecipe];
 
-        if (!recipeEntity.Has<RecipeLinkBuffer>())
-        {
-            EntityManager.AddBuffer<RecipeLinkBuffer>(recipeEntity);
-        }
-
         recipeRequirementBuffer = recipeEntity.ReadBuffer<RecipeRequirementBuffer>();
 
         var recipeOutputBuffer = recipeEntity.ReadBuffer<RecipeOutputBuffer>();
         recipeOutputBuffer.Add(new RecipeOutputBuffer { Guid = _itemJewelTemplate, Amount = 1 });
+
+        /*
+        if (!recipeEntity.Has<RecipeLinkBuffer>())
+        {
+            EntityManager.AddBuffer<RecipeLinkBuffer>(recipeEntity);
+        }
 
         var recipeLinkBuffer = recipeEntity.ReadBuffer<RecipeLinkBuffer>();
 
@@ -270,6 +271,7 @@ internal static class Recipes
             recipeOutputBuffer.Add(new RecipeOutputBuffer { Guid = _itemJewelTemplate, Amount = 1 });
             recipeLinkBuffer.Add(new RecipeLinkBuffer { Guid = shardRecipe });
         }
+        */
 
         recipeEntity.With((ref RecipeData recipeData) =>
         {

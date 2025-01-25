@@ -216,7 +216,7 @@ internal class CanvasService
     static GameObject _dailyQuestObject;
     static LocalizedText _dailyQuestHeader;
     static LocalizedText _dailyQuestSubHeader;
-    static Image _dailyQuestIcon;
+    public static Image _dailyQuestIcon;
     public static TargetType _dailyTargetType = TargetType.Kill;
     public static int _dailyProgress = 0;
     public static int _dailyGoal = 0;
@@ -226,7 +226,7 @@ internal class CanvasService
     static GameObject _weeklyQuestObject;
     static LocalizedText _weeklyQuestHeader;
     static LocalizedText _weeklyQuestSubHeader;
-    static Image _weeklyQuestIcon;
+    public static Image _weeklyQuestIcon;
     public static TargetType _weeklyTargetType = TargetType.Kill;
     public static int _weeklyProgress = 0;
     public static int _weeklyGoal = 0;
@@ -540,19 +540,23 @@ internal class CanvasService
             {
                 UpdateBar(_experienceProgress, _experienceLevel, _experienceMaxLevel, _experiencePrestige, _experienceText, _experienceHeader, _experienceFill, UIElement.Experience);
                 UpdateClass(_classType, _experienceClassText);
+
+                yield return null;
             }
 
             if (_legacyBar)
             {
                 UpdateBar(_legacyProgress, _legacyLevel, _legacyMaxLevel, _legacyPrestige, _legacyText, _legacyHeader, _legacyFill, UIElement.Legacy, _legacyType);
                 UpdateBloodStats(_legacyBonusStats, [_firstLegacyStat, _secondLegacyStat, _thirdLegacyStat], GetBloodStatInfo);
+
+                yield return null;
             }
 
             if (_expertiseBar)
             {
                 UpdateBar(_expertiseProgress, _expertiseLevel, _expertiseMaxLevel, _expertisePrestige, _expertiseText, _expertiseHeader, _expertiseFill, UIElement.Expertise, _expertiseType);
-               
                 UpdateWeaponStats(_expertiseBonusStats, [_firstExpertiseStat, _secondExpertiseStat, _thirdExpertiseStat], GetWeaponStatInfo);
+
                 yield return null;
             }
 
@@ -560,12 +564,16 @@ internal class CanvasService
             {
                 UpdateBar(_familiarProgress, _familiarLevel, _familiarMaxLevel, _familiarPrestige, _familiarText, _familiarHeader, _familiarFill, UIElement.Familiars, _familiarName);
                 UpdateFamiliarStats(_familiarStats, [_familiarMaxHealth, _familiarPhysicalPower, _familiarSpellPower]);
+
+                yield return null;
             }
 
             if (_questTracker)
             {
                 UpdateQuests(_dailyQuestObject, _dailyQuestSubHeader, _dailyQuestIcon, _dailyTargetType, _dailyTarget, _dailyProgress, _dailyGoal, _dailyVBlood);
                 UpdateQuests(_weeklyQuestObject, _weeklyQuestSubHeader, _weeklyQuestIcon, _weeklyTargetType, _weeklyTarget, _weeklyProgress, _weeklyGoal, _weeklyVBlood);
+
+                yield return null;
             }
 
             if (_professionBars)
@@ -575,10 +583,7 @@ internal class CanvasService
 
                 UpdateProfessions(_alchemyProgress, _alchemyLevel, _alchemyLevelText, _alchemyFill, Profession.Alchemy);
                 UpdateProfessions(_harvestingProgress, _harvestingLevel, _harvestingLevelText, _harvestingFill, Profession.Harvesting);
-               
                 UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _blacksmithingLevelText, _blacksmithingFill, Profession.Blacksmithing);
-                yield return null;
-
                 UpdateProfessions(_tailoringProgress, _tailoringLevel, _tailoringLevelText, _tailoringFill, Profession.Tailoring);
                 yield return null;
 

@@ -116,6 +116,8 @@ internal static class InitializationPatches
         }
 
         CanvasService._abilityTooltipData = null;
+        CanvasService._dailyQuestIcon = null;
+        CanvasService._weeklyQuestIcon = null;
 
         CanvasService.UIObjectStates.Clear();
         CanvasService.SpriteMap.Clear();

@@ -47,10 +47,13 @@ internal static class ClientChatSystemPatch
     public static Entity _localCharacter = Entity.Null;
     public static Entity _localUser = Entity.Null;
 
+    const string V1_2_2 = "1.2.2";
+    const string V1_3_2 = "1.3.2";
+
     static readonly List<string> _versions =
     [
-        "1.3.2",
-        "1.2.2"
+        V1_3_2,
+        V1_2_2
     ];
     public enum NetworkEventSubType
     {
@@ -65,6 +68,7 @@ internal static class ClientChatSystemPatch
     {
         if (!Core._initialized) return;
         else if (!_shouldInitialize) return;
+        else if (!_versions.Any()) return;
 
         if (!_userRegistered && !_registrationPending && _localCharacter.Exists() && _localUser.Exists())
         {
@@ -85,7 +89,6 @@ internal static class ClientChatSystemPatch
         }
 
         NativeArray<Entity> entities = __instance._ReceiveChatMessagesQuery.ToEntityArray(Allocator.Temp);
-
         try
         {
             foreach (Entity entity in entities)
@@ -95,11 +98,10 @@ internal static class ClientChatSystemPatch
                     ChatMessageServerEvent chatMessage = entity.Read<ChatMessageServerEvent>();
                     string message = chatMessage.MessageText.Value;
 
-                    if (string.IsNullOrEmpty(message)) continue;
-                    else if (CheckMAC(message, out string originalMessage))
+                    // if (string.IsNullOrEmpty(message)) continue;
+                    if (CheckMAC(message, out string originalMessage))
                     {
                         HandleServerMessage(originalMessage);
-
                         EntityManager.DestroyEntity(entity);
                     }
                 }
@@ -131,8 +133,6 @@ internal static class ClientChatSystemPatch
         int index = _versions.IndexOf(_versions.First());
         _versions.RemoveAt(index);
 
-        // (_versions[0], _versions[1]) = (_versions[1], _versions[0]);
-
         _registrationPending = false;
     }
     static void SendMessage(NetworkEventSubType subType, string message, string modVersion)
@@ -142,10 +142,10 @@ internal static class ClientChatSystemPatch
 
         switch (modVersion)
         {
-            case "1.2.2":
+            case V1_2_2:
                 messageWithMAC = $"{intermediateMessage};mac{GenerateMACV1_2_2(intermediateMessage)}";
                 break;
-            case "1.3.2":
+            case V1_3_2:
                 messageWithMAC = $"{intermediateMessage};mac{GenerateMACV1_3_2(intermediateMessage)}";
                 break;
         }
