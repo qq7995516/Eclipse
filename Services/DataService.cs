@@ -385,10 +385,12 @@ internal static class DataService
             if (playerData.Count == 45)
             {
                 _version = V1_2_2;
+
+                Core.Log.LogInfo($"ECLIPSE[{V1_2_2}]({DateTime.Now}) - {playerData.Count}");
             }
             else if (playerData.Count == 46)
             {
-                _equipmentBonus = true;
+                // _equipmentBonus = true;
 
                 try
                 {
@@ -400,6 +402,7 @@ internal static class DataService
                 }
 
                 _version = V1_3_2;
+                Core.Log.LogInfo($"ECLIPSE[{V1_3_2}]({DateTime.Now}) - {playerData.Count}");
             }
             else
             {

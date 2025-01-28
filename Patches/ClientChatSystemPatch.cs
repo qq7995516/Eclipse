@@ -21,13 +21,13 @@ internal static class ClientChatSystemPatch
 
     static readonly bool _shouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests || Plugin.Familiars || Plugin.Professions;
     public static bool _userRegistered = false;
-    public static bool _registrationPending = false;
+    public static bool _pending = false;
 
     static readonly Regex _regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex _regexMAC = new(@";mac([^;]+)$");
 
-    static readonly WaitForSeconds _registrationDelay = new(5f);
-    static readonly WaitForSeconds _pendingDelay = new(5f);
+    static readonly WaitForSeconds _registrationDelay = new(2.5f);
+    static readonly WaitForSeconds _pendingDelay = new(10f);
 
     static readonly ComponentType[] _networkEventComponents =
     [
@@ -50,11 +50,16 @@ internal static class ClientChatSystemPatch
     const string V1_2_2 = "1.2.2";
     const string V1_3_2 = "1.3.2";
 
+    /*
     static readonly List<string> _versions =
     [
         V1_3_2,
         V1_2_2
     ];
+    */
+
+    static readonly Queue<string> _versions = new([V1_3_2, V1_2_2]);
+
     public enum NetworkEventSubType
     {
         RegisterUser,
@@ -67,24 +72,25 @@ internal static class ClientChatSystemPatch
     static void OnUpdatePrefix(ClientChatSystem __instance)
     {
         if (!Core._initialized) return;
-        else if (!_shouldInitialize) return;
-        else if (!_versions.Any()) return;
-
-        if (!_userRegistered && !_registrationPending && _localCharacter.Exists() && _localUser.Exists())
+        else if (!_localCharacter.Exists() || !_localUser.Exists()) return;
+        else if (!_userRegistered && !_pending)
         {
-            _registrationPending = true;
+            _pending = true;
 
             try
             {
-                string modVersion = _versions.First();
-                string stringId = _localUser.GetUser().PlatformId.ToString();
+                if(_versions.TryDequeue(out string modVersion))
+                {
+                    string stringId = _localUser.GetUser().PlatformId.ToString();
+                    string message = $"{modVersion};{stringId}";
 
-                string message = $"{modVersion};{stringId}";
-                SendMessageDelayRoutine(message, modVersion).Start();
+                    SendMessageDelayRoutine(message, modVersion).Start();
+                    ResetPendingDelayRoutine().Start();
+                }
             }
             catch (Exception ex)
             {
-                Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to register with Bloodcraft on server! Error - {ex}");
+                Core.Log.LogError($"Failed sending registration payload to server! Error - {ex}");
             }
         }
 
@@ -98,8 +104,7 @@ internal static class ClientChatSystemPatch
                     ChatMessageServerEvent chatMessage = entity.Read<ChatMessageServerEvent>();
                     string message = chatMessage.MessageText.Value;
 
-                    // if (string.IsNullOrEmpty(message)) continue;
-                    if (CheckMAC(message, out string originalMessage))
+                    if (chatMessage.MessageType.Equals(ServerChatMessageType.System) && CheckMAC(message, out string originalMessage))
                     {
                         HandleServerMessage(originalMessage);
                         EntityManager.DestroyEntity(entity);
@@ -116,24 +121,17 @@ internal static class ClientChatSystemPatch
     {
         yield return _registrationDelay;
 
+        if (_userRegistered) yield break;
+
         SendMessage(NetworkEventSubType.RegisterUser, message, modVersion);
-        ResetPendingDelayRoutine().Start();
     }
     static IEnumerator ResetPendingDelayRoutine()
     {
         yield return _pendingDelay;
 
-        if (_userRegistered)
-        {
-            _registrationPending = false;
+        if (_userRegistered) yield break;
 
-            yield break;
-        }
-
-        int index = _versions.IndexOf(_versions.First());
-        _versions.RemoveAt(index);
-
-        _registrationPending = false;
+        _pending = false;
     }
     static void SendMessage(NetworkEventSubType subType, string message, string modVersion)
     {
@@ -163,34 +161,49 @@ internal static class ClientChatSystemPatch
         networkEntity.Write(new FromCharacter { Character = _localCharacter, User = _localUser });
         networkEntity.Write(_networkEventType);
         networkEntity.Write(chatMessageEvent);
+
+        Core.Log.LogInfo($"Registration payload sent to server ({DateTime.Now}) - {messageWithMAC}");
     }
     static void HandleServerMessage(string message)
     {
-        int eventType = int.Parse(_regexExtract.Match(message).Groups[1].Value);
-
-        switch (eventType)
+        if (int.TryParse(_regexExtract.Match(message).Groups[1].Value, out int result))
         {
-            case (int)NetworkEventSubType.ProgressToClient:
-                List<string> playerData = DataService.ParseMessageString(_regexExtract.Replace(message, ""));
-                DataService.ParsePlayerData(playerData);
+            try
+            {
+                switch (result)
+                {
+                    case (int)NetworkEventSubType.ProgressToClient:
+                        List<string> playerData = DataService.ParseMessageString(_regexExtract.Replace(message, ""));
+                        DataService.ParsePlayerData(playerData);
 
-                if (CanvasService._killSwitch) CanvasService._killSwitch = false;
-                if (!CanvasService._active) CanvasService._active = true;
+                        if (CanvasService._killSwitch) CanvasService._killSwitch = false;
+                        if (!CanvasService._active) CanvasService._active = true;
 
-                CanvasService.CanvasUpdateLoop().Start();
-                break;
-            case (int)NetworkEventSubType.ConfigsToClient:
-                List<string> configData = DataService.ParseMessageString(_regexExtract.Replace(message, ""));
-                DataService.ParseConfigData(configData);
+                        CanvasService.CanvasUpdateLoop().Start();
+                        break;
+                    case (int)NetworkEventSubType.ConfigsToClient:
+                        List<string> configData = DataService.ParseMessageString(_regexExtract.Replace(message, ""));
+                        DataService.ParseConfigData(configData);
 
-                _userRegistered = true;
-                break;
+                        _userRegistered = true;
+
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to handle message after parsing event type - {ex}");
+            }
+        }
+        else
+        {
+            Core.Log.LogWarning($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to parse event type after MAC verification - {message}");
         }
     }
     public static bool CheckMAC(string receivedMessage, out string originalMessage)
     {
         Match match = _regexMAC.Match(receivedMessage);
-        originalMessage = "";
+        originalMessage = string.Empty;
 
         if (match.Success)
         {
@@ -202,6 +215,10 @@ internal static class ClientChatSystemPatch
                 originalMessage = intermediateMessage;
 
                 return true;
+            }
+            else
+            {
+                Core.Log.LogInfo($"MAC verification failed for matched RegEx message - {receivedMessage}");
             }
         }
 

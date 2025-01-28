@@ -281,15 +281,15 @@ internal class CanvasService
     public static readonly Dictionary<GameObject, bool> UIObjectStates = [];
     static readonly List<GameObject> _professionObjects = [];
 
-    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _weaponStatCache = [];
+    public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> WeaponStatCache = [];
     // static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _blacksmithingStatCache = []; throwing in towel on this for now x_x
-    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _originalWeaponStatsCache = [];
+    public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> OriginalWeaponStatsCache = [];
 
-    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _grimoireStatCache = [];
-    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _originalGrimoireStatsCache = [];
+    public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> GrimoireStatCache = [];
+    public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> OriginalGrimoireStatsCache = [];
 
-    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _armorStatCache = [];
-    static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _originalArmorStatsCache = [];
+    public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> ArmorStatCache = [];
+    public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> OriginalArmorStatsCache = [];
 
     static readonly Dictionary<int, Action> _actionToggles = new()
     {
@@ -358,6 +358,7 @@ internal class CanvasService
     const string SHIFT_SPRITE = "KeyboardGlyphs_Smaller_36";
     const string SHIFT_TEXTURE = "KeyboardGlyphs_Smaller";
 
+    public static bool _ready = false;
     public static bool _active = false;
     public static bool _shiftActive = false;
     public static bool _killSwitch = false;
@@ -410,6 +411,8 @@ internal class CanvasService
                 ref _chargesTextObject, ref _cooldownFillImage, ref _chargesText, ref _chargeCooldownFillImage, ref _chargeCooldownImageObject,
                 ref _abilityEmptyIcon, ref _abilityIcon, ref _keybindObject);
         }
+
+        _ready = true;
     }
     static void InitializeAbilitySlotButtons()
     {
@@ -523,17 +526,21 @@ internal class CanvasService
     {
         while (true)
         {
-            if (_killSwitch)
+            if (!_ready)
             {
-                _active = false;
+                yield return _delay;
 
-                break;
+                continue;
             }
             else if (!_active)
             {
                 yield return _delay;
 
                 continue;
+            }
+            else if (_killSwitch)
+            {
+                break;
             }
 
             if (_experienceBar)
@@ -880,10 +887,10 @@ internal class CanvasService
             switch (profession)
             {
                 case Profession.Enchanting:
-                    HandleEquipment(equipment, EquipmentType.MagicSource, movement, level, _grimoireStatCache, _originalGrimoireStatsCache);
+                    HandleEquipment(equipment, EquipmentType.MagicSource, movement, level, GrimoireStatCache, OriginalGrimoireStatsCache);
                     break;
                 case Profession.Tailoring:
-                    foreach (EquipmentType equipmentType in _equipmentTypes) HandleEquipment(equipment, equipmentType, movement, level, _armorStatCache, _originalArmorStatsCache);
+                    foreach (EquipmentType equipmentType in _equipmentTypes) HandleEquipment(equipment, equipmentType, movement, level, ArmorStatCache, OriginalArmorStatsCache);
                     break;
                 default:
                     break;
@@ -895,9 +902,10 @@ internal class CanvasService
     {
         if (professionLevel <= 0 || !_equipmentBonus) return;
         else if (equipment.GetEquipmentEntity(equipmentType).TryGetSyncedEntity(out Entity equipmentEntity)
-            && equipmentEntity.TryGetComponent(out PrefabGUID prefabGuid) && !prefabGuid.GetPrefabName().Contains("SoulShard"))
+            && equipmentEntity.TryGetComponent(out PrefabGUID prefabGuid) && !prefabGuid.GetPrefabName().Contains("SoulShard") && !prefabGuid.IsEmpty())
         {
-            if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out Entity prefabEntity) && prefabEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer))
+            if (equipmentEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer))
+            // if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out Entity prefabEntity) && prefabEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer))
             {
                 if (!equipmentStatCache.TryGetValue(prefabGuid, out var previousEquipmentStats))
                 {
@@ -1131,19 +1139,19 @@ internal class CanvasService
             {
                 if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out Entity prefabEntity) && prefabEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer))
                 {
-                    if (!_weaponStatCache.TryGetValue(prefabGuid, out var previousWeaponStats))
+                    if (!WeaponStatCache.TryGetValue(prefabGuid, out var previousWeaponStats))
                     {
-                        _weaponStatCache[prefabGuid] = [];
-                        previousWeaponStats = _weaponStatCache[prefabGuid];
+                        WeaponStatCache[prefabGuid] = [];
+                        previousWeaponStats = WeaponStatCache[prefabGuid];
                     }
 
-                    if (!_originalWeaponStatsCache.TryGetValue(prefabGuid, out var originalWeaponStats))
+                    if (!OriginalWeaponStatsCache.TryGetValue(prefabGuid, out var originalWeaponStats))
                     {
-                        _originalWeaponStatsCache[prefabGuid] = [];
+                        OriginalWeaponStatsCache[prefabGuid] = [];
 
                         foreach (var entry in buffer)
                         {
-                            _originalWeaponStatsCache[prefabGuid][entry.StatType] = entry.Value;
+                            OriginalWeaponStatsCache[prefabGuid][entry.StatType] = entry.Value;
                         }
                     }
 

@@ -96,13 +96,23 @@ internal static class InitializationPatches
     static void OnUpdatePrefix(ClientBootstrapSystem __instance)
     {
         CanvasService._killSwitch = true;
+
         CanvasService._active = false;
         CanvasService._shiftActive = false;
+        CanvasService._ready = false;
 
         ClientChatSystemPatch._userRegistered = false;
-        ClientChatSystemPatch._registrationPending = false;
+        ClientChatSystemPatch._pending = false;
         ClientChatSystemPatch._localCharacter = Entity.Null;
         ClientChatSystemPatch._localUser = Entity.Null;
+
+        CanvasService.ArmorStatCache.Clear();
+        CanvasService.GrimoireStatCache.Clear();
+        CanvasService.WeaponStatCache.Clear();
+
+        CanvasService.OriginalArmorStatsCache.Clear();
+        CanvasService.OriginalGrimoireStatsCache.Clear();
+        CanvasService.OriginalWeaponStatsCache.Clear();
 
         _setCanvas = false;
         Core._initialized = false;
