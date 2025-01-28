@@ -368,7 +368,7 @@ internal static class DataService
 
         public Dictionary<BloodStatType, float> BloodStatValues;
 
-        public Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> bloodStats)> ClassStatSynergies;
+        public Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> BloodStats)> ClassStatSynergies;
         public ConfigData(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string maxFamiliarLevel, string maxProfessionLevel, string weaponStatValues, string bloodStatValues, string classStatSynergies)
         {
             PrestigeStatMultiplier = float.Parse(prestigeMultiplier, CultureInfo.InvariantCulture);
@@ -458,6 +458,8 @@ internal static class DataService
         catch (Exception e)
         {
             Core.Log.LogWarning($"Failed to parse config data first attempt - {e}");
+
+            index = 0;
         }
 
         try
