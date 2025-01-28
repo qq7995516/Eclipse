@@ -243,6 +243,8 @@ internal static class DataService
 
     public static float _prestigeStatMultiplier;
     public static float _classStatMultiplier;
+    public static bool _extraRecipes;
+    public static PrefabGUID _primalCost;
     internal class ExperienceData(string percent, string level, string prestige, string playerClass)
     {
         public float Progress { get; set; } = float.Parse(percent, CultureInfo.InvariantCulture) / 100f;
@@ -281,6 +283,70 @@ internal static class DataService
     internal class ShiftSpellData(string index)
     {
         public int ShiftSpellIndex { get; set; } = int.Parse(index);
+    }
+    internal class ConfigDataV1_3_2
+    {
+        public float PrestigeStatMultiplier;
+
+        public float ClassStatMultiplier;
+
+        public int MaxPlayerLevel;
+
+        public int MaxLegacyLevel;
+
+        public int MaxExpertiseLevel;
+
+        public int MaxFamiliarLevel;
+
+        public int MaxProfessionLevel;
+
+        public bool ExtraRecipes;
+
+        public int PrimalCost;
+
+        public Dictionary<WeaponStatType, float> WeaponStatValues;
+
+        public Dictionary<BloodStatType, float> BloodStatValues;
+
+        public Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> bloodStats)> ClassStatSynergies;
+        public ConfigDataV1_3_2(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string maxFamiliarLevel, string maxProfessionLevel, string extraRecipes, string primalCost, string weaponStatValues, string bloodStatValues, string classStatSynergies)
+        {
+            PrestigeStatMultiplier = float.Parse(prestigeMultiplier, CultureInfo.InvariantCulture);
+            ClassStatMultiplier = float.Parse(statSynergyMultiplier, CultureInfo.InvariantCulture);
+
+            MaxPlayerLevel = int.Parse(maxPlayerLevel);
+            MaxLegacyLevel = int.Parse(maxLegacyLevel);
+            MaxExpertiseLevel = int.Parse(maxExpertiseLevel);
+            MaxFamiliarLevel = int.Parse(maxFamiliarLevel);
+            MaxProfessionLevel = int.Parse(maxProfessionLevel);
+
+            ExtraRecipes = bool.Parse(extraRecipes);
+            PrimalCost = int.Parse(primalCost);
+
+            WeaponStatValues = weaponStatValues.Split(',')
+            .Select((value, index) => new { Index = index + 1, Value = float.Parse(value, CultureInfo.InvariantCulture) })
+            .ToDictionary(x => (WeaponStatType)x.Index, x => x.Value);
+
+            BloodStatValues = bloodStatValues.Split(',')
+            .Select((value, index) => new { Index = index + 1, Value = float.Parse(value, CultureInfo.InvariantCulture) })
+            .ToDictionary(x => (BloodStatType)x.Index, x => x.Value);
+
+            ClassStatSynergies = classStatSynergies
+            .Split(',')
+            .Select((value, index) => new { Value = value, Index = index })
+            .GroupBy(x => x.Index / 3)
+            .ToDictionary(
+                g => (PlayerClass)int.Parse(g.ElementAt(0).Value),
+                g => (
+                    Enumerable.Range(0, g.ElementAt(1).Value.Length / 2)
+                        .Select(j => (WeaponStatType)int.Parse(g.ElementAt(1).Value.Substring(j * 2, 2)))
+                        .ToList(),
+                    Enumerable.Range(0, g.ElementAt(2).Value.Length / 2)
+                        .Select(j => (BloodStatType)int.Parse(g.ElementAt(2).Value.Substring(j * 2, 2)))
+                        .ToList()
+                )
+            );
+        }
     }
     internal class ConfigData
     {
@@ -345,38 +411,90 @@ internal static class DataService
         {
             return [];
         }
+
         return [..configString.Split(',')];
     }
     public static void ParseConfigData(List<string> configData)
     {
         int index = 0;
 
-        ConfigData parsedConfigData = new(
-            configData[index++], // prestigeMultiplier
-            configData[index++], // statSynergyMultiplier
-            configData[index++], // maxPlayerLevel
-            configData[index++], // maxLegacyLevel
-            configData[index++], // maxExpertiseLevel
-            configData[index++], // maxFamiliarLevel
-            configData[index++], // maxProfessionLevel no longer used and merits getting cut but that necessitates enough other changes leaving alone for the moment
-            string.Join(",", configData.Skip(index).Take(12)), // Combine the next 11 elements for weaponStatValues
-            string.Join(",", configData.Skip(index += 12).Take(12)), // Combine the following 11 elements for bloodStatValues
-            string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
-        );
+        // Core.Log.LogInfo($"Parsing config data - {configData.Count} | {string.Join(",", configData)}");
 
-        _prestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
-        _classStatMultiplier = parsedConfigData.ClassStatMultiplier;
+        try
+        {
+            ConfigDataV1_3_2 parsedConfigData = new(
+                configData[index++], // prestigeMultiplier
+                configData[index++], // statSynergyMultiplier
+                configData[index++], // maxPlayerLevel
+                configData[index++], // maxLegacyLevel
+                configData[index++], // maxExpertiseLevel
+                configData[index++], // maxFamiliarLevel
+                configData[index++], // maxProfessionLevel no longer used and merits getting cut but that necessitates enough other changes leaving alone for the moment
+                configData[index++], // extraRecipes
+                configData[index++], // primalCost
+                string.Join(",", configData.Skip(index).Take(12)), // Combine the next 11 elements for weaponStatValues
+                string.Join(",", configData.Skip(index += 12).Take(12)), // Combine the following 11 elements for bloodStatValues
+                string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
+            );
 
-        _experienceMaxLevel = parsedConfigData.MaxPlayerLevel;
-        _legacyMaxLevel = parsedConfigData.MaxLegacyLevel;
-        _expertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
-        _familiarMaxLevel = parsedConfigData.MaxFamiliarLevel;
+            _prestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
+            _classStatMultiplier = parsedConfigData.ClassStatMultiplier;
 
-        _weaponStatValues = parsedConfigData.WeaponStatValues;
+            _experienceMaxLevel = parsedConfigData.MaxPlayerLevel;
+            _legacyMaxLevel = parsedConfigData.MaxLegacyLevel;
+            _expertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
+            _familiarMaxLevel = parsedConfigData.MaxFamiliarLevel;
+            // _maxProfessionLevel = parsedConfigData.MaxProfessionLevel;
+            _extraRecipes = parsedConfigData.ExtraRecipes;
+            _primalCost = new PrefabGUID(parsedConfigData.PrimalCost);
 
-        _bloodStatValues = parsedConfigData.BloodStatValues;
+            _weaponStatValues = parsedConfigData.WeaponStatValues;
+            _bloodStatValues = parsedConfigData.BloodStatValues;
 
-        _classStatSynergies = parsedConfigData.ClassStatSynergies;
+            _classStatSynergies = parsedConfigData.ClassStatSynergies;
+
+            return;
+        }
+        catch (Exception e)
+        {
+            Core.Log.LogWarning($"Failed to parse config data first attempt - {e}");
+        }
+
+        try
+        {
+            ConfigData parsedConfigData = new(
+                configData[index++], // prestigeMultiplier
+                configData[index++], // statSynergyMultiplier
+                configData[index++], // maxPlayerLevel
+                configData[index++], // maxLegacyLevel
+                configData[index++], // maxExpertiseLevel
+                configData[index++], // maxFamiliarLevel
+                configData[index++], // maxProfessionLevel no longer used and merits getting cut but that necessitates enough other changes leaving alone for the moment
+                string.Join(",", configData.Skip(index).Take(12)), // Combine the next 11 elements for weaponStatValues
+                string.Join(",", configData.Skip(index += 12).Take(12)), // Combine the following 11 elements for bloodStatValues
+                string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
+            );
+
+            _prestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
+            _classStatMultiplier = parsedConfigData.ClassStatMultiplier;
+
+            _experienceMaxLevel = parsedConfigData.MaxPlayerLevel;
+            _legacyMaxLevel = parsedConfigData.MaxLegacyLevel;
+            _expertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
+            _familiarMaxLevel = parsedConfigData.MaxFamiliarLevel;
+            // _maxProfessionLevel = parsedConfigData.MaxProfessionLevel;
+
+            _weaponStatValues = parsedConfigData.WeaponStatValues;
+            _bloodStatValues = parsedConfigData.BloodStatValues;
+
+            _classStatSynergies = parsedConfigData.ClassStatSynergies;
+
+            return;
+        }
+        catch (Exception e)
+        {
+            Core.Log.LogWarning($"Failed to parse config data second attempt - {e}");
+        }
     }
     public static void ParsePlayerData(List<string> playerData)
     {
@@ -394,7 +512,7 @@ internal static class DataService
 
                 try
                 {
-                    Recipes.ModifyRecipes();
+                    if (_extraRecipes) Recipes.ModifyRecipes();
                 }
                 catch (Exception ex)
                 {

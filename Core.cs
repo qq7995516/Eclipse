@@ -38,11 +38,18 @@ internal class Core
 
         _initialized = true;
     }
+    public static void Reset()
+    {
+        _client = null;
+        _systemService = null;
+        CanvasService = null;
+        _initialized = false;
+    }
     public static void SetCanvas(UICanvasBase canvas)
     {
         CanvasService = new(canvas);
     }
-    public static void StartCoroutine(IEnumerator routine)
+    public static Coroutine StartCoroutine(IEnumerator routine)
     {
         if (_monoBehaviour == null)
         {
@@ -51,7 +58,13 @@ internal class Core
             UnityEngine.Object.DontDestroyOnLoad(go);
         }
 
-        _monoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
+        return _monoBehaviour.StartCoroutine(routine.WrapToIl2Cpp());
+    }
+    public static void StopCoroutine(Coroutine routine)
+    {
+        if (_monoBehaviour == null) return;
+
+        _monoBehaviour.StopCoroutine(routine);
     }
 
     /*

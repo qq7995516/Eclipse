@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
 using static Eclipse.LocalizationService;
 
 namespace Eclipse;
@@ -448,8 +449,12 @@ internal static class Extensions
     {
         return ClientGameManager.IsAllies(entity, player);
     }
-    public static void Start(this IEnumerator routine)
+    public static Coroutine Start(this IEnumerator routine)
     {
-        Core.StartCoroutine(routine);
+        return Core.StartCoroutine(routine);
+    }
+    public static void Stop(this Coroutine routine)
+    {
+        if (routine != null) Core.StopCoroutine(routine);
     }
 }

@@ -49,6 +49,7 @@ internal static class InitializationPatches
         if (!_setCanvas && Core._initialized)
         {
             _setCanvas = true;
+
             Core.SetCanvas(canvas);
         }
     }
@@ -97,14 +98,20 @@ internal static class InitializationPatches
     {
         CanvasService._killSwitch = true;
 
+        CanvasService._shiftRoutine.Stop();
+        CanvasService._canvasRoutine.Stop();
+
         CanvasService._active = false;
         CanvasService._shiftActive = false;
         CanvasService._ready = false;
 
         ClientChatSystemPatch._userRegistered = false;
         ClientChatSystemPatch._pending = false;
+        ClientChatSystemPatch._versions = new([ClientChatSystemPatch.V1_3_2, ClientChatSystemPatch.V1_2_2]);
+
         ClientChatSystemPatch._localCharacter = Entity.Null;
         ClientChatSystemPatch._localUser = Entity.Null;
+        CanvasService._version = string.Empty;
 
         CanvasService.ArmorStatCache.Clear();
         CanvasService.GrimoireStatCache.Clear();
@@ -115,9 +122,16 @@ internal static class InitializationPatches
         CanvasService.OriginalWeaponStatsCache.Clear();
 
         _setCanvas = false;
-        Core._initialized = false;
 
         foreach (GameObject gameObject in CanvasService.UIObjectStates.Keys) // destroy to let resolution be changed and elements get recreated to match new scaling?
+        {
+            if (gameObject != null)
+            {
+                GameObject.Destroy(gameObject);
+            }
+        }
+
+        foreach (GameObject gameObject in CanvasService.ProfessionObjects) // destroy to let resolution be changed and elements get recreated to match new scaling?
         {
             if (gameObject != null)
             {
@@ -130,6 +144,9 @@ internal static class InitializationPatches
         CanvasService._weeklyQuestIcon = null;
 
         CanvasService.UIObjectStates.Clear();
+        CanvasService.ProfessionObjects.Clear();
         CanvasService.SpriteMap.Clear();
+
+        Core.Reset();
     }
 }

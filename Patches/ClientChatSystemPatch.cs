@@ -47,8 +47,8 @@ internal static class ClientChatSystemPatch
     public static Entity _localCharacter = Entity.Null;
     public static Entity _localUser = Entity.Null;
 
-    const string V1_2_2 = "1.2.2";
-    const string V1_3_2 = "1.3.2";
+    public const string V1_2_2 = "1.2.2";
+    public const string V1_3_2 = "1.3.2";
 
     /*
     static readonly List<string> _versions =
@@ -58,7 +58,7 @@ internal static class ClientChatSystemPatch
     ];
     */
 
-    static readonly Queue<string> _versions = new([V1_3_2, V1_2_2]);
+    public static Queue<string> _versions = new([V1_3_2, V1_2_2]);
 
     public enum NetworkEventSubType
     {
@@ -179,7 +179,8 @@ internal static class ClientChatSystemPatch
                         if (CanvasService._killSwitch) CanvasService._killSwitch = false;
                         if (!CanvasService._active) CanvasService._active = true;
 
-                        CanvasService.CanvasUpdateLoop().Start();
+                        CanvasService._canvasRoutine = CanvasService.CanvasUpdateLoop().Start();
+
                         break;
                     case (int)NetworkEventSubType.ConfigsToClient:
                         List<string> configData = DataService.ParseMessageString(_regexExtract.Replace(message, ""));

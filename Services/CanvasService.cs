@@ -61,7 +61,8 @@ internal class CanvasService
         "Poneti_Icon_Hammer_30",
         "Poneti_Icon_Bag",
         "Poneti_Icon_Res_93",
-        SHIFT_SPRITE
+        SHIFT_SPRITE,
+        "Stunlock_Icon_Item_Jewel_Collection4"
     ];
 
     public const string ABILITY_ICON = "Stunlock_Icon_Ability_Spell_";
@@ -279,7 +280,7 @@ internal class CanvasService
     const float BAR_WIDTH_SPACING = 0.065f;
 
     public static readonly Dictionary<GameObject, bool> UIObjectStates = [];
-    static readonly List<GameObject> _professionObjects = [];
+    public static readonly List<GameObject> ProfessionObjects = [];
 
     public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> WeaponStatCache = [];
     // static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _blacksmithingStatCache = []; throwing in towel on this for now x_x
@@ -362,6 +363,9 @@ internal class CanvasService
     public static bool _active = false;
     public static bool _shiftActive = false;
     public static bool _killSwitch = false;
+
+    public static Coroutine _canvasRoutine;
+    public static Coroutine _shiftRoutine;
     public CanvasService(UICanvasBase canvas)
     {
         _uiCanvasBase = canvas;
@@ -468,7 +472,7 @@ internal class CanvasService
     {
         foreach (GameObject professionObject in UIObjectStates.Keys)
         {
-            if (_professionObjects.Contains(professionObject))
+            if (ProfessionObjects.Contains(professionObject))
             {
                 bool active = !professionObject.activeSelf;
 
@@ -526,7 +530,11 @@ internal class CanvasService
     {
         while (true)
         {
-            if (!_ready)
+            if (_killSwitch)
+            {
+                yield break;
+            }
+            else if (!_ready)
             {
                 yield return _delay;
 
@@ -537,10 +545,6 @@ internal class CanvasService
                 yield return _delay;
 
                 continue;
-            }
-            else if (_killSwitch)
-            {
-                break;
             }
 
             if (_experienceBar)
@@ -606,8 +610,7 @@ internal class CanvasService
                 if (abilityGroupEntity.TryGetComponent(out AbilityGroupState abilityGroupState) && abilityGroupState.SlotIndex == 3) // if ability found on slot 3, activate shift loop
                 {
                     _shiftActive = true;
-
-                    ShiftUpdateLoop().Start();
+                    _shiftRoutine = ShiftUpdateLoop().Start();
                 }
             }
 
@@ -802,13 +805,17 @@ internal class CanvasService
     {
         while (true)
         {
-            if (_killSwitch) // stop running when player leaves game
+            if (_killSwitch)
             {
-                _shiftActive = false;
-
-                break;
+                yield break;
             }
-            else if (!_shiftActive) // don't update if not active
+            else if (!_ready)
+            {
+                yield return _delay;
+
+                continue;
+            }
+            else if (!_shiftActive)
             {
                 yield return _delay;
 
@@ -1812,8 +1819,9 @@ internal class CanvasService
         _graphBarNumber++;
 
         barGameObject.SetActive(true);
+
         UIObjectStates.Add(barGameObject, true);
-        _professionObjects.Add(barGameObject);
+        ProfessionObjects.Add(barGameObject);
     }
     static void ConfigureInformationPanel(ref GameObject informationPanelObject, ref LocalizedText firstText, ref LocalizedText secondText, ref LocalizedText thirdText, UIElement element)
     {
