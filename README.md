@@ -21,13 +21,19 @@ Jairon Orellana; Odjit; Jera; Eve winters; Kokuren TCG and Gaming Shop; Rexxn; E
 
 ### UIOptions
 
-- **Experience Bar**: `ExperienceBar` (bool, default: false)  
+- **Experience Bar**: `ExperienceBar` (bool, default: true)  
   Enable or disable the experience bar.
-- **Show Prestige**: `ShowPrestige` (bool, default: false)  
+- **Show Prestige**: `ShowPrestige` (bool, default: true)  
   Enable or disable showing prestige levels.
-- **Legacy Bar**: `LegacyBar` (bool, default: false)  
+- **Legacy Bar**: `LegacyBar` (bool, default: true)  
   Enable or disable the legacy bar.
-- **Expertise Bar**: `ExpertiseBar` (bool, default: false)  
+- **Expertise Bar**: `ExpertiseBar` (bool, default: true)  
   Enable or disable the expertise bar.
-- **Quest Tracker**: `QuestTracker` (bool, default: false)  
+- **Familiars**: `Familiars` (bool, default: true)  
+  Enable or disable the familiar bar.
+- **Quest Tracker**: `QuestTracker` (bool, default: true)  
   Enable or disable the quest windows.
+- **Professions**: `Professions` (bool, default: true)  
+  Enable or disable the profession bars.
+- **ShiftSlot**: `ShiftSlot` (bool, default: true)  
+  Enable or disable the shift slot appearing when applicable.
