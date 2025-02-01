@@ -84,6 +84,11 @@ internal static class Recipes
     static readonly PrefabGUID _greaterStygian = new(576389135);
     static readonly PrefabGUID _primalStygian = new(28358550);
 
+    static readonly PrefabGUID _bloodCrystalRecipe = new(-597461125);  // using perfect topaz gemdust recipe for this
+    static readonly PrefabGUID _crystal = new(-257494203);
+    static readonly PrefabGUID _bloodCrystal = new(-1913156733);
+    static readonly PrefabGUID _greaterEssence = new(271594022);
+
     static readonly List<PrefabGUID> _shardRecipes =
     [
         _solarusShardRecipe,
@@ -160,6 +165,36 @@ internal static class Recipes
         });
 
         recipeMap[_primalStygianRecipe] = recipeEntity.Read<RecipeData>();
+
+        recipeEntity = PrefabCollectionSystem._PrefabGuidToEntityMap[_bloodCrystalRecipe];
+
+        recipeRequirementBuffer = recipeEntity.ReadBuffer<RecipeRequirementBuffer>();
+
+        recipeRequirement = recipeRequirementBuffer[0];
+        recipeRequirement.Guid = _crystal;
+        recipeRequirement.Amount = 100;
+
+        recipeRequirementBuffer[0] = recipeRequirement;
+        recipeRequirement.Guid = _greaterEssence;
+        recipeRequirement.Amount = 1;
+        recipeRequirementBuffer.Add(recipeRequirement);
+
+        recipeOutputBuffer = recipeEntity.ReadBuffer<RecipeOutputBuffer>();
+
+        recipeOutput = recipeOutputBuffer[0];
+        recipeOutput.Guid = _bloodCrystal;
+        recipeOutput.Amount = 50;
+
+        recipeOutputBuffer[0] = recipeOutput;
+
+        recipeEntity.With((ref RecipeData recipeData) =>
+        {
+            recipeData.AlwaysUnlocked = true;
+            recipeData.HideInStation = false;
+            recipeData.HudSortingOrder = 0;
+        });
+
+        recipeMap[_bloodCrystalRecipe] = recipeEntity.Read<RecipeData>();
 
         if (CanvasService.SpriteMap.TryGetValue(PRIMAL_JEWEL, out Sprite jewelSprite))
         {

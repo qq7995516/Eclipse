@@ -4,7 +4,6 @@ using ProjectM;
 using ProjectM.UI;
 using Stunlock.Core;
 using System.Collections;
-using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using TMPro;
 using Unity.Entities;
@@ -61,12 +60,52 @@ internal class CanvasService
         "Poneti_Icon_Hammer_30",
         "Poneti_Icon_Bag",
         "Poneti_Icon_Res_93",
-        SHIFT_SPRITE,
-        "Stunlock_Icon_Item_Jewel_Collection4"
+        SHIFT_SPRITE, // still no idea why this just refuses to work like every other sprite after placing, something with the base material? idk
+        "Stunlock_Icon_Item_Jewel_Collection4",
+        "Stunlock_Icon_Bag_Background_Alchemy",     // Poneti_Icon_Alchemy_02_mortar
+        "Poneti_Icon_Alchemy_02_mortar",
+        "Stunlock_Icon_Bag_Background_Jewel",       // nope
+        "Poneti_Icon_runic_tablet_12",
+        "Stunlock_Icon_Bag_Background_Woodworking", //
+        "Stunlock_Icon_Bag_Background_Herbs",       // Poneti_Icon_Herbalism_35_fellherb
+        "Poneti_Icon_Herbalism_35_fellherb",        // harvesting
+        "Stunlock_Icon_Bag_Background_Fish",        // Poneti_Icon_Cooking_28_fish
+        "Poneti_Icon_Cooking_28_fish",              // fishing
+        "Poneti_Icon_Cooking_60_oceanfish",
+        "Stunlock_Icon_Bag_Background_Armor",       // nope
+        "Poneti_Icon_Tailoring_38_fiercloth",       // tailoring
+        "FantasyIcon_ResourceAndCraftAddon (56)",
+        "Stunlock_Icon_Bag_Background_Weapon",      // nope
+        "Poneti_Icon_Sword_v2_48",                  // blacksmithing
+        "Poneti_Icon_Hammer_30",
+        "Stunlock_Icon_Bag_Background_Consumable",   //
+        "Poneti_Icon_Quest_131",
+        "FantasyIcon_Wood_Hallow",
+        "Poneti_Icon_Engineering_59_mega_fishingrod",
+        "Poneti_Icon_Axe_v2_04",
+        "Poneti_Icon_Blacksmith_21_big_grindstone",
+        "FantasyIcon_Flowers (11)",
+        "FantasyIcon_MagicItem (105)",
+        "Item_MagicSource_General_T05_Relic",
+        "Stunlock_Icon_BloodRose",
+        "Poneti_Icon_Blacksmith_24_bigrune_grindstone",
+        "Item_MagicSource_General_T04_FrozenEye"
     ];
 
     public const string ABILITY_ICON = "Stunlock_Icon_Ability_Spell_";
     public const string NPC_ABILITY = "Ashka_M1_64";
+
+    static readonly Dictionary<Profession, string> _professionIcons = new()
+    {
+        { Profession.Enchanting, "Item_MagicSource_General_T04_FrozenEye" },
+        { Profession.Alchemy, "FantasyIcon_MagicItem (105)" },
+        { Profession.Harvesting, "Stunlock_Icon_BloodRose" },
+        { Profession.Blacksmithing, "Poneti_Icon_Blacksmith_24_bigrune_grindstone" },
+        { Profession.Tailoring, "FantasyIcon_ResourceAndCraftAddon (56)" },
+        { Profession.Woodcutting, "Poneti_Icon_Axe_v2_04" },
+        { Profession.Mining, "Poneti_Icon_Hammer_30" },
+        { Profession.Fishing, "Poneti_Icon_Engineering_59_mega_fishingrod" }
+    };
 
     public static readonly Dictionary<string, Sprite> SpriteMap = [];
     public static readonly Dictionary<string, Sprite> AbilityIconMap = [];
@@ -90,7 +129,7 @@ internal class CanvasService
     static readonly WaitForSeconds _delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable
     static readonly WaitForSeconds _shiftDelay = new(0.1f);
 
-    // object & component references for UI elements... these should probably all be custom classes, note for later
+    // object & component references for UI elements... these should probably all be a custom class or two, note for later | oops it's later, maybe later later >_>
     static UICanvasBase _uiCanvasBase;
     static Canvas _canvas;
     public static string _version = string.Empty;
@@ -164,52 +203,59 @@ internal class CanvasService
     public static bool _equipmentBonus = false;
     const float MAX_PROFESSION_LEVEL = 100f;
     const float EQUIPMENT_BONUS = 0.1f;
-    static float _fontSize = 0f;
 
     static GameObject _enchantingBarGameObject;
     static LocalizedText _enchantingLevelText;
+    static Image _enchantingProgressFill;
     static Image _enchantingFill;
     public static float _enchantingProgress = 0f;
     public static int _enchantingLevel = 0;
 
     static GameObject _alchemyBarGameObject;
     static LocalizedText _alchemyLevelText;
+    static Image _alchemyProgressFill;
     static Image _alchemyFill;
     public static float _alchemyProgress = 0f;
     public static int _alchemyLevel = 0;
 
     static GameObject _harvestingGameObject;
     static LocalizedText _harvestingLevelText;
+    static Image _harvestingProgressFill;
     static Image _harvestingFill;
     public static float _harvestingProgress = 0f;
     public static int _harvestingLevel = 0;
 
     static GameObject _blacksmithingBarGameObject;
     static LocalizedText _blacksmithingLevelText;
+    static Image _blacksmithingProgressFill;
     static Image _blacksmithingFill;
     public static float _blacksmithingProgress = 0f;
     public static int _blacksmithingLevel = 0;
 
     static GameObject _tailoringBarGameObject;
     static LocalizedText _tailoringLevelText;
+    static Image _tailoringProgressFill;
     static Image _tailoringFill;
     public static float _tailoringProgress = 0f;
     public static int _tailoringLevel = 0;
 
     static GameObject _woodcuttingBarGameObject;
     static LocalizedText _woodcuttingLevelText;
+    static Image _woodcuttingProgressFill;
     static Image _woodcuttingFill;
     public static float _woodcuttingProgress = 0f;
     public static int _woodcuttingLevel = 0;
 
     static GameObject _miningBarGameObject;
     static LocalizedText _miningLevelText;
+    static Image _miningProgressFill;
     static Image _miningFill;
     public static float _miningProgress = 0f;
     public static int _miningLevel = 0;
 
     static GameObject _fishingBarGameObject;
     static LocalizedText _fishingLevelText;
+    static Image _fishingProgressFill;
     static Image _fishingFill;
     public static float _fishingProgress = 0f;
     public static int _fishingLevel = 0;
@@ -275,6 +321,7 @@ internal class CanvasService
     static int _barNumber;
     static int _graphBarNumber;
     static float _windowOffset;
+    static readonly Color _brightGold = new(1.0f, 0.84f, 0.0f, 1f); // Brighter, rich gold
 
     const float BAR_HEIGHT_SPACING = 0.075f;
     const float BAR_WIDTH_SPACING = 0.065f;
@@ -399,14 +446,14 @@ internal class CanvasService
 
         if (_professionBars)
         {
-            ConfigureVerticalProgressBar(ref _enchantingBarGameObject, ref _enchantingFill, ref _enchantingLevelText, ProfessionColors[Profession.Enchanting]);
-            ConfigureVerticalProgressBar(ref _alchemyBarGameObject, ref _alchemyFill, ref _alchemyLevelText, ProfessionColors[Profession.Alchemy]);
-            ConfigureVerticalProgressBar(ref _harvestingGameObject, ref _harvestingFill, ref _harvestingLevelText, ProfessionColors[Profession.Harvesting]);
-            ConfigureVerticalProgressBar(ref _blacksmithingBarGameObject, ref _blacksmithingFill, ref _blacksmithingLevelText, ProfessionColors[Profession.Blacksmithing]);
-            ConfigureVerticalProgressBar(ref _tailoringBarGameObject, ref _tailoringFill, ref _tailoringLevelText, ProfessionColors[Profession.Tailoring]);
-            ConfigureVerticalProgressBar(ref _woodcuttingBarGameObject, ref _woodcuttingFill, ref _woodcuttingLevelText, ProfessionColors[Profession.Woodcutting]);
-            ConfigureVerticalProgressBar(ref _miningBarGameObject, ref _miningFill, ref _miningLevelText, ProfessionColors[Profession.Mining]);
-            ConfigureVerticalProgressBar(ref _fishingBarGameObject, ref _fishingFill, ref _fishingLevelText, ProfessionColors[Profession.Fishing]);
+            ConfigureVerticalProgressBar(ref _alchemyBarGameObject, ref _alchemyProgressFill, ref _alchemyFill, ref _alchemyLevelText, Profession.Alchemy);
+            ConfigureVerticalProgressBar(ref _blacksmithingBarGameObject, ref _blacksmithingProgressFill, ref _blacksmithingFill, ref _blacksmithingLevelText, Profession.Blacksmithing);
+            ConfigureVerticalProgressBar(ref _enchantingBarGameObject, ref _enchantingProgressFill, ref _enchantingFill, ref _enchantingLevelText, Profession.Enchanting);
+            ConfigureVerticalProgressBar(ref _tailoringBarGameObject, ref _tailoringProgressFill, ref _tailoringFill, ref _tailoringLevelText, Profession.Tailoring);
+            ConfigureVerticalProgressBar(ref _fishingBarGameObject, ref _fishingProgressFill, ref _fishingFill, ref _fishingLevelText, Profession.Fishing);
+            ConfigureVerticalProgressBar(ref _harvestingGameObject, ref _harvestingProgressFill, ref _harvestingFill, ref _harvestingLevelText, Profession.Harvesting);
+            ConfigureVerticalProgressBar(ref _miningBarGameObject, ref _miningProgressFill, ref _miningFill, ref _miningLevelText, Profession.Mining);
+            ConfigureVerticalProgressBar(ref _woodcuttingBarGameObject, ref _woodcuttingProgressFill, ref _woodcuttingFill, ref _woodcuttingLevelText, Profession.Woodcutting);
         }
 
         if (_shiftSlot)
@@ -559,8 +606,6 @@ internal class CanvasService
             {
                 UpdateBar(_legacyProgress, _legacyLevel, _legacyMaxLevel, _legacyPrestige, _legacyText, _legacyHeader, _legacyFill, UIElement.Legacy, _legacyType);
                 UpdateBloodStats(_legacyBonusStats, [_firstLegacyStat, _secondLegacyStat, _thirdLegacyStat], GetBloodStatInfo);
-
-                yield return null;
             }
 
             if (_expertiseBar)
@@ -575,8 +620,6 @@ internal class CanvasService
             {
                 UpdateBar(_familiarProgress, _familiarLevel, _familiarMaxLevel, _familiarPrestige, _familiarText, _familiarHeader, _familiarFill, UIElement.Familiars, _familiarName);
                 UpdateFamiliarStats(_familiarStats, [_familiarMaxHealth, _familiarPhysicalPower, _familiarSpellPower]);
-
-                yield return null;
             }
 
             if (_questTracker)
@@ -589,18 +632,17 @@ internal class CanvasService
 
             if (_professionBars)
             {
-                UpdateProfessions(_enchantingProgress, _enchantingLevel, _enchantingLevelText, _enchantingFill, Profession.Enchanting);
+                UpdateProfessions(_alchemyProgress, _alchemyLevel, _alchemyLevelText, _alchemyProgressFill, _alchemyFill, Profession.Alchemy);
+                UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _blacksmithingLevelText, _blacksmithingProgressFill, _blacksmithingFill, Profession.Blacksmithing);
+                UpdateProfessions(_enchantingProgress, _enchantingLevel, _enchantingLevelText, _enchantingProgressFill, _enchantingFill, Profession.Enchanting);
+                UpdateProfessions(_tailoringProgress, _tailoringLevel, _tailoringLevelText, _tailoringProgressFill, _tailoringFill, Profession.Tailoring);
                 yield return null;
 
-                UpdateProfessions(_alchemyProgress, _alchemyLevel, _alchemyLevelText, _alchemyFill, Profession.Alchemy);
-                UpdateProfessions(_harvestingProgress, _harvestingLevel, _harvestingLevelText, _harvestingFill, Profession.Harvesting);
-                UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _blacksmithingLevelText, _blacksmithingFill, Profession.Blacksmithing);
-                UpdateProfessions(_tailoringProgress, _tailoringLevel, _tailoringLevelText, _tailoringFill, Profession.Tailoring);
+                UpdateProfessions(_fishingProgress, _fishingLevel, _fishingLevelText, _fishingProgressFill, _fishingFill, Profession.Fishing);
+                UpdateProfessions(_harvestingProgress, _harvestingLevel, _harvestingLevelText, _harvestingProgressFill, _harvestingFill, Profession.Harvesting);
+                UpdateProfessions(_miningProgress, _miningLevel, _miningLevelText, _miningProgressFill, _miningFill, Profession.Mining);
+                UpdateProfessions(_woodcuttingProgress, _woodcuttingLevel, _woodcuttingLevelText, _woodcuttingProgressFill, _woodcuttingFill, Profession.Woodcutting);
                 yield return null;
-
-                UpdateProfessions(_woodcuttingProgress, _woodcuttingLevel, _woodcuttingLevelText, _woodcuttingFill, Profession.Woodcutting);
-                UpdateProfessions(_miningProgress, _miningLevel, _miningLevelText, _miningFill, Profession.Mining);
-                UpdateProfessions(_fishingProgress, _fishingLevel, _fishingLevelText, _fishingFill, Profession.Fishing);
             }
 
             if (!_shiftActive && _localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
@@ -862,19 +904,22 @@ internal class CanvasService
 
         return _abilityTooltipData != null;
     }
-    static void UpdateProfessions(float progress, int level, LocalizedText levelText, Image fill, Profession profession)
+    static void UpdateProfessions(float progress, int level, LocalizedText levelText, Image progressFill, Image fill, Profession profession)
     {
-        string levelString = level.ToString();
+        // string levelString = level.ToString();
 
         if (level == MAX_PROFESSION_LEVEL)
         {
+            progressFill.fillAmount = 1f;
             fill.fillAmount = 1f;
         }
         else
         {
-            fill.fillAmount = progress;
+            progressFill.fillAmount = progress;
+            fill.fillAmount = level / MAX_PROFESSION_LEVEL;
         }
 
+        /*
         if (level >= 100)
         {
             levelText.Text.fontSize = _fontSize * 0.7f;
@@ -888,7 +933,9 @@ internal class CanvasService
         {
             levelText.ForceSet(levelString);
         }
+        */
 
+        /*
         if (_localCharacter.TryGetComponent(out Equipment equipment) && _localCharacter.TryGetComponent(out Movement movement))
         {
             switch (profession)
@@ -903,6 +950,7 @@ internal class CanvasService
                     break;
             }
         }
+        */
     }
     static void HandleEquipment(Equipment equipment, EquipmentType equipmentType, Movement movement, float professionLevel, 
         Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> equipmentStatCache, Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> originalEquipmentStatCache)
@@ -1713,16 +1761,16 @@ internal class CanvasService
         fill.fillAmount = 0f;
         fill.color = fillColor;
         level.ForceSet("0");
+
+        // Set header text
         header.ForceSet(element.ToString());
         header.Text.fontSize *= 1.5f;
 
         // set sizes for later reference
         _headerFontSize = header.Text.fontSize;
-        _familiarHeaderSmall = _headerFontSize * 0.9f;
-        _familiarHeaderSmaller = _headerFontSize * 0.8f;
-        _familiarHeaderSmallest = _headerFontSize * 0.7f;
-
-        // if (element.Equals(UIElement.Familiars)) header.Text.enableAutoSizing = true; // maybe will just work? >_>
+        _familiarHeaderSmall = _headerFontSize * 0.85f; // may want to replace ALL OF THE THINGS with consts but later
+        _familiarHeaderSmaller = _headerFontSize * 0.75f;
+        _familiarHeaderSmallest = _headerFontSize * 0.65f;
 
         // Set these to 0 so don't appear, deactivating instead seemed funky
         FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
@@ -1737,7 +1785,7 @@ internal class CanvasService
         barGameObject.SetActive(true);
         UIObjectStates.Add(barGameObject, true);
     }
-    static void ConfigureVerticalProgressBar(ref GameObject barGameObject, ref Image fill, ref LocalizedText level, Color fillColor)
+    static void ConfigureVerticalProgressBar(ref GameObject barGameObject, ref Image progressFill, ref Image maxFill, ref LocalizedText level, Profession profession)
     {
         // Instantiate the bar object from the prefab
         barGameObject = GameObject.Instantiate(_uiCanvasBase.TargetInfoParent.gameObject);
@@ -1766,40 +1814,59 @@ internal class CanvasService
         barRectTransform.localScale = updatedScale;
 
         // positioning
-        float offsetY = 0.235f; // try 0.24f if needs adjusting?
+        float offsetY = 0.24f; // try 0.24f if needs adjusting? 0.235f previous
         barRectTransform.anchorMin = new Vector2(offsetX, offsetY);
         barRectTransform.anchorMax = new Vector2(offsetX, offsetY);
         barRectTransform.pivot = new Vector2(offsetX, offsetY);
 
         // Assign fill and level text components
-        fill = FindTargetUIObject(barRectTransform.transform, "Fill").GetComponent<Image>();
-        fill.fillMethod = Image.FillMethod.Horizontal;
-        fill.fillOrigin = 0;
-        fill.fillAmount = 0f; // This will be set based on profession level
-        fill.color = fillColor;
+        progressFill = FindTargetUIObject(barRectTransform.transform, "Fill").GetComponent<Image>();
+        progressFill.fillMethod = Image.FillMethod.Horizontal;
+        progressFill.fillOrigin = 0;
+        progressFill.fillAmount = 0f; // This will be set based on profession level
+        progressFill.color = ProfessionColors[profession];
 
         // **Rotate the bar by 90 degrees around the Z-axis**
         barRectTransform.localRotation = Quaternion.Euler(0, 0, 90);
 
         // Assign and adjust the level text component
-        
         level = FindTargetUIObject(barRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
-        _fontSize = level.Text.fontSize;
 
-        // **Rotate the level text back by -90 degrees to keep it upright**
-        RectTransform levelRectTransform = level.GetComponent<RectTransform>();
-        levelRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
-        // levelRectTransform.localScale = Vector3.one * 1.25f; CHECKING FUZZY TEXT FOR PROFESSIONS 1/23 @ 10:12 - debatably improved, took a screenshot and will take other one to compare maybe or just leave it god so tired
+        // font size for later reference
+        // _fontSize = level.Text.fontSize;
+        // level.Text.fontSize *= 1.2f;
 
         // Get text container and rotate back
         // GameObject levelTextContainer = FindTargetUIObject(barRectTransform.transform, "LevelDiff");
         // RectTransform levelTextContainerRectTransform = levelTextContainer.GetComponent<RectTransform>();
+        // levelTextContainerRectTransform.rotation = Quaternion.identity;
         // levelTextContainerRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
-        // comment this back out if gets worse for fuzzy text or anything else weird 1/24 @ 01:57 - haha yeah fuck that
 
         // LevelBackground scale set back
-        RectTransform levelBackgroundRectTransform = FindTargetUIObject(barRectTransform.transform, "LevelBackground").GetComponent<RectTransform>();
-        levelBackgroundRectTransform.localScale *= 1.2f;
+        GameObject levelBackgroundObject = FindTargetUIObject(barRectTransform.transform, "LevelBackground");
+        // GameObject highlightObject = GameObject.Instantiate(levelBackgroundObject);
+
+        Image levelBackgroundImage = levelBackgroundObject.GetComponent<Image>();
+        Sprite professionIcon = _professionIcons.TryGetValue(profession, out string spriteName) && SpriteMap.TryGetValue(spriteName, out Sprite sprite) ? sprite : levelBackgroundImage.sprite;
+        levelBackgroundImage.sprite = professionIcon ?? levelBackgroundImage.sprite;
+        levelBackgroundImage.color = new(1f, 1f, 1f, 1f);
+        levelBackgroundObject.transform.localRotation = Quaternion.Euler(0, 0, -90);
+        levelBackgroundObject.transform.localScale = new(0.25f, 1f, 1f);
+
+        /*
+        // add gameObject with image to use as coloring fill effect for icon
+        highlightObject.transform.SetParent(levelBackgroundObject.transform.parent, false);
+        highlightObject.transform.SetSiblingIndex(levelBackgroundObject.transform.GetSiblingIndex() - 1);
+
+        iconFill = highlightObject.GetComponent<Image>();
+        iconFill.sprite = professionIcon ?? levelBackgroundImage.sprite;
+        // highlightObject.transform.rotation = Quaternion.identity;
+        // iconFill.type = Image.Type.Filled;
+        // iconFill.fillMethod = Image.FillMethod.Vertical;
+        // iconFill.fillOrigin = 2;
+        // iconFill.fillAmount = 0.5f;
+        highlightObject?.SetActive(true);
+        */
 
         // Hide unnecessary UI elements
         var headerObject = FindTargetUIObject(barRectTransform.transform, "Name");
@@ -1810,15 +1877,17 @@ internal class CanvasService
 
         // Set these to 0 so don't appear, deactivating instead seemed funky
         FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
-        FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>().fillAmount = 0f;
-
-        // Set the level text to display the profession level
-        level.ForceSet("0");
+        //FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>().fillAmount = 0f;
+        maxFill = FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>();
+        maxFill.fillAmount = 0f;
+        maxFill.transform.localScale = new(1f, 0.25f, 1f);
+        maxFill.color = _brightGold;
 
         // Increment GraphBarNumber for horizontal spacing within the bar graph
         _graphBarNumber++;
 
         barGameObject.SetActive(true);
+        level.gameObject.SetActive(false);
 
         UIObjectStates.Add(barGameObject, true);
         ProfessionObjects.Add(barGameObject);

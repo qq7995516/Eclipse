@@ -197,14 +197,14 @@ internal static class DataService
 
     public static readonly Dictionary<Profession, Color> ProfessionColors = new()
     {
-        { Profession.Enchanting,    new Color(0.494f, 0.133f, 0.808f) },
-        { Profession.Alchemy,       new Color(0.071f, 0.831f, 0.635f) },
-        { Profession.Harvesting,    new Color(0.0f, 0.502f, 0.0f) },
-        { Profession.Blacksmithing, new Color(0.208f, 0.212f, 0.255f) },
-        { Profession.Tailoring,     new Color(0.976f, 0.871f, 0.741f) },
-        { Profession.Woodcutting,   new Color(0.545f, 0.271f, 0.075f) },
-        { Profession.Mining,        new Color(0.502f, 0.502f, 0.502f) },
-        { Profession.Fishing,       new Color(0.0f, 0.7f, 0.9f) }
+        { Profession.Enchanting,    new Color(0.5f, 0.13f, 0.8f, 0.5f) },
+        { Profession.Alchemy,       new Color(0.1f, 0.87f, 0.66f, 0.5f) },
+        { Profession.Harvesting,    new Color(0f, 0.5f, 0f, 0.5f) },
+        { Profession.Blacksmithing, new Color(0.2f, 0.2f, 0.26f, 0.5f) },
+        { Profession.Tailoring,     new Color(0.85f, 0.55f, 0.5f, 0.5f) },
+        { Profession.Woodcutting,   new Color(0.54f, 0.27f, 0.1f, 0.5f) },
+        { Profession.Mining,        new Color(0.5f, 0.5f, 0.5f, 0.5f) },
+        { Profession.Fishing,       new Color(0f, 0.46f, 0.66f, 0.5f) }
     };
     internal class ProfessionData(string enchantingProgress, string enchantingLevel, string alchemyProgress, string alchemyLevel,
         string harvestingProgress, string harvestingLevel, string blacksmithingProgress, string blacksmithingLevel,
