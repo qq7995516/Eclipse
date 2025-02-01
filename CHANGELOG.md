@@ -1,3 +1,8 @@
+`1.3.2`
+- backwards compatible with Bloodcraft 1.5.3 (will show NPC spell cooldown's on shift when using 1.6.4 #soonYM, other changes below do not require additional information from Bloodcraft)
+- weapon expertise stats show on tooltips accordingly (not all stats will show there for some reason but works for most)
+- new recipe/salvage additions and changes added in 1.6.4 with ExtraRecipes enabled are best experienced with Eclipse
+  
 `1.2.2`
 - added bar for basic familiar info
 - added bargraph of sorts for professions
