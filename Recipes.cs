@@ -159,6 +159,7 @@ internal static class Recipes
 
         recipeEntity.With((ref RecipeData recipeData) =>
         {
+            recipeData.CraftDuration = 10f;
             recipeData.AlwaysUnlocked = true;
             recipeData.HideInStation = false;
             recipeData.HudSortingOrder = 0;
@@ -183,12 +184,13 @@ internal static class Recipes
 
         recipeOutput = recipeOutputBuffer[0];
         recipeOutput.Guid = _bloodCrystal;
-        recipeOutput.Amount = 50;
+        recipeOutput.Amount = 100;
 
         recipeOutputBuffer[0] = recipeOutput;
 
         recipeEntity.With((ref RecipeData recipeData) =>
         {
+            recipeData.CraftDuration = 10f;
             recipeData.AlwaysUnlocked = true;
             recipeData.HideInStation = false;
             recipeData.HudSortingOrder = 0;
@@ -474,10 +476,6 @@ internal static class Recipes
 
         var refinementBuffer = stationEntity.ReadBuffer<RefinementstationRecipesBuffer>();
         refinementBuffer.Add(new RefinementstationRecipesBuffer { RecipeGuid = _vampiricDustRecipe, Disabled = false, Unlocked = true });
-        // refinementBuffer.Add(new RefinementstationRecipesBuffer { RecipeGuid = _draculaShardRecipe, Disabled = false, Unlocked = true });
-        // refinementBuffer.Add(new RefinementstationRecipesBuffer { RecipeGuid = _monsterShardRecipe, Disabled = false, Unlocked = true });
-        // refinementBuffer.Add(new RefinementstationRecipesBuffer { RecipeGuid = _manticoreShardRecipe, Disabled = false, Unlocked = true });
-        // refinementBuffer.Add(new RefinementstationRecipesBuffer { RecipeGuid = _solarusShardRecipe, Disabled = false, Unlocked = true });
 
         stationEntity = PrefabCollectionSystem._PrefabGuidToEntityMap[_fabricator];
         recipeEntity = PrefabCollectionSystem._PrefabGuidToEntityMap[_copperWiresRecipe];

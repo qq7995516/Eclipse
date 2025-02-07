@@ -94,6 +94,7 @@ internal class CanvasService
 
     public const string ABILITY_ICON = "Stunlock_Icon_Ability_Spell_";
     public const string NPC_ABILITY = "Ashka_M1_64";
+    const string TRIMMER = " the ";
 
     static readonly Dictionary<Profession, string> _professionIcons = new()
     {
@@ -705,6 +706,7 @@ internal class CanvasService
             _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : _shiftSpellIndex * COOLDOWN_FACTOR;
             _cooldownEndTime = Core.ServerTime.TimeOnServer + _cooldownTime; // see if this fixes not appearing till second use
 
+            // _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : (_shiftSpellIndex * COOLDOWN_FACTOR) +COOLDOWN_FACTOR;
             // _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : _shiftSpellIndex * COOLDOWN_FACTOR;
             // Core.Log.LogInfo($"UpdateAbilityData _cooldownTime - {_cooldownTime}");
             /*
@@ -1086,6 +1088,12 @@ internal class CanvasService
             levelText.ForceSet(levelString);
         }
 
+        if (element.Equals(UIElement.Familiars))
+        {
+            int index = type.IndexOf(TRIMMER);
+            type = index >= 0 ? type[..index] : type;
+        }
+
         if (_showPrestige && prestiges != 0)
         {
             string header = "";
@@ -1114,28 +1122,6 @@ internal class CanvasService
             if (barHeader.GetText() != type)
             {
                 barHeader.ForceSet(type);
-            }
-        }
-
-        if (element.Equals(UIElement.Familiars))
-        {
-            int textLength = barHeader.Text.text.Length;
-
-            if (textLength >= SMALLEST_HEADER_CHARS)
-            {
-                barHeader.Text.fontSize = _familiarHeaderSmallest;
-            }
-            else if (textLength >= SMALLER_HEADER_CHARS)
-            {
-                barHeader.Text.fontSize = _familiarHeaderSmaller;
-            }
-            else if (textLength >= SMALL_HEADER_CHARS)
-            {
-                barHeader.Text.fontSize = _familiarHeaderSmall;
-            }
-            else
-            {
-                barHeader.Text.fontSize = _headerFontSize;
             }
         }
     }
@@ -1768,9 +1754,9 @@ internal class CanvasService
 
         // set sizes for later reference
         _headerFontSize = header.Text.fontSize;
-        _familiarHeaderSmall = _headerFontSize * 0.85f; // may want to replace ALL OF THE THINGS with consts but later
+        _familiarHeaderSmall = _headerFontSize * 0.9f; // may want to replace ALL OF THE THINGS with consts but later
         _familiarHeaderSmaller = _headerFontSize * 0.75f;
-        _familiarHeaderSmallest = _headerFontSize * 0.65f;
+        _familiarHeaderSmallest = _headerFontSize * 0.5f;
 
         // Set these to 0 so don't appear, deactivating instead seemed funky
         FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
