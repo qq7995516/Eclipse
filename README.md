@@ -10,7 +10,7 @@
 
 ## Sponsors
 
-Jairon Orellana; Odjit; Jera; Eve winters; Kokuren TCG and Gaming Shop; Rexxn; Eduardo G.;
+Jairon O.; Odjit; Jera; Eve W.; Kokuren TCG and Gaming Shop; Rexxn; Eduardo G.; DirtyMike; RENEGADO; Imperivm Draconis; Geoffrey D.;
 
 ## Features
 
