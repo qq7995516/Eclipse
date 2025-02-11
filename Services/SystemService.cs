@@ -4,7 +4,7 @@ using ProjectM.Scripting;
 using Unity.Entities;
 
 namespace Eclipse.Services;
-public class SystemService(World world)
+internal class SystemService(World world)
 {
     readonly World _world = world ?? throw new ArgumentNullException(nameof(world));
 

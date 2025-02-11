@@ -50,16 +50,7 @@ internal static class ClientChatSystemPatch
     public const string V1_2_2 = "1.2.2";
     public const string V1_3_2 = "1.3.2";
 
-    /*
-    static readonly List<string> _versions =
-    [
-        V1_3_2,
-        V1_2_2
-    ];
-    */
-
     public static Queue<string> _versions = new([V1_3_2, V1_2_2]);
-
     public enum NetworkEventSubType
     {
         RegisterUser,
