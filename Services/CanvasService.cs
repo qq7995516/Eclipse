@@ -709,6 +709,7 @@ internal class CanvasService
             // _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : (_shiftSpellIndex * COOLDOWN_FACTOR) +COOLDOWN_FACTOR;
             // _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : _shiftSpellIndex * COOLDOWN_FACTOR;
             // Core.Log.LogInfo($"UpdateAbilityData _cooldownTime - {_cooldownTime}");
+
             /*
             if (!abilityGroupEntity.Has<VBloodAbilityData>() && abilityCastEntity.TryGetComponent(out AbilityCooldownState abilityCooldownState))
             {
@@ -1168,6 +1169,7 @@ internal class CanvasService
             }
         }
 
+        /*
         if (_localCharacter.TryGetComponent(out Equipment equipment))
         {
             Entity weaponEntity = equipment.WeaponSlot.SlotEntity.GetEntityOnServer();
@@ -1175,6 +1177,7 @@ internal class CanvasService
             if (!weaponEntity.Exists()) return;
             DataService.WeaponType weaponType = GetWeaponTypeFromWeaponEntity(weaponEntity);
 
+            
             if (weaponType.ToString() != _expertiseType) return;
             else if (weaponEntity.TryGetComponent(out PrefabGUID prefabGuid) && _localCharacter.TryGetComponent(out Movement movement))
             {
@@ -1272,152 +1275,10 @@ internal class CanvasService
                             }
                         }
                     }
-
-                    /*
-                    if (!_expertiseStatCache.TryGetValue(prefabGuid, out var previousExpertiseStats))
-                    {
-                        _expertiseStatCache[prefabGuid] = [];
-                        previousExpertiseStats = _expertiseStatCache[prefabGuid];
-                    }
-
-                    if (!_blacksmithingStatCache.TryGetValue(prefabGuid, out var previousBlacksmithingStats))
-                    {
-                        _blacksmithingStatCache[prefabGuid] = [];
-                        previousBlacksmithingStats = _blacksmithingStatCache[prefabGuid];
-                    }
-
-                    if (!_originalWeaponStatsCache.TryGetValue(prefabGuid, out var originalWeaponStats))
-                    {
-                        _originalWeaponStatsCache[prefabGuid] = [];
-
-                        foreach (var entry in buffer)
-                        {
-                            _originalWeaponStatsCache[prefabGuid][entry.StatType] = entry.Value;
-                        }
-
-                        originalWeaponStats = _originalWeaponStatsCache[prefabGuid];
-                    }
-
-                    float movementSpeed = movement.Speed._Value;
-
-                    if (previousExpertiseStats.Any() && !expertiseStats.Any()) // weapon expertise stats reset and add back blacksmithing if applicable
-                    {
-                        buffer.Clear();
-
-                        foreach (var keyValuePair in originalWeaponStats)
-                        {
-                            float value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? keyValuePair.Value / movementSpeed : keyValuePair.Value;
-                            value = _equipmentBonus ? value * (1f + (_blacksmithingLevel / MAX_PROFESSION_LEVEL) * (EQUIPMENT_BONUS)) : value;
-
-                            ModifyUnitStatBuff_DOTS newEntry = new()
-                            {
-                                StatType = keyValuePair.Key,
-                                ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
-                                Value = value,
-                                Modifier = 1,
-                                IncreaseByStacks = false,
-                                ValueByStacks = 0,
-                                Priority = 0,
-                                Id = ModificationIDs.Create().NewModificationId()
-                            };
-                                
-                            buffer.Add(newEntry);
-                        }
-
-                        previousExpertiseStats.Clear();
-                    }
-                    else if (!expertiseStats.Any()) // apply blacksmithing stats
-                    {
-                        foreach (var keyValuePair in originalWeaponStats)
-                        {
-                            float value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? keyValuePair.Value / movementSpeed : keyValuePair.Value;
-
-                            float previousBlacksmithingValue = previousBlacksmithingStats.TryGetValue(keyValuePair.Key, out var previousValue) ? previousValue : 0f;
-                            float blacksmithingValue = _equipmentBonus ? value * (1f + (_blacksmithingLevel / MAX_PROFESSION_LEVEL) * (EQUIPMENT_BONUS)) : 0f;
-
-                            float delta = blacksmithingValue - previousBlacksmithingValue;
-                            value += delta;
-
-                            ModifyUnitStatBuff_DOTS newEntry = new()
-                            {
-                                StatType = keyValuePair.Key,
-                                ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
-                                Value = value,
-                                Modifier = 1,
-                                IncreaseByStacks = false,
-                                ValueByStacks = 0,
-                                Priority = 0,
-                                Id = ModificationIDs.Create().NewModificationId()
-                            };
-
-                            buffer.Add(newEntry);
-                            previousBlacksmithingStats[keyValuePair.Key] = blacksmithingValue;
-                        }
-                    }
-                    else if (expertiseStats.Any())
-                    {
-                        for (int i = 0; i < buffer.Length; i++) // first, add to expertise stats that already exist as buffer entries
-                        {
-                            ModifyUnitStatBuff_DOTS entry = buffer[i];
-
-                            if (expertiseStats.TryGetValue(entry.StatType, out var updatedExpertiseValue) && originalWeaponStats.TryGetValue(entry.StatType, out var originalStatValue))
-                            {
-                                float updatedBlacksmithingValue = _equipmentBonus ? originalStatValue * (1 + (_blacksmithingLevel / MAX_PROFESSION_LEVEL) * (EQUIPMENT_BONUS)) : 0f;
-
-                                float previousExpertiseValue = previousExpertiseStats.TryGetValue(entry.StatType, out var previousValue) ? previousValue : 0f;
-                                float previousBlacksmithingValue = previousBlacksmithingStats.TryGetValue(entry.StatType, out previousValue) ? previousValue : 0f;
-
-                                float expertiseDelta = updatedExpertiseValue - previousExpertiseValue;
-                                float blacksmithingDelta = updatedBlacksmithingValue - previousBlacksmithingValue;
-
-                                float delta = expertiseDelta + blacksmithingDelta;
-
-                                if (entry.StatType == UnitStatType.MovementSpeed)
-                                {
-                                    entry.Value += delta / movementSpeed;
-                                }
-                                else
-                                {
-                                    entry.Value += delta;
-                                }
-
-                                buffer[i] = entry;
-
-                                previousExpertiseStats[entry.StatType] = updatedExpertiseValue;
-                                previousBlacksmithingStats[entry.StatType] = updatedBlacksmithingValue;
-
-                                expertiseStats.Remove(entry.StatType);
-                            }
-                        }
-
-                        if (expertiseStats.Any()) // second, add expertise stats that don't already exist as new buffer entries
-                        {
-                            foreach (var keyValuePair in expertiseStats)
-                            {
-                                float previousValue = previousExpertiseStats.TryGetValue(keyValuePair.Key, out var value) ? value : 0f;
-                                float valueDelta = keyValuePair.Value - previousValue;
-
-                                ModifyUnitStatBuff_DOTS newEntry = new()
-                                {
-                                    StatType = keyValuePair.Key,
-                                    ModificationType = !keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? ModificationType.AddToBase : ModificationType.MultiplyBaseAdd,
-                                    Value = keyValuePair.Key.Equals(UnitStatType.MovementSpeed) ? valueDelta / movementSpeed : valueDelta,
-                                    Modifier = 1,
-                                    IncreaseByStacks = false,
-                                    ValueByStacks = 0,
-                                    Priority = 0,
-                                    Id = ModificationIDs.Create().NewModificationId()
-                                };
-
-                                buffer.Insert(1, newEntry);
-                                previousExpertiseStats[keyValuePair.Key] = keyValuePair.Value;
-                            }
-                        }
-                    }
-                    */
                 }
             }
         }
+        */
     }
     static void UpdateBloodStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, string> getStatInfo)
     {
@@ -1967,7 +1828,7 @@ internal class CanvasService
 
         return result;
     }
-    internal static class GameObjectUtilities
+    public static class GameObjectUtilities
     {
         public static GameObject FindTargetUIObject(Transform root, string targetName)
         {
@@ -2035,7 +1896,7 @@ internal class CanvasService
             HashSet<Transform> visited = [];
 
             Il2CppArrayBase<Transform> children = root.GetComponentsInChildren<Transform>();
-            List<Transform> transforms = [.. children];
+            List<Transform> transforms = [..children];
 
             while (transformStack.Count > 0)
             {

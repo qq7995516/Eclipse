@@ -3,7 +3,6 @@ using HarmonyLib;
 using ProjectM;
 using ProjectM.Network;
 using ProjectM.UI;
-using Stunlock.Core;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
@@ -61,6 +60,7 @@ internal static class InitializationPatches
         if (!Core._initialized) return;
 
         NativeArray<Entity> entities = __instance.__query_1840110765_0.ToEntityArray(Allocator.Temp);
+
         try
         {
             foreach (Entity entity in entities)

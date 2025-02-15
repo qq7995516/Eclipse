@@ -86,6 +86,7 @@ internal static class ClientChatSystemPatch
         }
 
         NativeArray<Entity> entities = __instance._ReceiveChatMessagesQuery.ToEntityArray(Allocator.Temp);
+
         try
         {
             foreach (Entity entity in entities)
