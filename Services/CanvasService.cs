@@ -330,6 +330,8 @@ internal class CanvasService
     public static readonly Dictionary<GameObject, bool> UIObjectStates = [];
     public static readonly List<GameObject> ProfessionObjects = [];
 
+    public static readonly Dictionary<PrefabGUID, Entity> PrefabEntityCache = [];
+    public static readonly Dictionary<Entity, Dictionary<UnitStatType, float>> WeaponEntityStatCache = [];
     public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> WeaponStatCache = [];
     // static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _blacksmithingStatCache = []; throwing in towel on this for now x_x
     public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> OriginalWeaponStatsCache = [];
@@ -1177,12 +1179,22 @@ internal class CanvasService
             if (!weaponEntity.Exists()) return;
             DataService.WeaponType weaponType = GetWeaponTypeFromWeaponEntity(weaponEntity);
 
-            
             if (weaponType.ToString() != _expertiseType) return;
             else if (weaponEntity.TryGetComponent(out PrefabGUID prefabGuid) && _localCharacter.TryGetComponent(out Movement movement))
             {
-                if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out Entity prefabEntity) && prefabEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer))
+                // if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(prefabGuid, out Entity prefabEntity) && prefabEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer)) ClientGameManager y u do dis :(
+
+                if (weaponEntity.Has<ModifyUnitStatBuff_DOTS>())
                 {
+                    if (!PrefabEntityCache.TryGetValue(prefabGuid, out Entity prefabEntity))
+                    {
+                        PrefabEntityCache[prefabGuid] = PrefabCollectionSystem._PrefabGuidToEntityMap[prefabGuid];
+                    }
+
+                    if (!prefabEntity.Has<ModifyUnitStatBuff_DOTS>()) return;
+
+                    var buffer = prefabEntity.ReadBuffer<ModifyUnitStatBuff_DOTS>(); // try GameManager_Shared?
+
                     if (!WeaponStatCache.TryGetValue(prefabGuid, out var previousWeaponStats))
                     {
                         WeaponStatCache[prefabGuid] = [];
@@ -1319,6 +1331,13 @@ internal class CanvasService
         if (progress != goal && UIObjectStates[questObject])
         {
             if (!questObject.gameObject.active) questObject.gameObject.active = true;
+
+            if (targetType.Equals(TargetType.Kill))
+            {
+                int index = target.IndexOf(TRIMMER);
+                target = index >= 0 ? target[..index] : target;
+            }
+
             questSubHeader.ForceSet($"<color=white>{target}</color>: {progress}/<color=yellow>{goal}</color>");
 
             if (targetType.Equals(TargetType.Kill))
