@@ -12,7 +12,7 @@ namespace Eclipse;
 internal class Plugin : BasePlugin
 {
     Harmony _harmony;
-    internal static Plugin Instance { get; private set; }
+    internal static Plugin Instance { get; set; }
     public static ManualLogSource LogInstance => Instance.Log;
 
     public static readonly List<string> DirectoryPaths =

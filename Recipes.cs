@@ -136,8 +136,8 @@ internal static class Recipes
         Entity itemEntity = PrefabCollectionSystem._PrefabGuidToEntityMap[_itemBuildingEMP];
 
         var recipeRequirementBuffer = EntityManager.AddBuffer<RecipeRequirementBuffer>(itemEntity);
-        recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _depletedBattery, Amount = 5 });
-        recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _techScrap, Amount = 25 });
+        recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _depletedBattery, Amount = 2 });
+        recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _techScrap, Amount = 15 });
 
         if (!itemEntity.Has<Salvageable>())
         {
@@ -375,7 +375,7 @@ internal static class Recipes
 
         recipeEntity.With((ref RecipeData recipeData) =>
         {
-            recipeData.CraftDuration = 180f;
+            recipeData.CraftDuration = 90f;
             recipeData.AlwaysUnlocked = true;
             recipeData.HideInStation = false;
             recipeData.HudSortingOrder = 0;
