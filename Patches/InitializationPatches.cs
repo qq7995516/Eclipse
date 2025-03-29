@@ -107,7 +107,7 @@ internal static class InitializationPatches
 
         ClientChatSystemPatch._userRegistered = false;
         ClientChatSystemPatch._pending = false;
-        ClientChatSystemPatch._versions = new([ClientChatSystemPatch.V1_3_2, ClientChatSystemPatch.V1_2_2]);
+        ClientChatSystemPatch._versions = new([ClientChatSystemPatch.VERSION, ClientChatSystemPatch.V1_2_2]);
 
         ClientChatSystemPatch._localCharacter = Entity.Null;
         ClientChatSystemPatch._localUser = Entity.Null;
