@@ -48,9 +48,9 @@ internal static class ClientChatSystemPatch
     public static Entity _localUser = Entity.Null;
 
     public const string V1_2_2 = "1.2.2";
-    public const string V1_3_2 = "1.3.2";
+    public const string VERSION = MyPluginInfo.PLUGIN_VERSION;
 
-    public static Queue<string> _versions = new([V1_3_2, V1_2_2]);
+    public static Queue<string> _versions = new([VERSION, V1_2_2]);
     public enum NetworkEventSubType
     {
         RegisterUser,
@@ -128,8 +128,9 @@ internal static class ClientChatSystemPatch
     static void SendMessage(NetworkEventSubType subType, string message, string modVersion)
     {
         string intermediateMessage = $"[ECLIPSE][{(int)subType}]:{message}";
-        string messageWithMAC = string.Empty;
+        string messageWithMAC;
 
+        /*
         switch (modVersion)
         {
             case V1_2_2:
@@ -139,6 +140,14 @@ internal static class ClientChatSystemPatch
                 messageWithMAC = $"{intermediateMessage};mac{GenerateMACV1_3_2(intermediateMessage)}";
                 break;
         }
+        */
+
+        messageWithMAC = modVersion switch
+        {
+            V1_2_2 => $"{intermediateMessage};mac{GenerateMACV1_2_2(intermediateMessage)}",
+            _ when modVersion.StartsWith("1.3") => $"{intermediateMessage};mac{GenerateMACV1_3(intermediateMessage)}",
+            _ => string.Empty
+        };
 
         if (string.IsNullOrEmpty(messageWithMAC)) return;
 
@@ -238,7 +247,7 @@ internal static class ClientChatSystemPatch
 
         return Convert.ToBase64String(hashBytes);
     }
-    public static string GenerateMACV1_3_2(string message)
+    public static string GenerateMACV1_3(string message)
     {
         using var hmac = new HMACSHA256(Core.NEW_SHARED_KEY);
         byte[] messageBytes = Encoding.UTF8.GetBytes(message);

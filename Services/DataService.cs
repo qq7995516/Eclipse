@@ -276,15 +276,13 @@ internal static class DataService
         public int Level { get; set; } = int.TryParse(level, out int parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;
         public int Prestige { get; set; } = int.Parse(prestige);
         public string FamiliarName { get; set; } = !string.IsNullOrEmpty(familiarName) ? familiarName : "Familiar";
-        public List<string> FamiliarStats { get; set; } = !string.IsNullOrEmpty(familiarStats) ? new List<string> { familiarStats[..4], familiarStats[4..7], familiarStats[7..] }
-                .Select(stat => int.Parse(stat).ToString())
-                .ToList() : ["", "", ""];
+        public List<string> FamiliarStats { get; set; } = !string.IsNullOrEmpty(familiarStats) ? [..new List<string> { familiarStats[..4], familiarStats[4..7], familiarStats[7..] }.Select(stat => int.Parse(stat).ToString())] : ["", "", ""];
     }
     internal class ShiftSpellData(string index)
     {
         public int ShiftSpellIndex { get; set; } = int.Parse(index);
     }
-    internal class ConfigDataV1_3_2
+    internal class ConfigDataV1_3
     {
         public float PrestigeStatMultiplier;
 
@@ -309,7 +307,7 @@ internal static class DataService
         public Dictionary<BloodStatType, float> BloodStatValues;
 
         public Dictionary<PlayerClass, (List<WeaponStatType> WeaponStats, List<BloodStatType> bloodStats)> ClassStatSynergies;
-        public ConfigDataV1_3_2(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string maxFamiliarLevel, string maxProfessionLevel, string extraRecipes, string primalCost, string weaponStatValues, string bloodStatValues, string classStatSynergies)
+        public ConfigDataV1_3(string prestigeMultiplier, string statSynergyMultiplier, string maxPlayerLevel, string maxLegacyLevel, string maxExpertiseLevel, string maxFamiliarLevel, string maxProfessionLevel, string extraRecipes, string primalCost, string weaponStatValues, string bloodStatValues, string classStatSynergies)
         {
             PrestigeStatMultiplier = float.Parse(prestigeMultiplier, CultureInfo.InvariantCulture);
             ClassStatMultiplier = float.Parse(statSynergyMultiplier, CultureInfo.InvariantCulture);
@@ -418,11 +416,9 @@ internal static class DataService
     {
         int index = 0;
 
-        // Core.Log.LogInfo($"Parsing config data - {configData.Count} | {string.Join(",", configData)}");
-
         try
         {
-            ConfigDataV1_3_2 parsedConfigData = new(
+            ConfigDataV1_3 parsedConfigData = new(
                 configData[index++], // prestigeMultiplier
                 configData[index++], // statSynergyMultiplier
                 configData[index++], // maxPlayerLevel
@@ -444,7 +440,6 @@ internal static class DataService
             _legacyMaxLevel = parsedConfigData.MaxLegacyLevel;
             _expertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
             _familiarMaxLevel = parsedConfigData.MaxFamiliarLevel;
-            // _maxProfessionLevel = parsedConfigData.MaxProfessionLevel;
             _extraRecipes = parsedConfigData.ExtraRecipes;
             _primalCost = new PrefabGUID(parsedConfigData.PrimalCost);
 
@@ -484,7 +479,6 @@ internal static class DataService
             _legacyMaxLevel = parsedConfigData.MaxLegacyLevel;
             _expertiseMaxLevel = parsedConfigData.MaxExpertiseLevel;
             _familiarMaxLevel = parsedConfigData.MaxFamiliarLevel;
-            // _maxProfessionLevel = parsedConfigData.MaxProfessionLevel;
 
             _weaponStatValues = parsedConfigData.WeaponStatValues;
             _bloodStatValues = parsedConfigData.BloodStatValues;
@@ -510,8 +504,6 @@ internal static class DataService
             }
             else if (playerData.Count == 46)
             {
-                // _equipmentBonus = true;
-
                 try
                 {
                     if (_extraRecipes) Recipes.ModifyRecipes();
@@ -521,8 +513,8 @@ internal static class DataService
                     Core.Log.LogWarning($"Failed to modify recipes: {ex}");
                 }
 
-                _version = V1_3_2;
-                Core.Log.LogInfo($"ECLIPSE[{V1_3_2}]({DateTime.Now}) - {playerData.Count}");
+                _version = V1_3;
+                Core.Log.LogInfo($"ECLIPSE[{V1_3}]({DateTime.Now}) - {playerData.Count}");
             }
             else
             {
@@ -593,15 +585,12 @@ internal static class DataService
         _weeklyTarget = weeklyQuestData.Target;
         _weeklyVBlood = weeklyQuestData.IsVBlood;
 
-        if (_version.Equals(V1_3_2))
+        if (_version.Equals(V1_3))
         {
             ShiftSpellData shiftSpellData = new(playerData[index]);
 
             _shiftSpellIndex = shiftSpellData.ShiftSpellIndex;
         }
-
-        // Core.Log.LogInfo(string.Join(",", playerData));
-        //Core.Log.LogInfo($"ShiftSpellIndex: {shiftSpellData.ShiftSpellIndex}");
     }
     public static WeaponType GetWeaponTypeFromWeaponEntity(Entity weaponEntity)
     {

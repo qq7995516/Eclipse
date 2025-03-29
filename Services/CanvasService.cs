@@ -133,7 +133,7 @@ internal class CanvasService
     };
 
     public const string V1_2_2 = "1.2.2";
-    public const string V1_3_2 = "1.3.2";
+    public const string V1_3 = "1.3";
 
     static readonly WaitForSeconds _delay = new(1f); // won't ever update faster than 2.5s intervals since that's roughly how often the server sends updates which I find acceptable
     static readonly WaitForSeconds _shiftDelay = new(0.1f);
