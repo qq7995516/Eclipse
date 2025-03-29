@@ -6,7 +6,11 @@ using ProjectM;
 using ProjectM.Physics;
 using ProjectM.Scripting;
 using ProjectM.UI;
+using Stunlock.Core;
+using Stunlock.Localization;
 using System.Collections;
+using System.Security.Cryptography;
+using System.Text;
 using Unity.Entities;
 using UnityEngine;
 
@@ -63,8 +67,45 @@ internal class Core
     public static void StopCoroutine(Coroutine routine)
     {
         if (_monoBehaviour == null) return;
-
         _monoBehaviour.StopCoroutine(routine);
+    }
+    public static void LogEntity(World world, Entity entity)
+    {
+        Il2CppSystem.Text.StringBuilder sb = new();
+
+        try
+        {
+            EntityDebuggingUtility.DumpEntity(world, entity, true, sb);
+            Log.LogInfo($"Entity Dump:\n{sb.ToString()}");
+        }
+        catch (Exception e)
+        {
+            Log.LogWarning($"Error dumping entity: {e.Message}");
+        }
+    }
+    static AssetGuid GetAssetGuid(string textString)
+    {
+        using SHA256 sha256 = SHA256.Create();
+        byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(textString));
+
+        Il2CppSystem.Guid uniqueGuid = new(hashBytes[..16]);
+        return AssetGuid.FromGuid(uniqueGuid);
+    }
+    public static LocalizationKey LocalizeString(string text)
+    {
+        AssetGuid assetGuid = GetAssetGuid(text);
+
+        if (Stunlock.Localization.Localization.Initialized)
+        {
+            Stunlock.Localization.Localization._LocalizedStrings.TryAdd(assetGuid, text);
+            return new(assetGuid);
+        }
+        else
+        {
+            Log.LogWarning("Stunlock.Localization not initialized yet!");
+        }
+
+        return LocalizationKey.Empty;
     }
 
     /*

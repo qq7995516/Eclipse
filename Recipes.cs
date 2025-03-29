@@ -112,12 +112,13 @@ internal static class Recipes
         _manticoreShardContainer,
         _draculaShardContainer
     ];
-    static readonly Dictionary<PrefabGUID, PrefabGUID> _familiarSoulBoostItems = new()
+
+    static readonly Dictionary<PrefabGUID, PrefabGUID> _recipesToShards = new()
     {
-        { _solarusShard, _radiantFibre},
-        { _monsterShard, _resonator},
-        { _manticoreShard, _demonFragment},
-        { _draculaShard, _pristineHeart}
+        { _solarusShardRecipe, _solarusShard },
+        { _monsterShardRecipe, _monsterShard },
+        { _manticoreShardRecipe, _manticoreShard },
+        { _draculaShardRecipe, _draculaShard }
     };
 
     const string PRIMAL_JEWEL = "Stunlock_Icon_Item_Jewel_Collection4";
@@ -145,7 +146,7 @@ internal static class Recipes
             {
                 salvageable.RecipeGUID = PrefabGUID.Empty;
                 salvageable.SalvageFactor = 1f;
-                salvageable.SalvageTimer = 10f;
+                salvageable.SalvageTimer = 20f;
             });
         }
 
@@ -237,7 +238,7 @@ internal static class Recipes
             {
                 salvageable.RecipeGUID = PrefabGUID.Empty;
                 salvageable.SalvageFactor = 1f;
-                salvageable.SalvageTimer = 5f;
+                salvageable.SalvageTimer = 10f;
             });
 
             if (!prefabEntity.Has<RecipeRequirementBuffer>())
@@ -260,7 +261,7 @@ internal static class Recipes
             {
                 salvageable.RecipeGUID = PrefabGUID.Empty;
                 salvageable.SalvageFactor = 1f;
-                salvageable.SalvageTimer = 20f;
+                salvageable.SalvageTimer = 15f;
             });
 
             if (!prefabEntity.Has<RecipeRequirementBuffer>())
@@ -307,7 +308,7 @@ internal static class Recipes
             {
                 salvageable.RecipeGUID = PrefabGUID.Empty;
                 salvageable.SalvageFactor = 1f;
-                salvageable.SalvageTimer = 20f;
+                salvageable.SalvageTimer = 10f;
             });
 
             if (!prefabEntity.Has<RecipeRequirementBuffer>())
@@ -317,6 +318,31 @@ internal static class Recipes
 
             recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
             recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = _goldJewelry, Amount = 2 });
+        }
+
+        if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_radiantFibre, out prefabEntity))
+        {
+            if (!prefabEntity.Has<Salvageable>())
+            {
+                prefabEntity.Add<Salvageable>();
+            }
+
+            prefabEntity.With((ref Salvageable salvageable) =>
+            {
+                salvageable.RecipeGUID = PrefabGUID.Empty;
+                salvageable.SalvageFactor = 1f;
+                salvageable.SalvageTimer = 10f;
+            });
+
+            if (!prefabEntity.Has<RecipeRequirementBuffer>())
+            {
+                prefabEntity.AddBuffer<RecipeRequirementBuffer>();
+            }
+
+            recipeRequirementBuffer = prefabEntity.ReadBuffer<RecipeRequirementBuffer>();
+            recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = Prefabs.Item_Ingredient_Gemdust, Amount = 8 });
+            recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = Prefabs.Item_Ingredient_Plant_PlantFiber, Amount = 16 });
+            recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = Prefabs.Item_Ingredient_Pollen, Amount = 24 });
         }
 
         if (DataService._primalCost.HasValue() && PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(DataService._primalCost, out Entity costEntity) && costEntity.Has<ItemData>())
@@ -332,6 +358,16 @@ internal static class Recipes
 
             recipeOutputBuffer = recipeEntity.ReadBuffer<RecipeOutputBuffer>();
             recipeOutputBuffer.Add(new RecipeOutputBuffer { Guid = _itemJewelTemplate, Amount = 1 });
+
+            foreach (PrefabGUID shardRecipe in _shardRecipes)
+            {
+                recipeEntity = PrefabCollectionSystem._PrefabGuidToEntityMap[shardRecipe];
+                PrefabGUID soulShard = _recipesToShards[shardRecipe];
+
+                recipeRequirementBuffer = recipeEntity.ReadBuffer<RecipeRequirementBuffer>();
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = soulShard, Amount = 1 });
+                recipeRequirementBuffer.Add(new RecipeRequirementBuffer { Guid = DataService._primalCost, Amount = 1 });
+            }
         }
 
         if (PrefabCollectionSystem._PrefabGuidToEntityMap.TryGetValue(_batteryCharge, out prefabEntity))

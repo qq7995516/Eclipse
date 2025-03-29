@@ -89,7 +89,15 @@ internal class CanvasService
         "Item_MagicSource_General_T05_Relic",
         "Stunlock_Icon_BloodRose",
         "Poneti_Icon_Blacksmith_24_bigrune_grindstone",
-        "Item_MagicSource_General_T04_FrozenEye"
+        "Item_MagicSource_General_T04_FrozenEye",
+        "Stunlock_Icon_SpellPoint_Blood1",
+        "Stunlock_Icon_SpellPoint_Unholy1",
+        "Stunlock_Icon_SpellPoint_Frost1",
+        "Stunlock_Icon_SpellPoint_Chaos1",
+        "Stunlock_Icon_SpellPoint_Frost1",
+        "Stunlock_Icon_SpellPoint_Storm1",
+        "Stunlock_Icon_SpellPoint_Illusion1",
+        "spell_level_icon"
     ];
 
     public const string ABILITY_ICON = "Stunlock_Icon_Ability_Spell_";
@@ -193,13 +201,6 @@ internal class CanvasService
     public static int _familiarMaxLevel = 90;
     public static string _familiarName = "";
     public static List<string> _familiarStats = ["", "", ""];
-    static float _headerFontSize;
-    static float _familiarHeaderSmall;
-    static float _familiarHeaderSmaller;
-    static float _familiarHeaderSmallest;
-    const int SMALL_HEADER_CHARS = 23;
-    const int SMALLER_HEADER_CHARS = 28;
-    const int SMALLEST_HEADER_CHARS = 33;
 
     public static bool _equipmentBonus = false;
     const float MAX_PROFESSION_LEVEL = 100f;
@@ -306,7 +307,6 @@ internal class CanvasService
 
     public static int _shiftSpellIndex = -1;
     const float COOLDOWN_FACTOR = 8f;
-    static bool _isVBloodAbility = true;
 
     public static double _cooldownEndTime = 0;
     public static float _cooldownRemaining = 0f;
@@ -327,6 +327,7 @@ internal class CanvasService
     const float BAR_HEIGHT_SPACING = 0.075f;
     const float BAR_WIDTH_SPACING = 0.065f;
 
+    static readonly Dictionary<UIElement, GameObject> _gameObjects = [];
     public static readonly Dictionary<GameObject, bool> UIObjectStates = [];
     public static readonly List<GameObject> ProfessionObjects = [];
 
@@ -416,6 +417,8 @@ internal class CanvasService
 
     public static Coroutine _canvasRoutine;
     public static Coroutine _shiftRoutine;
+
+    static TutorialTask_Generic _tutorialTasks;
     public CanvasService(UICanvasBase canvas)
     {
         _uiCanvasBase = canvas;
@@ -489,6 +492,36 @@ internal class CanvasService
                 }
             }
         }
+    }
+
+    /*
+    static bool _shouldTest = true;
+    static void Tutorial()
+    {
+        // TutorialSystem
+        // TutorialUtilities
+        // TutorialTaskData
+        
+        _tutorialTasks = UnityEngine.Object.FindObjectOfType<TutorialTask_Generic>();
+
+        TutorialTaskData tutorialTaskData = new()
+        {
+            AutoCompleteTime = 10f,
+            Header = Core.LocalizeString("Tutorial Test"),
+            Text = Core.LocalizeString("This is a test tutorial!"),
+            TutorialObjectiveType = TutorialObjectiveType.UNUSED05,
+            AnalogInputActions = new(),
+            ButtonInputActions = new()
+        };
+
+        _tutorialTasks.SetUI(tutorialTaskData);
+    }
+    */
+    static void ToggleGameObject(GameObject gameObject)
+    {
+        bool active = !gameObject.activeSelf;
+        gameObject.SetActive(active);
+        UIObjectStates[gameObject] = active;
     }
     static void ExperienceToggle()
     {
@@ -599,56 +632,148 @@ internal class CanvasService
 
             if (_experienceBar)
             {
-                UpdateBar(_experienceProgress, _experienceLevel, _experienceMaxLevel, _experiencePrestige, _experienceText, _experienceHeader, _experienceFill, UIElement.Experience);
-                UpdateClass(_classType, _experienceClassText);
+                try
+                {
+                    UpdateBar(_experienceProgress, _experienceLevel, _experienceMaxLevel, _experiencePrestige, _experienceText, _experienceHeader, _experienceFill, UIElement.Experience);
+                    UpdateClass(_classType, _experienceClassText);
+                }
+                catch (Exception e)
+                {
+                    Core.Log.LogError($"Error updating experience bar: {e}");
+                }
 
+                // UpdateBar(_experienceProgress, _experienceLevel, _experienceMaxLevel, _experiencePrestige, _experienceText, _experienceHeader, _experienceFill, UIElement.Experience);
+                // UpdateClass(_classType, _experienceClassText);
                 yield return null;
             }
 
             if (_legacyBar)
             {
-                UpdateBar(_legacyProgress, _legacyLevel, _legacyMaxLevel, _legacyPrestige, _legacyText, _legacyHeader, _legacyFill, UIElement.Legacy, _legacyType);
-                UpdateBloodStats(_legacyBonusStats, [_firstLegacyStat, _secondLegacyStat, _thirdLegacyStat], GetBloodStatInfo);
+                try
+                {
+                    UpdateBar(_legacyProgress, _legacyLevel, _legacyMaxLevel, _legacyPrestige, _legacyText, _legacyHeader, _legacyFill, UIElement.Legacy, _legacyType);
+                    UpdateBloodStats(_legacyBonusStats, [_firstLegacyStat, _secondLegacyStat, _thirdLegacyStat], GetBloodStatInfo);
+                }
+                catch (Exception e)
+                {
+                    Core.Log.LogError($"Error updating legacy bar: {e}");
+                }
+
+                // UpdateBar(_legacyProgress, _legacyLevel, _legacyMaxLevel, _legacyPrestige, _legacyText, _legacyHeader, _legacyFill, UIElement.Legacy, _legacyType);
+                // UpdateBloodStats(_legacyBonusStats, [_firstLegacyStat, _secondLegacyStat, _thirdLegacyStat], GetBloodStatInfo);
+                yield return null;
             }
 
             if (_expertiseBar)
             {
-                UpdateBar(_expertiseProgress, _expertiseLevel, _expertiseMaxLevel, _expertisePrestige, _expertiseText, _expertiseHeader, _expertiseFill, UIElement.Expertise, _expertiseType);
-                UpdateWeaponStats(_expertiseBonusStats, [_firstExpertiseStat, _secondExpertiseStat, _thirdExpertiseStat], GetWeaponStatInfo);
+                try
+                {
+                    UpdateBar(_expertiseProgress, _expertiseLevel, _expertiseMaxLevel, _expertisePrestige, _expertiseText, _expertiseHeader, _expertiseFill, UIElement.Expertise, _expertiseType);
+                    UpdateWeaponStats(_expertiseBonusStats, [_firstExpertiseStat, _secondExpertiseStat, _thirdExpertiseStat], GetWeaponStatInfo);
+                }
+                catch (Exception e)
+                {
+                    Core.Log.LogError($"Error updating expertise bar: {e}");
+                }
 
+                // UpdateBar(_expertiseProgress, _expertiseLevel, _expertiseMaxLevel, _expertisePrestige, _expertiseText, _expertiseHeader, _expertiseFill, UIElement.Expertise, _expertiseType);
+                // UpdateWeaponStats(_expertiseBonusStats, [_firstExpertiseStat, _secondExpertiseStat, _thirdExpertiseStat], GetWeaponStatInfo);
                 yield return null;
             }
 
             if (_familiarBar)
             {
-                UpdateBar(_familiarProgress, _familiarLevel, _familiarMaxLevel, _familiarPrestige, _familiarText, _familiarHeader, _familiarFill, UIElement.Familiars, _familiarName);
-                UpdateFamiliarStats(_familiarStats, [_familiarMaxHealth, _familiarPhysicalPower, _familiarSpellPower]);
+                try
+                {
+                    UpdateBar(_familiarProgress, _familiarLevel, _familiarMaxLevel, _familiarPrestige, _familiarText, _familiarHeader, _familiarFill, UIElement.Familiars, _familiarName);
+                    UpdateFamiliarStats(_familiarStats, [_familiarMaxHealth, _familiarPhysicalPower, _familiarSpellPower]);
+                }
+                catch (Exception e)
+                {
+                    Core.Log.LogError($"Error updating familiar bar: {e}");
+                }
+
+                // UpdateBar(_familiarProgress, _familiarLevel, _familiarMaxLevel, _familiarPrestige, _familiarText, _familiarHeader, _familiarFill, UIElement.Familiars, _familiarName);
+                // UpdateFamiliarStats(_familiarStats, [_familiarMaxHealth, _familiarPhysicalPower, _familiarSpellPower]);
+                yield return null;
             }
 
             if (_questTracker)
             {
-                UpdateQuests(_dailyQuestObject, _dailyQuestSubHeader, _dailyQuestIcon, _dailyTargetType, _dailyTarget, _dailyProgress, _dailyGoal, _dailyVBlood);
-                UpdateQuests(_weeklyQuestObject, _weeklyQuestSubHeader, _weeklyQuestIcon, _weeklyTargetType, _weeklyTarget, _weeklyProgress, _weeklyGoal, _weeklyVBlood);
+                try
+                {
+                    UpdateQuests(_dailyQuestObject, _dailyQuestSubHeader, _dailyQuestIcon, _dailyTargetType, _dailyTarget, _dailyProgress, _dailyGoal, _dailyVBlood);
+                    UpdateQuests(_weeklyQuestObject, _weeklyQuestSubHeader, _weeklyQuestIcon, _weeklyTargetType, _weeklyTarget, _weeklyProgress, _weeklyGoal, _weeklyVBlood);
+                }
+                catch (Exception e)
+                {
+                    Core.Log.LogError($"Error updating quest tracker: {e}");
+                }
 
+                // UpdateQuests(_dailyQuestObject, _dailyQuestSubHeader, _dailyQuestIcon, _dailyTargetType, _dailyTarget, _dailyProgress, _dailyGoal, _dailyVBlood);
+                // UpdateQuests(_weeklyQuestObject, _weeklyQuestSubHeader, _weeklyQuestIcon, _weeklyTargetType, _weeklyTarget, _weeklyProgress, _weeklyGoal, _weeklyVBlood);
                 yield return null;
             }
 
             if (_professionBars)
             {
-                UpdateProfessions(_alchemyProgress, _alchemyLevel, _alchemyLevelText, _alchemyProgressFill, _alchemyFill, Profession.Alchemy);
-                UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _blacksmithingLevelText, _blacksmithingProgressFill, _blacksmithingFill, Profession.Blacksmithing);
-                UpdateProfessions(_enchantingProgress, _enchantingLevel, _enchantingLevelText, _enchantingProgressFill, _enchantingFill, Profession.Enchanting);
-                UpdateProfessions(_tailoringProgress, _tailoringLevel, _tailoringLevelText, _tailoringProgressFill, _tailoringFill, Profession.Tailoring);
+                try
+                {
+                    UpdateProfessions(_alchemyProgress, _alchemyLevel, _alchemyLevelText, _alchemyProgressFill, _alchemyFill, Profession.Alchemy);
+                    UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _blacksmithingLevelText, _blacksmithingProgressFill, _blacksmithingFill, Profession.Blacksmithing);
+                    UpdateProfessions(_enchantingProgress, _enchantingLevel, _enchantingLevelText, _enchantingProgressFill, _enchantingFill, Profession.Enchanting);
+                    UpdateProfessions(_tailoringProgress, _tailoringLevel, _tailoringLevelText, _tailoringProgressFill, _tailoringFill, Profession.Tailoring);
+                }
+                catch (Exception e)
+                {
+                    Core.Log.LogError($"Error updating professions(1): {e}");
+                }
+
+                // UpdateProfessions(_alchemyProgress, _alchemyLevel, _alchemyLevelText, _alchemyProgressFill, _alchemyFill, Profession.Alchemy);
+                // UpdateProfessions(_blacksmithingProgress, _blacksmithingLevel, _blacksmithingLevelText, _blacksmithingProgressFill, _blacksmithingFill, Profession.Blacksmithing);
+                // UpdateProfessions(_enchantingProgress, _enchantingLevel, _enchantingLevelText, _enchantingProgressFill, _enchantingFill, Profession.Enchanting);
+                // UpdateProfessions(_tailoringProgress, _tailoringLevel, _tailoringLevelText, _tailoringProgressFill, _tailoringFill, Profession.Tailoring);
                 yield return null;
 
-                UpdateProfessions(_fishingProgress, _fishingLevel, _fishingLevelText, _fishingProgressFill, _fishingFill, Profession.Fishing);
-                UpdateProfessions(_harvestingProgress, _harvestingLevel, _harvestingLevelText, _harvestingProgressFill, _harvestingFill, Profession.Harvesting);
-                UpdateProfessions(_miningProgress, _miningLevel, _miningLevelText, _miningProgressFill, _miningFill, Profession.Mining);
-                UpdateProfessions(_woodcuttingProgress, _woodcuttingLevel, _woodcuttingLevelText, _woodcuttingProgressFill, _woodcuttingFill, Profession.Woodcutting);
+                try
+                {
+                    UpdateProfessions(_fishingProgress, _fishingLevel, _fishingLevelText, _fishingProgressFill, _fishingFill, Profession.Fishing);
+                    UpdateProfessions(_harvestingProgress, _harvestingLevel, _harvestingLevelText, _harvestingProgressFill, _harvestingFill, Profession.Harvesting);
+                    UpdateProfessions(_miningProgress, _miningLevel, _miningLevelText, _miningProgressFill, _miningFill, Profession.Mining);
+                    UpdateProfessions(_woodcuttingProgress, _woodcuttingLevel, _woodcuttingLevelText, _woodcuttingProgressFill, _woodcuttingFill, Profession.Woodcutting);
+                }
+                catch (Exception e)
+                {
+                    Core.Log.LogError($"Error updating professions(2): {e}");
+                }
+
+                // UpdateProfessions(_fishingProgress, _fishingLevel, _fishingLevelText, _fishingProgressFill, _fishingFill, Profession.Fishing);
+                // UpdateProfessions(_harvestingProgress, _harvestingLevel, _harvestingLevelText, _harvestingProgressFill, _harvestingFill, Profession.Harvesting);
+                // UpdateProfessions(_miningProgress, _miningLevel, _miningLevelText, _miningProgressFill, _miningFill, Profession.Mining);
+                // UpdateProfessions(_woodcuttingProgress, _woodcuttingLevel, _woodcuttingLevelText, _woodcuttingProgressFill, _woodcuttingFill, Profession.Woodcutting);
                 yield return null;
             }
 
-            if (!_shiftActive && _localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
+            try
+            {
+                if ((!_killSwitch && _active) && !_shiftActive && _localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
+                {
+                    Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
+
+                    if (abilityGroupEntity.TryGetComponent(out AbilityGroupState abilityGroupState) && abilityGroupState.SlotIndex == 3) // if ability found on slot 3, activate shift loop
+                    {
+                        _shiftActive = true;
+                        _shiftRoutine = ShiftUpdateLoop().Start();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Core.Log.LogError($"Error updating ability bar: {e}");
+            }
+
+            /*
+            if ((!_killSwitch && _active) && !_shiftActive && _localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
             {
                 Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
 
@@ -658,6 +783,7 @@ internal class CanvasService
                     _shiftRoutine = ShiftUpdateLoop().Start();
                 }
             }
+            */
 
             yield return _delay;
         }
@@ -911,7 +1037,7 @@ internal class CanvasService
     }
     static void UpdateProfessions(float progress, int level, LocalizedText levelText, Image progressFill, Image fill, Profession profession)
     {
-        // string levelString = level.ToString();
+        if (_killSwitch) return;
 
         if (level == MAX_PROFESSION_LEVEL)
         {
@@ -1070,6 +1196,8 @@ internal class CanvasService
     }
     static void UpdateBar(float progress, int level, int maxLevel, int prestiges, LocalizedText levelText, LocalizedText barHeader, Image fill, UIElement element, string type = "")
     {
+        if (_killSwitch) return;
+
         string levelString = level.ToString();
 
         if (type == "Frailed" || type == "Familiar")
@@ -1130,6 +1258,8 @@ internal class CanvasService
     }
     static void UpdateClass(PlayerClass classType, LocalizedText classText)
     {
+        if (_killSwitch) return;
+
         if (classType != PlayerClass.None)
         {
             if (!classText.enabled) classText.enabled = true;
@@ -1154,6 +1284,8 @@ internal class CanvasService
     }
     static void UpdateWeaponStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, Dictionary<UnitStatType, float>, string> getStatInfo)
     {
+        if (_killSwitch) return;
+
         Dictionary<UnitStatType, float> weaponStats = [];
 
         for (int i = 0; i < 3; i++)
@@ -1294,6 +1426,8 @@ internal class CanvasService
     }
     static void UpdateBloodStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, string> getStatInfo)
     {
+        if (_killSwitch) return;
+
         for (int i = 0; i < 3; i++)
         {
             if (bonusStats[i] != "None")
@@ -1311,6 +1445,8 @@ internal class CanvasService
     }
     static void UpdateFamiliarStats(List<string> familiarStats, List<LocalizedText> statTexts)
     {
+        if (_killSwitch) return;
+
         for (int i = 0; i < 3; i++)
         {
             if (!string.IsNullOrEmpty(familiarStats[i]))
@@ -1328,6 +1464,8 @@ internal class CanvasService
     }
     static void UpdateQuests(GameObject questObject, LocalizedText questSubHeader, Image questIcon, TargetType targetType, string target, int progress, int goal, bool isVBlood)
     {
+        if (_killSwitch) return;
+
         if (progress != goal && UIObjectStates[questObject])
         {
             if (!questObject.gameObject.active) questObject.gameObject.active = true;
@@ -1588,7 +1726,7 @@ internal class CanvasService
 
         // Set header text
         header.ForceSet(questType.ToString() + " Quest");
-        subHeader.ForceSet("UnitName: 0/0"); // For testing, can be updated later
+        subHeader.ForceSet("UnitName: 0/0");
 
         // Add to active objects
         UIObjectStates.Add(questObject, true);
@@ -1631,12 +1769,6 @@ internal class CanvasService
         // Set header text
         header.ForceSet(element.ToString());
         header.Text.fontSize *= 1.5f;
-
-        // set sizes for later reference
-        _headerFontSize = header.Text.fontSize;
-        _familiarHeaderSmall = _headerFontSize * 0.9f; // may want to replace ALL OF THE THINGS with consts but later
-        _familiarHeaderSmaller = _headerFontSize * 0.75f;
-        _familiarHeaderSmallest = _headerFontSize * 0.5f;
 
         // Set these to 0 so don't appear, deactivating instead seemed funky
         FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;

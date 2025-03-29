@@ -15,16 +15,12 @@ internal class Plugin : BasePlugin
     internal static Plugin Instance { get; set; }
     public static ManualLogSource LogInstance => Instance.Log;
 
+    /*
     public static readonly List<string> DirectoryPaths =
     [
         Path.Combine(Paths.ConfigPath, MyPluginInfo.PLUGIN_NAME) // 0
     ];
-
-    public static readonly List<string> FilePaths =
-    [
-        Path.Combine(DirectoryPaths[0], "game_objects.json"), // 0
-        Path.Combine(DirectoryPaths[0], "sprites.json"), // 1
-    ];
+    */
 
     static ConfigEntry<bool> _leveling;
     static ConfigEntry<bool> _prestige;
@@ -58,10 +54,12 @@ internal class Plugin : BasePlugin
     }
     static void InitConfig()
     {
+        /*
         foreach (string path in DirectoryPaths)
         {
             CreateDirectory(path);
         }
+        */
 
         _leveling = InitConfigEntry("UIOptions", "ExperienceBar", true, "Enable/Disable the experience bar, requires both ClientCompanion/LevelingSystem to be enabled in Bloodcraft.");
         _prestige = InitConfigEntry("UIOptions", "ShowPrestige", true, "Enable/Disable showing prestige level in front of experience bar, requires both ClientCompanion/PrestigeSystem to be enabled in Bloodcraft.");

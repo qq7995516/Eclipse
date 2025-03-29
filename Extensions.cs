@@ -283,6 +283,10 @@ internal static class Extensions
     {
         return entity.Has<Disabled>();
     }
+    public static bool HasConnectedCoffin(this Entity entity)
+    {
+        return entity.TryGetComponent(out ServantConnectedCoffin servantConnectedCoffin) && servantConnectedCoffin.CoffinEntity.GetEntityOnServer().Exists();
+    }
     public static bool IsVBlood(this Entity entity)
     {
         return entity.Has<VBloodUnit>();
@@ -444,6 +448,10 @@ internal static class Extensions
                 factionReference.FactionGuid._Value = factionPrefabGUID;
             });
         }
+    }
+    public static bool HasValue(this Entity entity)
+    {
+        return entity != Entity.Null;
     }
     public static bool IsAllied(this Entity entity, Entity player)
     {
