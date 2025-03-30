@@ -82,7 +82,7 @@ jobs:
           tag_name: v${{ env.version }}
           fail_on_unmatched_files: true
           files: |
-            ./bin/Release/net7.0/${{ steps.get_dll_name.outputs.dll_name }}.dll
+            ./bin/Release/net6.0/${{ steps.get_dll_name.outputs.dll_name }}.dll
             CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
