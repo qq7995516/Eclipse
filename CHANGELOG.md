@@ -1,3 +1,7 @@
+`1.3.3`
+- small changes to accomodate minor version increases without needing to add more boilerplate logic to client/server
+- minor recipe adjustments to match server-side changes for the client visually
+
 `1.3.2`
 - backwards compatible with Bloodcraft 1.5.3 (will show NPC spell cooldown's on shift when using 1.6.4 #soonYM, other changes below do not require additional information from Bloodcraft)
 - weapon expertise stats show on tooltips accordingly (not all stats will show there for some reason but works for most)
