@@ -62,8 +62,15 @@ jobs:
             echo "No changes to commit in thunderstore.toml"
           fi
           
-      - name: Build project
-        run: dotnet build "${{ steps.discover_csproj.outputs.csproj_file }}" --configuration Release
+      - name: Create secrets.json
+        run: |
+          mkdir -p /home/runner/work/Eclipse/Eclipse/Resources
+          echo '{
+            "NEW_SHARED_KEY": "${{ secrets.NEW_SHARED_KEY }}"
+          }' > /home/runner/work/Eclipse/Eclipse/Resources/secrets.json
+          
+      - name: Build (Release)
+        run: dotnet build . --configuration Release -p:Version=${{ env.version }}
 
       - name: GH Release
         uses: softprops/action-gh-release@v1
