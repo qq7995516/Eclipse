@@ -12,7 +12,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using static Eclipse.LocalizationService;
+using static Eclipse.Services.LocalizationService;
 
 namespace Eclipse;
 internal static class Extensions
@@ -163,7 +163,7 @@ internal static class Extensions
     }
     public static string GetPrefabName(this PrefabGUID prefabGUID)
     {
-        return PrefabCollectionSystem.PrefabGuidToNameDictionary.TryGetValue(prefabGUID, out string prefabName) ? $"{prefabName} {prefabGUID}" : "String.Empty";
+        return PrefabGuidsToNames.TryGetValue(prefabGUID, out string prefabName) ? $"{prefabName} {prefabGUID}" : "String.Empty";
     }
     public static string GetLocalizedName(this PrefabGUID prefabGUID)
     {
@@ -341,11 +341,11 @@ internal static class Extensions
     }
     public static bool HasBuff(this Entity entity, PrefabGUID buffPrefabGUID)
     {
-        return ClientGameManager.HasBuff(entity, buffPrefabGUID.ToIdentifier());
+        return GameManager_Shared.HasBuff(EntityManager, entity, buffPrefabGUID.ToIdentifier());
     }
     public static bool TryGetBuff(this Entity entity, PrefabGUID buffPrefabGUID, out Entity buffEntity)
     {
-        if (ClientGameManager.TryGetBuff(entity, buffPrefabGUID.ToIdentifier(), out buffEntity))
+        if (GameManager_Shared.TryGetBuff(EntityManager, entity, buffPrefabGUID.ToIdentifier(), out buffEntity))
         {
             return true;
         }
@@ -354,11 +354,12 @@ internal static class Extensions
     }
     public static unsafe bool TryGetBuffer<T>(this Entity entity, out DynamicBuffer<T> dynamicBuffer) where T : struct
     {
-        if (ClientGameManager.TryGetBuffer(entity, out dynamicBuffer))
+        if (GameManager_Shared.TryGetBuffer(EntityManager, entity, out dynamicBuffer))
         {
             return true;
         }
 
+        dynamicBuffer = default;
         return false;
     }
     public static float3 GetAimPosition(this Entity entity)
@@ -464,5 +465,16 @@ internal static class Extensions
     public static void Stop(this Coroutine routine)
     {
         if (routine != null) Core.StopCoroutine(routine);
+    }
+    public static Dictionary<TValue, TKey> Reverse<TKey, TValue>(this IDictionary<TKey, TValue> source)
+    {
+        var reversed = new Dictionary<TValue, TKey>();
+
+        foreach (var kvp in source)
+        {
+            reversed[kvp.Value] = kvp.Key;
+        }
+
+        return reversed;
     }
 }

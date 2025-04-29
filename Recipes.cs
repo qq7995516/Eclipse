@@ -209,7 +209,7 @@ internal static class Recipes
 
         recipeMap[_bloodCrystalRecipe] = recipeEntity.Read<RecipeData>();
 
-        if (CanvasService.SpriteMap.TryGetValue(PRIMAL_JEWEL, out Sprite jewelSprite))
+        if (CanvasService.Sprites.TryGetValue(PRIMAL_JEWEL, out Sprite jewelSprite))
         {
             ManagedItemData managedItemData = Core.SystemService.ManagedDataSystem.ManagedDataRegistry.GetOrDefault<ManagedItemData>(_itemJewelTemplate);
 

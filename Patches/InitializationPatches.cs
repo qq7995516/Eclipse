@@ -59,7 +59,7 @@ internal static class InitializationPatches
     {
         if (!Core._initialized) return;
 
-        NativeArray<Entity> entities = __instance.__query_1840110765_0.ToEntityArray(Allocator.Temp);
+        NativeArray<Entity> entities = __instance.EntityQueries[0].ToEntityArray(Allocator.Temp);
 
         try
         {
@@ -74,7 +74,7 @@ internal static class InitializationPatches
             entities.Dispose();
         }
 
-        entities = __instance.__query_1840110765_1.ToEntityArray(Allocator.Temp);
+        entities = __instance.EntityQueries[1].ToEntityArray(Allocator.Temp);
 
         try
         {
@@ -107,45 +107,18 @@ internal static class InitializationPatches
 
         ClientChatSystemPatch._userRegistered = false;
         ClientChatSystemPatch._pending = false;
-        ClientChatSystemPatch._versions = new([ClientChatSystemPatch.VERSION, ClientChatSystemPatch.V1_2_2]);
 
         ClientChatSystemPatch._localCharacter = Entity.Null;
         ClientChatSystemPatch._localUser = Entity.Null;
         CanvasService._version = string.Empty;
 
-        CanvasService.ArmorStatCache.Clear();
-        CanvasService.GrimoireStatCache.Clear();
-        CanvasService.WeaponStatCache.Clear();
-
-        CanvasService.OriginalArmorStatsCache.Clear();
-        CanvasService.OriginalGrimoireStatsCache.Clear();
-        CanvasService.OriginalWeaponStatsCache.Clear();
-
         _setCanvas = false;
-
-        foreach (GameObject gameObject in CanvasService.UIObjectStates.Keys) // destroy to let resolution be changed and elements get recreated to match new scaling?
-        {
-            if (gameObject != null)
-            {
-                GameObject.Destroy(gameObject);
-            }
-        }
-
-        foreach (GameObject gameObject in CanvasService.ProfessionObjects) // destroy to let resolution be changed and elements get recreated to match new scaling?
-        {
-            if (gameObject != null)
-            {
-                GameObject.Destroy(gameObject);
-            }
-        }
 
         CanvasService._abilityTooltipData = null;
         CanvasService._dailyQuestIcon = null;
         CanvasService._weeklyQuestIcon = null;
 
-        CanvasService.UIObjectStates.Clear();
-        CanvasService.ProfessionObjects.Clear();
-        CanvasService.SpriteMap.Clear();
+        CanvasService.ResetState(); // need to add the rest here, just sprites for now
 
         Core.Reset();
     }

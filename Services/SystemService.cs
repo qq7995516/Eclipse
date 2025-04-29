@@ -19,6 +19,9 @@ internal class SystemService(World world)
 
     ManagedDataSystem _managedDataSystem;
     public ManagedDataSystem ManagedDataSystem => _managedDataSystem ??= GetSystem<ManagedDataSystem>();
+
+    TutorialSystem _tutorialSystem;
+    public TutorialSystem TutorialSystem => _tutorialSystem ??= GetSystem<TutorialSystem>();
     T GetSystem<T>() where T : ComponentSystemBase
     {
         return _world.GetExistingSystemManaged<T>() ?? throw new InvalidOperationException($"Failed to get {Il2CppType.Of<T>().FullName} from the Server...");

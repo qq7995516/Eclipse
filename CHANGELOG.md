@@ -1,3 +1,6 @@
+`1.3.5`
+- Updated for VRising 1.1 compatibility
+
 `1.3.3`
 - small changes to accomodate minor version increases without needing to add more boilerplate logic to client/server
 - minor recipe adjustments to match server-side changes for the client visually

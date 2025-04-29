@@ -36,7 +36,7 @@ internal class Core
 
         _client = __instance.World;
 
-        _ = new Localization();
+        _ = new LocalizationService();
 
         NEW_SHARED_KEY = Convert.FromBase64String(SecretManager.GetNewSharedKey());
 
@@ -57,7 +57,7 @@ internal class Core
     {
         if (_monoBehaviour == null)
         {
-            var go = new GameObject("Eclipse");
+            var go = new GameObject(MyPluginInfo.PLUGIN_NAME);
             _monoBehaviour = go.AddComponent<IgnorePhysicsDebugSystem>();
             UnityEngine.Object.DontDestroyOnLoad(go);
         }

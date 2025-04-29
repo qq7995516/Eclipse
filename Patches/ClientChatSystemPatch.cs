@@ -47,10 +47,10 @@ internal static class ClientChatSystemPatch
     public static Entity _localCharacter = Entity.Null;
     public static Entity _localUser = Entity.Null;
 
-    public const string V1_2_2 = "1.2.2";
+    public const string V1_3 = "1.3";
     public const string VERSION = MyPluginInfo.PLUGIN_VERSION;
 
-    public static Queue<string> _versions = new([VERSION, V1_2_2]);
+    // public static Queue<string> _versions = new([VERSION, V1_2_2]);
     public enum NetworkEventSubType
     {
         RegisterUser,
@@ -70,6 +70,7 @@ internal static class ClientChatSystemPatch
 
             try
             {
+                /*
                 if(_versions.TryDequeue(out string modVersion))
                 {
                     string stringId = _localUser.GetUser().PlatformId.ToString();
@@ -78,6 +79,12 @@ internal static class ClientChatSystemPatch
                     SendMessageDelayRoutine(message, modVersion).Start();
                     ResetPendingDelayRoutine().Start();
                 }
+                */
+
+                string stringId = _localUser.GetUser().PlatformId.ToString();
+                string message = $"{VERSION};{stringId}";
+
+                SendMessageDelayRoutine(message, VERSION).Start();
             }
             catch (Exception ex)
             {
@@ -109,14 +116,17 @@ internal static class ClientChatSystemPatch
             entities.Dispose();
         }
     }
+
     static IEnumerator SendMessageDelayRoutine(string message, string modVersion)
     {
         yield return _registrationDelay;
 
-        if (_userRegistered) yield break;
+        // if (_userRegistered) yield break;
 
         SendMessage(NetworkEventSubType.RegisterUser, message, modVersion);
     }
+
+    /*
     static IEnumerator ResetPendingDelayRoutine()
     {
         yield return _pendingDelay;
@@ -125,27 +135,16 @@ internal static class ClientChatSystemPatch
 
         _pending = false;
     }
+    */
     static void SendMessage(NetworkEventSubType subType, string message, string modVersion)
     {
         string intermediateMessage = $"[ECLIPSE][{(int)subType}]:{message}";
         string messageWithMAC;
 
-        /*
-        switch (modVersion)
-        {
-            case V1_2_2:
-                messageWithMAC = $"{intermediateMessage};mac{GenerateMACV1_2_2(intermediateMessage)}";
-                break;
-            case V1_3_2:
-                messageWithMAC = $"{intermediateMessage};mac{GenerateMACV1_3_2(intermediateMessage)}";
-                break;
-        }
-        */
-
         messageWithMAC = modVersion switch
         {
-            V1_2_2 => $"{intermediateMessage};mac{GenerateMACV1_2_2(intermediateMessage)}",
-            _ when modVersion.StartsWith("1.3") => $"{intermediateMessage};mac{GenerateMACV1_3(intermediateMessage)}",
+            // V1_2_2 => $"{intermediateMessage};mac{GenerateMACV1_2_2(intermediateMessage)}",
+            _ when modVersion.StartsWith(V1_3) => $"{intermediateMessage};mac{GenerateMACV1_3(intermediateMessage)}",
             _ => string.Empty
         };
 
@@ -176,6 +175,8 @@ internal static class ClientChatSystemPatch
                     case (int)NetworkEventSubType.ProgressToClient:
                         List<string> playerData = DataService.ParseMessageString(_regexExtract.Replace(message, ""));
                         DataService.ParsePlayerData(playerData);
+
+                        // Core.Log.LogWarning($"Player data - {string.Join(", ", playerData)}");
 
                         if (CanvasService._killSwitch) CanvasService._killSwitch = false;
                         if (!CanvasService._active) CanvasService._active = true;
@@ -215,7 +216,6 @@ internal static class ClientChatSystemPatch
             if (VerifyMAC(intermediateMessage, receivedMAC, Core.NEW_SHARED_KEY))
             {
                 originalMessage = intermediateMessage;
-
                 return true;
             }
             else
@@ -237,15 +237,6 @@ internal static class ClientChatSystemPatch
         return CryptographicOperations.FixedTimeEquals(
             Encoding.UTF8.GetBytes(recalculatedMAC),
             Encoding.UTF8.GetBytes(receivedMAC));
-    }
-    public static string GenerateMACV1_2_2(string message)
-    {
-        using var hmac = new HMACSHA256(Core.NEW_SHARED_KEY);
-        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-
-        byte[] hashBytes = hmac.ComputeHash(messageBytes);
-
-        return Convert.ToBase64String(hashBytes);
     }
     public static string GenerateMACV1_3(string message)
     {

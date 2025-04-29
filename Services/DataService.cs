@@ -1,8 +1,6 @@
 ﻿using Stunlock.Core;
 using System.Globalization;
-using Unity.Entities;
 using UnityEngine;
-using UnityEngine.InputSystem.Utilities;
 using static Eclipse.Services.CanvasService;
 
 namespace Eclipse.Services;
@@ -12,7 +10,8 @@ internal static class DataService
     {
         Kill,
         Craft,
-        Gather
+        Gather,
+        Fish
     }
     public enum Profession
     {
@@ -38,7 +37,8 @@ internal static class DataService
         Draculin,
         Immortal,
         Creature,
-        Brute
+        Brute,
+        Corruption
     }
     public enum WeaponType
     {
@@ -54,7 +54,10 @@ internal static class DataService
         Longbow,
         Whip,
         Unarmed,
-        FishingPole
+        FishingPole,
+        TwinBlades,
+        Daggers,
+        Claws
     }
 
     public static Dictionary<WeaponStatType, float> _weaponStatValues = [];
@@ -69,10 +72,10 @@ internal static class DataService
         PrimaryLifeLeech,
         PhysicalPower,
         SpellPower,
-        PhysicalCritChance,
-        PhysicalCritDamage,
-        SpellCritChance,
-        SpellCritDamage
+        PhysicalCriticalStrikeChance,
+        PhysicalCriticalStrikeDamage,
+        SpellCriticalStrikeChance,
+        SpellCriticalStrikeDamage
     }
 
     public static readonly Dictionary<WeaponStatType, string> WeaponStatTypeAbbreviations = new()
@@ -85,10 +88,10 @@ internal static class DataService
         { WeaponStatType.PrimaryLifeLeech, "PLL" },
         { WeaponStatType.PhysicalPower, "PP" },
         { WeaponStatType.SpellPower, "SP" },
-        { WeaponStatType.PhysicalCritChance, "PCC" },
-        { WeaponStatType.PhysicalCritDamage, "PCD" },
-        { WeaponStatType.SpellCritChance, "SCC" },
-        { WeaponStatType.SpellCritDamage, "SCD" }
+        { WeaponStatType.PhysicalCriticalStrikeChance, "PCC" },
+        { WeaponStatType.PhysicalCriticalStrikeDamage, "PCD" },
+        { WeaponStatType.SpellCriticalStrikeChance, "SCC" },
+        { WeaponStatType.SpellCriticalStrikeDamage, "SCD" }
     };
 
     public static readonly Dictionary<string, string> WeaponStatStringAbbreviations = new()
@@ -101,10 +104,10 @@ internal static class DataService
         { "PrimaryLifeLeech", "PLL" },
         { "PhysicalPower", "PP" },
         { "SpellPower", "SP" },
-        { "PhysicalCritChance", "PCC" },
-        { "PhysicalCritDamage", "PCD" },
-        { "SpellCritChance", "SCC" },
-        { "SpellCritDamage", "SCD" }
+        { "PhysicalCriticalStrikeChance", "PCC" },
+        { "PhysicalCriticalStrikeDamage", "PCD" },
+        { "SpellCriticalStrikeChance", "SCC" },
+        { "SpellCriticalStrikeDamage", "SCD" }
     };
 
     public static readonly Dictionary<WeaponStatType, string> WeaponStatFormats = new()
@@ -117,28 +120,28 @@ internal static class DataService
         { WeaponStatType.PrimaryLifeLeech, "percentage" },
         { WeaponStatType.PhysicalPower, "integer" },
         { WeaponStatType.SpellPower, "integer" },
-        { WeaponStatType.PhysicalCritChance, "percentage" },
-        { WeaponStatType.PhysicalCritDamage, "percentage" },
-        { WeaponStatType.SpellCritChance, "percentage" },
-        { WeaponStatType.SpellCritDamage, "percentage" }
+        { WeaponStatType.PhysicalCriticalStrikeChance, "percentage" },
+        { WeaponStatType.PhysicalCriticalStrikeDamage, "percentage" },
+        { WeaponStatType.SpellCriticalStrikeChance, "percentage" },
+        { WeaponStatType.SpellCriticalStrikeDamage, "percentage" }
     };
 
     public static Dictionary<BloodStatType, float> _bloodStatValues = [];
     public enum BloodStatType
     {
-        None, // 0
-        HealingReceived, // 0
-        DamageReduction, // 1
-        PhysicalResistance, // 2
-        SpellResistance, // 3
-        ResourceYield, // 4
-        BloodDrain, // 5
-        SpellCooldownRecoveryRate, // 6
-        WeaponCooldownRecoveryRate, // 7
-        UltimateCooldownRecoveryRate, // 8
-        MinionDamage, // 9
-        ShieldAbsorb, // 10
-        BloodEfficiency // 11
+        None,
+        HealingReceived, 
+        DamageReduction, 
+        PhysicalResistance, 
+        SpellResistance, 
+        ResourceYield,
+        ReducedBloodDrain,
+        SpellCooldownRecoveryRate,
+        WeaponCooldownRecoveryRate,
+        UltimateCooldownRecoveryRate,
+        MinionDamage, 
+        AbilityAttackSpeed, 
+        CorruptionDamageReduction 
     }
 
     public static readonly Dictionary<BloodStatType, string> BloodStatTypeAbbreviations = new()
@@ -148,13 +151,13 @@ internal static class DataService
         { BloodStatType.PhysicalResistance, "PR" },
         { BloodStatType.SpellResistance, "SR" },
         { BloodStatType.ResourceYield, "RY" },
-        { BloodStatType.BloodDrain, "BD" },
+        { BloodStatType.ReducedBloodDrain, "RBD" },
         { BloodStatType.SpellCooldownRecoveryRate, "SCR" },
         { BloodStatType.WeaponCooldownRecoveryRate, "WCR" },
         { BloodStatType.UltimateCooldownRecoveryRate, "UCR" },
         { BloodStatType.MinionDamage, "MD" },
-        { BloodStatType.ShieldAbsorb, "SA" },
-        { BloodStatType.BloodEfficiency, "BE" }
+        { BloodStatType.AbilityAttackSpeed, "AAS" },
+        { BloodStatType.CorruptionDamageReduction, "CDR" }
     };
 
     public static readonly Dictionary<string, string> BloodStatStringAbbreviations = new()
@@ -164,13 +167,13 @@ internal static class DataService
         { "PhysicalResistance", "PR" },
         { "SpellResistance", "SR" },
         { "ResourceYield", "RY" },
-        { "BloodDrain", "BD" },
+        { "ReducedBloodDrain", "RBD" },
         { "SpellCooldownRecoveryRate", "SCR" },
         { "WeaponCooldownRecoveryRate", "WCR" },
         { "UltimateCooldownRecoveryRate", "UCR" },
         { "MinionDamage", "MD" },
-        { "ShieldAbsorb", "SA" },
-        { "BloodEfficiency", "BE" }
+        { "AbilityAttackSpeed", "AAS" },
+        { "CorruptionDamageReduction", "CDR" }
     };
 
     public static Dictionary<FamiliarStatType, float> _familiarStatValues = [];
@@ -197,16 +200,16 @@ internal static class DataService
 
     public static readonly Dictionary<Profession, Color> ProfessionColors = new()
     {
-        { Profession.Enchanting,    new Color(0.5f, 0.13f, 0.8f, 0.5f) },
-        { Profession.Alchemy,       new Color(0.1f, 0.87f, 0.66f, 0.5f) },
+        { Profession.Enchanting,    new Color(0.5f, 0.1f, 0.8f, 0.5f) },
+        { Profession.Alchemy,       new Color(0.1f, 0.9f, 0.7f, 0.5f) },
         { Profession.Harvesting,    new Color(0f, 0.5f, 0f, 0.5f) },
-        { Profession.Blacksmithing, new Color(0.2f, 0.2f, 0.26f, 0.5f) },
-        { Profession.Tailoring,     new Color(0.85f, 0.55f, 0.5f, 0.5f) },
-        { Profession.Woodcutting,   new Color(0.54f, 0.27f, 0.1f, 0.5f) },
+        { Profession.Blacksmithing, new Color(0.2f, 0.2f, 0.3f, 0.5f) },
+        { Profession.Tailoring,     new Color(0.9f, 0.6f, 0.5f, 0.5f) },
+        { Profession.Woodcutting,   new Color(0.5f, 0.3f, 0.1f, 0.5f) },
         { Profession.Mining,        new Color(0.5f, 0.5f, 0.5f, 0.5f) },
-        { Profession.Fishing,       new Color(0f, 0.46f, 0.66f, 0.5f) }
+        { Profession.Fishing,       new Color(0f, 0.5f, 0.7f, 0.5f) }
     };
-    internal class ProfessionData(string enchantingProgress, string enchantingLevel, string alchemyProgress, string alchemyLevel,
+    public class ProfessionData(string enchantingProgress, string enchantingLevel, string alchemyProgress, string alchemyLevel,
         string harvestingProgress, string harvestingLevel, string blacksmithingProgress, string blacksmithingLevel,
         string tailoringProgress, string tailoringLevel, string woodcuttingProgress, string woodcuttingLevel, string miningProgress,
         string miningLevel, string fishingProgress, string fishingLevel)
@@ -245,24 +248,24 @@ internal static class DataService
     public static float _classStatMultiplier;
     public static bool _extraRecipes;
     public static PrefabGUID _primalCost;
-    internal class ExperienceData(string percent, string level, string prestige, string playerClass)
+    public class ExperienceData(string percent, string level, string prestige, string playerClass)
     {
         public float Progress { get; set; } = float.Parse(percent, CultureInfo.InvariantCulture) / 100f;
         public int Level { get; set; } = int.Parse(level);
         public int Prestige { get; set; } = int.Parse(prestige);
         public PlayerClass Class { get; set; } = (PlayerClass)int.Parse(playerClass);
     }
-    internal class LegacyData(string percent, string level, string prestige, string legacyType, string bonusStats) : ExperienceData(percent, level, prestige, legacyType)
+    public class LegacyData(string percent, string level, string prestige, string legacyType, string bonusStats) : ExperienceData(percent, level, prestige, legacyType)
     {
         public string LegacyType { get; set; } = ((BloodType)int.Parse(legacyType)).ToString();
         public List<string> BonusStats { get; set; } = Enumerable.Range(0, bonusStats.Length / 2).Select(i => ((BloodStatType)int.Parse(bonusStats.Substring(i * 2, 2))).ToString()).ToList();
     }
-    internal class ExpertiseData(string percent, string level, string prestige, string expertiseType, string bonusStats) : ExperienceData(percent, level, prestige, expertiseType)
+    public class ExpertiseData(string percent, string level, string prestige, string expertiseType, string bonusStats) : ExperienceData(percent, level, prestige, expertiseType)
     {
         public string ExpertiseType { get; set; } = ((WeaponType)int.Parse(expertiseType)).ToString();
         public List<string> BonusStats { get; set; } = Enumerable.Range(0, bonusStats.Length / 2).Select(i => ((WeaponStatType)int.Parse(bonusStats.Substring(i * 2, 2))).ToString()).ToList();
     }
-    internal class QuestData(string type, string progress, string goal, string target, string isVBlood)
+    public class QuestData(string type, string progress, string goal, string target, string isVBlood)
     {
         public TargetType TargetType { get; set; } = (TargetType)int.Parse(type);
         public int Progress { get; set; } = int.Parse(progress);
@@ -270,7 +273,7 @@ internal static class DataService
         public string Target { get; set; } = target;
         public bool IsVBlood { get; set; } = bool.Parse(isVBlood);
     }
-    internal class FamiliarData(string percent, string level, string prestige, string familiarName, string familiarStats)
+    public class FamiliarData(string percent, string level, string prestige, string familiarName, string familiarStats)
     {
         public float Progress { get; set; } = float.Parse(percent, CultureInfo.InvariantCulture) / 100f;
         public int Level { get; set; } = int.TryParse(level, out int parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;
@@ -278,11 +281,11 @@ internal static class DataService
         public string FamiliarName { get; set; } = !string.IsNullOrEmpty(familiarName) ? familiarName : "Familiar";
         public List<string> FamiliarStats { get; set; } = !string.IsNullOrEmpty(familiarStats) ? [..new List<string> { familiarStats[..4], familiarStats[4..7], familiarStats[7..] }.Select(stat => int.Parse(stat).ToString())] : ["", "", ""];
     }
-    internal class ShiftSpellData(string index)
+    public class ShiftSpellData(string index)
     {
         public int ShiftSpellIndex { get; set; } = int.Parse(index);
     }
-    internal class ConfigDataV1_3
+    public class ConfigDataV1_3
     {
         public float PrestigeStatMultiplier;
 
@@ -346,7 +349,7 @@ internal static class DataService
             );
         }
     }
-    internal class ConfigData
+    public class ConfigData
     {
         public float PrestigeStatMultiplier;
 
@@ -403,14 +406,14 @@ internal static class DataService
             );
         }
     }
-    public static List<string> ParseMessageString(string configString)
+    public static List<string> ParseMessageString(string serverMessage)
     {
-        if (string.IsNullOrEmpty(configString))
+        if (string.IsNullOrEmpty(serverMessage))
         {
             return [];
         }
 
-        return [..configString.Split(',')];
+        return [..serverMessage.Split(',')];
     }
     public static void ParseConfigData(List<string> configData)
     {
@@ -448,15 +451,21 @@ internal static class DataService
 
             _classStatSynergies = parsedConfigData.ClassStatSynergies;
 
-            return;
+            try
+            {
+                if (_extraRecipes) Recipes.ModifyRecipes();
+            }
+            catch (Exception ex)
+            {
+                Core.Log.LogWarning($"Failed to modify recipes: {ex}");
+            }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Core.Log.LogWarning($"Failed to parse config data first attempt - {e}");
-
-            index = 0;
+            Core.Log.LogWarning($"Failed to parse config data: {ex}");
         }
 
+        /*
         try
         {
             ConfigData parsedConfigData = new(
@@ -491,9 +500,11 @@ internal static class DataService
         {
             Core.Log.LogWarning($"Failed to parse config data second attempt - {e}");
         }
+        */
     }
     public static void ParsePlayerData(List<string> playerData)
     {
+        /*
         if (string.IsNullOrEmpty(_version))
         {
             if (playerData.Count == 45)
@@ -502,26 +513,20 @@ internal static class DataService
 
                 Core.Log.LogInfo($"ECLIPSE[{V1_2_2}]({DateTime.Now}) - {playerData.Count}");
             }
-            else if (playerData.Count == 46)
+
+            if (playerData.Count == 46)
             {
-                try
-                {
-                    if (_extraRecipes) Recipes.ModifyRecipes();
-                }
-                catch (Exception ex)
-                {
-                    Core.Log.LogWarning($"Failed to modify recipes: {ex}");
-                }
+
 
                 _version = V1_3;
                 Core.Log.LogInfo($"ECLIPSE[{V1_3}]({DateTime.Now}) - {playerData.Count}");
             }
             else
             {
-                Core.Log.LogWarning("Invalid player data length, falling back to previous version!");
-                _version = V1_2_2;
+                Core.Log.LogWarning("Couldn't parse playerData!");
             }
         }
+        */
 
         int index = 0;
 
@@ -549,6 +554,8 @@ internal static class DataService
         _expertisePrestige = expertiseData.Prestige;
         _expertiseType = expertiseData.ExpertiseType;
         _expertiseBonusStats = expertiseData.BonusStats;
+
+        // Core.Log.LogWarning($"Expertise bonus stats - {string.Join(", ", _expertiseBonusStats)}");
 
         _familiarProgress = familiarData.Progress;
         _familiarLevel = familiarData.Level;
@@ -585,13 +592,11 @@ internal static class DataService
         _weeklyTarget = weeklyQuestData.Target;
         _weeklyVBlood = weeklyQuestData.IsVBlood;
 
-        if (_version.Equals(V1_3))
-        {
-            ShiftSpellData shiftSpellData = new(playerData[index]);
-
-            _shiftSpellIndex = shiftSpellData.ShiftSpellIndex;
-        }
+        ShiftSpellData shiftSpellData = new(playerData[index]);
+        _shiftSpellIndex = shiftSpellData.ShiftSpellIndex;
     }
+
+    /*
     public static WeaponType GetWeaponTypeFromWeaponEntity(Entity weaponEntity)
     {
         if (weaponEntity == Entity.Null) return WeaponType.Unarmed;
@@ -604,4 +609,5 @@ internal static class DataService
             !(type == WeaponType.Sword && weaponCheck.Contains("GreatSword", StringComparison.OrdinalIgnoreCase))
             );
     }
+    */
 }
