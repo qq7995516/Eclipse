@@ -67,6 +67,13 @@ jobs:
             echo "No changes to commit in thunderstore.toml"
           fi
           
+      - name: Create secrets.json
+        run: |
+          mkdir -p /home/runner/work/Eclipse/Eclipse/Resources
+          echo '{
+            "NEW_SHARED_KEY": "${{ secrets.NEW_SHARED_KEY }}"
+          }' > /home/runner/work/Eclipse/Eclipse/Resources/secrets.json
+          
       - name: Build (Release)
         run: dotnet build . --configuration Release -p:Version=${{ env.version }} -p:RunGenerateREADME=false
 
