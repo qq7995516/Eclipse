@@ -1,3 +1,6 @@
+`1.3.6`
+- small fix for legacy bar errors in console
+
 `1.3.5`
 - Updated for VRising 1.1 compatibility
 

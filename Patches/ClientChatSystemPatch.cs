@@ -116,6 +116,11 @@ internal static class ClientChatSystemPatch
             entities.Dispose();
         }
     }
+    static void NetworkTesting()
+    {
+        // IncomingClientMessage
+        // IncomingNetBuffer
+    }
 
     static IEnumerator SendMessageDelayRoutine(string message, string modVersion)
     {
