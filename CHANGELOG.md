@@ -1,5 +1,6 @@
 `1.3.6`
 - small fix for legacy bar errors in console
+- weapon expertise stats (most, not all) appear on tooltips
 
 `1.3.5`
 - Updated for VRising 1.1 compatibility

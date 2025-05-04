@@ -712,7 +712,7 @@ internal class CanvasService
                 {
                     UpdateBar(_expertiseProgress, _expertiseLevel, _expertiseMaxLevel, _expertisePrestige, _expertiseText, _expertiseHeader, _expertiseFill, UIElement.Expertise, _expertiseType);
                     UpdateWeaponStats(_expertiseBonusStats, [_firstExpertiseStat, _secondExpertiseStat, _thirdExpertiseStat], GetWeaponStatInfo);
-                    GetAndUpdateWeaponStatsBuffer(_localCharacter);
+                    GetAndUpdateWeaponStatBuffer(_localCharacter);
                 }
                 catch (Exception e)
                 {
@@ -726,7 +726,7 @@ internal class CanvasService
                 {
                     if (_localCharacter.TryGetBuff(_statsBuff, out Entity buffEntity))
                     {
-                        UpdateBuffStatsBuffer(buffEntity);
+                        UpdateBuffStatBuffer(buffEntity);
                     }
                 }
                 catch (Exception e)
@@ -811,7 +811,7 @@ internal class CanvasService
             yield return _delay;
         }
     }
-    static void GetAndUpdateWeaponStatsBuffer(Entity playerCharacter)
+    static void GetAndUpdateWeaponStatBuffer(Entity playerCharacter)
     {
         if (!playerCharacter.TryGetComponent(out Equipment equipment)) return;
 
@@ -819,10 +819,9 @@ internal class CanvasService
         if (!weaponEntity.Exists()) return;
 
         Entity prefabEntity = weaponEntity.GetPrefabEntity();
-        UpdateWeaponStatsBuffer(prefabEntity);
-        // if (!weaponEntity.TryGetComponent(out Equippable equippable) || !equippable.EquipBuff.Exists()) return;
+        UpdateWeaponStatBuffer(prefabEntity);
     }
-    static void UpdateWeaponStatsBuffer(Entity weaponEntity)
+    static void UpdateWeaponStatBuffer(Entity weaponEntity)
     {
         if (!weaponEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer)) return;
 
@@ -850,7 +849,7 @@ internal class CanvasService
             }
         }
     }
-    static void UpdateBuffStatsBuffer(Entity buffEntity)
+    static void UpdateBuffStatBuffer(Entity buffEntity)
     {
         if (!buffEntity.TryGetBuffer<ModifyUnitStatBuff_DOTS>(out var buffer)) return;
 
@@ -1293,8 +1292,15 @@ internal class CanvasService
             if (_weaponStatValues.TryGetValue(weaponStat, out float statValue))
             {
                 float classMultiplier = ClassSynergy(weaponStat, _classType, _classStatSynergies);
-                statValue *= ((1 + (_prestigeStatMultiplier * _expertisePrestige)) * classMultiplier * ((float)_expertiseLevel / _expertiseMaxLevel));
+                statValue *= (1 + (_prestigeStatMultiplier * _expertisePrestige)) * classMultiplier * ((float)_expertiseLevel / _expertiseMaxLevel);
                 int statModificationId = ModificationIds.GenerateId(0, (int)weaponStat, statValue);
+
+                if (weaponStat.Equals(WeaponStatType.MovementSpeed)
+                    && _localCharacter.TryGetComponent(out Movement movement))
+                {
+                    float movementSpeed = movement.Speed._Value;
+                    statValue /= movementSpeed;
+                }
 
                 ModifyUnitStatBuff_DOTS unitStatBuff = new()
                 {
