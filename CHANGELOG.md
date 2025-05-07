@@ -1,3 +1,7 @@
+`1.3.7`
+- adjusted name trimming to target only vBloods for fam bar/quest targets
+- handling for movementSpeed to show correctly on expertise bar and weapon tooltips
+
 `1.3.6`
 - small fix for legacy bar errors in console
 - weapon expertise stats (most, not all) appear on tooltips

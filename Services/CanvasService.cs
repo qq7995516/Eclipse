@@ -1293,6 +1293,7 @@ internal class CanvasService
             {
                 float classMultiplier = ClassSynergy(weaponStat, _classType, _classStatSynergies);
                 statValue *= (1 + (_prestigeStatMultiplier * _expertisePrestige)) * classMultiplier * ((float)_expertiseLevel / _expertiseMaxLevel);
+                float displayStatValue = statValue;
                 int statModificationId = ModificationIds.GenerateId(0, (int)weaponStat, statValue);
 
                 if (weaponStat.Equals(WeaponStatType.MovementSpeed)
@@ -1315,10 +1316,7 @@ internal class CanvasService
                 };
 
                 _weaponStats.TryAdd(statModificationId, unitStatBuff);
-
-                // Core.Log.LogWarning($"GetWeaponStatInfo - {statModificationId}|{_buffStats.Count}");
-
-                return FormatWeaponStat(weaponStat, statValue);
+                return FormatWeaponStat(weaponStat, displayStatValue);
             }
             else
             {
@@ -2171,8 +2169,24 @@ internal class CanvasService
     static string TrimToFirstWord(string name)
     {
         int firstSpaceIndex = name.IndexOf(' ');
+        int secondSpaceIndex = name.IndexOf(' ', firstSpaceIndex + 1);
+
+        // Only trim if there are at least two spaces (i.e., three words)
+        if (firstSpaceIndex > 0 && secondSpaceIndex > 0)
+        {
+            return name[..firstSpaceIndex];
+        }
+
+        return name;
+    }
+
+    /*
+    static string TrimToFirstWord(string name)
+    {
+        int firstSpaceIndex = name.IndexOf(' ');
         return firstSpaceIndex > 0 ? name[..firstSpaceIndex] : name;
     }
+    */
     public static void ResetState()
     {
         foreach (GameObject gameObject in CanvasService._objectStates.Keys)
