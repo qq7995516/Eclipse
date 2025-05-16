@@ -1,20 +1,15 @@
 using Eclipse.Services;
 using HarmonyLib;
 using ProjectM;
-using ProjectM.Network;
 using ProjectM.UI;
-using Unity.Collections;
 using Unity.Entities;
-using UnityEngine;
 
 namespace Eclipse.Patches;
 
 [HarmonyPatch]
 internal static class InitializationPatches
 {
-    static EntityManager EntityManager => Core.EntityManager;
-
-    static readonly bool _shouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Familiars || Plugin.Quests; // will use operators with other bools as options are added in the future
+    static readonly bool _shouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Familiars || Plugin.Quests;
     static bool _setCanvas = false;
 
     [HarmonyPatch(typeof(GameDataManager), nameof(GameDataManager.OnUpdate))]
@@ -48,11 +43,11 @@ internal static class InitializationPatches
         if (!_setCanvas && Core._initialized)
         {
             _setCanvas = true;
-
             Core.SetCanvas(canvas);
         }
     }
 
+    /*
     [HarmonyPatch(typeof(CommonClientDataSystem), nameof(CommonClientDataSystem.OnUpdate))]
     [HarmonyPostfix]
     static void OnUpdatePostfix(CommonClientDataSystem __instance)
@@ -91,6 +86,7 @@ internal static class InitializationPatches
             entities.Dispose();
         }
     }
+    */
 
     [HarmonyPatch(typeof(ClientBootstrapSystem), nameof(ClientBootstrapSystem.OnDestroy))]
     [HarmonyPrefix]
@@ -108,8 +104,6 @@ internal static class InitializationPatches
         ClientChatSystemPatch._userRegistered = false;
         ClientChatSystemPatch._pending = false;
 
-        ClientChatSystemPatch._localCharacter = Entity.Null;
-        ClientChatSystemPatch._localUser = Entity.Null;
         CanvasService._version = string.Empty;
 
         _setCanvas = false;

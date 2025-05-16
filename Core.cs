@@ -19,6 +19,21 @@ internal class Core
 {
     static World _client;
     static SystemService _systemService;
+
+    static Entity _localCharacter = Entity.Null;
+    static Entity _localUser = Entity.Null;
+    public static Entity LocalCharacter =>
+        _localCharacter != Entity.Null
+        ? _localCharacter
+        : (ConsoleShared.TryGetLocalCharacterInCurrentWorld(out _localCharacter, _client)
+        ? _localCharacter
+        : Entity.Null);
+    public static Entity LocalUser =>
+        _localUser != Entity.Null
+        ? _localUser
+        : (ConsoleShared.TryGetLocalUserInCurrentWorld(out _localUser, _client)
+        ? _localUser
+        : Entity.Null);
     public static EntityManager EntityManager => _client.EntityManager;
     public static SystemService SystemService => _systemService ??= new(_client);
     public static ClientGameManager ClientGameManager => SystemService.ClientScriptMapper._ClientGameManager;

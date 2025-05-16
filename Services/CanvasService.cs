@@ -26,6 +26,7 @@ internal class CanvasService
     static EntityManager EntityManager => Core.EntityManager;
     static SystemService SystemService => Core.SystemService;
     static ManagedDataRegistry ManagedDataRegistry => SystemService.ManagedDataSystem.ManagedDataRegistry;
+    static Entity LocalCharacter => Core.LocalCharacter;
 
     static readonly bool _experienceBar = Plugin.Leveling;
     static readonly bool _showPrestige = Plugin.Prestige;
@@ -286,7 +287,6 @@ internal class CanvasService
     public static string _weeklyTarget = "";
     public static bool _weeklyVBlood = false;
 
-    public static Entity _localCharacter;
     static PrefabGUID _abilityGroupPrefabGUID;
 
     public static AbilityTooltipData _abilityTooltipData;
@@ -425,15 +425,12 @@ internal class CanvasService
     public static Coroutine _canvasRoutine;
     public static Coroutine _shiftRoutine;
 
-    // modifying active buff entity sufficient, can leave prefab alone
+    // modifying active buff/item entity sufficient, can leave prefab alone
     static readonly PrefabGUID _statsBuff = PrefabGUIDs.SetBonus_AllLeech_T09;
     static readonly bool _statsBuffActive = _legacyBar || _expertiseBar; // in loop can check for if has a class for those stats
 
     static readonly Dictionary<int, ModifyUnitStatBuff_DOTS> _weaponStats = [];
     static readonly Dictionary<int, ModifyUnitStatBuff_DOTS> _bloodStats = [];
-
-    // static TutorialTask_Generic _tutorialTasks;
-    // GameObject layoutObject = GameObject.Find("HUDCanvas(Clone)/JournalCanvas/JournalParent(Clone)/Content/Layout/JournalEntry_Multi/ButtonParent/ClaimButton");  
     public CanvasService(UICanvasBase canvas)
     {
         _canvasBase = canvas;
@@ -538,38 +535,6 @@ internal class CanvasService
                 }
             }
         }
-    }
-
-    static bool _shouldTest = true;
-    static void Tutorial()
-    {
-        if (!_shouldTest) return;
-
-        // TutorialSystem
-        // TutorialUtilities
-        // TutorialTaskData
-
-        TutorialTaskData tutorialTaskData = new()
-        {
-            AutoCompleteTime = 10f,
-            Header = Core.LocalizeString("Tutorial Test"),
-            Text = Core.LocalizeString("This is a test tutorial!"),
-            TutorialObjectiveType = TutorialObjectiveType.NONE,
-            AnalogInputActions = new(),
-            ButtonInputActions = new(),
-            MinimumActiveTime = 10f,
-            ActivationDelayTime = 0f,
-            IsHoldButton = DisplayHoldText.NO,
-            Repeatable = false
-        };
-
-        SystemService.TutorialSystem._TutorialParent.TutorialMapping.TutorialList.Add(tutorialTaskData);
-        SystemService.TutorialSystem._TutorialParent.AddTutorialQuest(TutorialObjectiveType.NONE, true);
-        SystemService.TutorialSystem._TutorialParent.TutorialTask_Generic.SetUI(tutorialTaskData);
-        
-        // UIHelper.CaptureScreenshot();
-
-        _shouldTest = false;
     }
     static void ToggleGameObject(GameObject gameObject)
     {
@@ -712,7 +677,7 @@ internal class CanvasService
                 {
                     UpdateBar(_expertiseProgress, _expertiseLevel, _expertiseMaxLevel, _expertisePrestige, _expertiseText, _expertiseHeader, _expertiseFill, UIElement.Expertise, _expertiseType);
                     UpdateWeaponStats(_expertiseBonusStats, [_firstExpertiseStat, _secondExpertiseStat, _thirdExpertiseStat], GetWeaponStatInfo);
-                    GetAndUpdateWeaponStatBuffer(_localCharacter);
+                    GetAndUpdateWeaponStatBuffer(LocalCharacter);
                 }
                 catch (Exception e)
                 {
@@ -724,7 +689,7 @@ internal class CanvasService
             {
                 try
                 {
-                    if (_localCharacter.TryGetBuff(_statsBuff, out Entity buffEntity))
+                    if (LocalCharacter.TryGetBuff(_statsBuff, out Entity buffEntity))
                     {
                         UpdateBuffStatBuffer(buffEntity);
                     }
@@ -792,7 +757,7 @@ internal class CanvasService
 
             try
             {
-                if (!_shiftActive && _localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
+                if (!_shiftActive && LocalCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
                 {
                     Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
 
@@ -1081,7 +1046,7 @@ internal class CanvasService
                 continue;
             }
 
-            if (_localCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
+            if (LocalCharacter.TryGetComponent(out AbilityBar_Shared abilityBar_Shared))
             {
                 Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
                 Entity abilityCastEntity = abilityBar_Shared.CastAbility.GetEntityOnServer();
@@ -1297,7 +1262,7 @@ internal class CanvasService
                 int statModificationId = ModificationIds.GenerateId(0, (int)weaponStat, statValue);
 
                 if (weaponStat.Equals(WeaponStatType.MovementSpeed)
-                    && _localCharacter.TryGetComponent(out Movement movement))
+                    && LocalCharacter.TryGetComponent(out Movement movement))
                 {
                     float movementSpeed = movement.Speed._Value;
                     statValue /= movementSpeed;

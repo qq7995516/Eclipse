@@ -18,6 +18,8 @@ namespace Eclipse.Patches;
 internal static class ClientChatSystemPatch
 {
     static EntityManager EntityManager => Core.EntityManager;
+    static Entity LocalCharacter => Core.LocalCharacter;
+    static Entity LocalUser => Core.LocalUser;
 
     static readonly bool _shouldInitialize = Plugin.Leveling || Plugin.Expertise || Plugin.Legacies || Plugin.Quests || Plugin.Familiars || Plugin.Professions;
     public static bool _userRegistered = false;
@@ -44,9 +46,6 @@ internal static class ClientChatSystemPatch
         IsDebugEvent = false,
     };
 
-    public static Entity _localCharacter = Entity.Null;
-    public static Entity _localUser = Entity.Null;
-
     public const string V1_3 = "1.3";
     public const string VERSION = MyPluginInfo.PLUGIN_VERSION;
 
@@ -63,7 +62,7 @@ internal static class ClientChatSystemPatch
     static void OnUpdatePrefix(ClientChatSystem __instance)
     {
         if (!Core._initialized) return;
-        else if (!_localCharacter.Exists() || !_localUser.Exists()) return;
+        else if (!LocalCharacter.Exists() || !LocalUser.Exists()) return;
         else if (!_userRegistered && !_pending)
         {
             _pending = true;
@@ -81,7 +80,7 @@ internal static class ClientChatSystemPatch
                 }
                 */
 
-                string stringId = _localUser.GetUser().PlatformId.ToString();
+                string stringId = LocalUser.GetUser().PlatformId.ToString();
                 string message = $"{VERSION};{stringId}";
 
                 SendMessageDelayRoutine(message, VERSION).Start();
@@ -116,12 +115,6 @@ internal static class ClientChatSystemPatch
             entities.Dispose();
         }
     }
-    static void NetworkTesting()
-    {
-        // IncomingClientMessage
-        // IncomingNetBuffer
-    }
-
     static IEnumerator SendMessageDelayRoutine(string message, string modVersion)
     {
         yield return _registrationDelay;
@@ -130,17 +123,6 @@ internal static class ClientChatSystemPatch
 
         SendMessage(NetworkEventSubType.RegisterUser, message, modVersion);
     }
-
-    /*
-    static IEnumerator ResetPendingDelayRoutine()
-    {
-        yield return _pendingDelay;
-
-        if (_userRegistered) yield break;
-
-        _pending = false;
-    }
-    */
     static void SendMessage(NetworkEventSubType subType, string message, string modVersion)
     {
         string intermediateMessage = $"[ECLIPSE][{(int)subType}]:{message}";
@@ -159,11 +141,11 @@ internal static class ClientChatSystemPatch
         {
             MessageText = new FixedString512Bytes(messageWithMAC),
             MessageType = ChatMessageType.Local,
-            ReceiverEntity = _localUser.Read<NetworkId>()
+            ReceiverEntity = LocalUser.GetNetworkId()
         };
 
         Entity networkEntity = EntityManager.CreateEntity(_networkEventComponents);
-        networkEntity.Write(new FromCharacter { Character = _localCharacter, User = _localUser });
+        networkEntity.Write(new FromCharacter { Character = LocalCharacter, User = LocalUser });
         networkEntity.Write(_networkEventType);
         networkEntity.Write(chatMessageEvent);
 
