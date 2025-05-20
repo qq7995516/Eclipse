@@ -63,6 +63,8 @@ internal class Core
         _systemService = null;
         CanvasService = null;
         _initialized = false;
+        _localCharacter = Entity.Null;
+        _localUser = Entity.Null;
     }
     public static void SetCanvas(UICanvasBase canvas)
     {
@@ -110,9 +112,9 @@ internal class Core
     {
         AssetGuid assetGuid = GetAssetGuid(text);
 
-        if (Stunlock.Localization.Localization.Initialized)
+        if (Localization.Initialized)
         {
-            Stunlock.Localization.Localization._LocalizedStrings.TryAdd(assetGuid, text);
+            Localization._LocalizedStrings.TryAdd(assetGuid, text);
             return new(assetGuid);
         }
         else

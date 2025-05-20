@@ -2151,7 +2151,22 @@ internal class CanvasService
         int firstSpaceIndex = name.IndexOf(' ');
         return firstSpaceIndex > 0 ? name[..firstSpaceIndex] : name;
     }
+
+    static string TrimToFirstWord(string name)
+    {
+        int firstSpaceIndex = name.IndexOf(' ');
+        if (firstSpaceIndex == -1) return name;
+
+        int secondSpaceIndex = name.IndexOf(' ', firstSpaceIndex + 1);
+        if (secondSpaceIndex == -1) return name;
+
+        int thirdSpaceIndex = name.IndexOf(' ', secondSpaceIndex + 1);
+        if (thirdSpaceIndex != -1) return name;
+
+        return name[..firstSpaceIndex];
+    }
     */
+
     public static void ResetState()
     {
         foreach (GameObject gameObject in CanvasService._objectStates.Keys)

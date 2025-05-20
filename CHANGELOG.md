@@ -1,3 +1,7 @@
+`1.3.8`
+- removing interact progress bar when unlocking familiars from buff entity on client
+- changed abbreviation for PrimaryLifeLeech to PAL
+
 `1.3.7`
 - adjusted name trimming to target only vBloods for fam bar/quest targets
 - handling for movementSpeed to show correctly on expertise bar and weapon tooltips

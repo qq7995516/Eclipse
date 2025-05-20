@@ -12,7 +12,6 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static Eclipse.Services.LocalizationService;
 
 namespace Eclipse;
@@ -189,15 +188,11 @@ internal static class Extensions
     }
     public static void Add<T>(this Entity entity)
     {
-        EntityManager.AddComponent(entity, new(Il2CppType.Of<T>()));
-    }
-    public static void Add(this Entity entity, ComponentType componentType)
-    {
-        EntityManager.AddComponent(entity, componentType);
+        if (!entity.Has<T>()) EntityManager.AddComponent(entity, new(Il2CppType.Of<T>()));
     }
     public static void Remove<T>(this Entity entity)
     {
-        EntityManager.RemoveComponent(entity, new(Il2CppType.Of<T>()));
+        if (entity.Has<T>()) EntityManager.RemoveComponent(entity, new(Il2CppType.Of<T>()));
     }
     public static bool TryGetFollowedPlayer(this Entity entity, out Entity player)
     {

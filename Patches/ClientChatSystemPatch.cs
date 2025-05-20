@@ -1,8 +1,10 @@
-﻿using Eclipse.Services;
+﻿using Bloodcraft.Resources;
+using Eclipse.Services;
 using HarmonyLib;
 using Il2CppInterop.Runtime;
 using ProjectM.Network;
 using ProjectM.UI;
+using Stunlock.Core;
 using System.Collections;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -48,8 +50,6 @@ internal static class ClientChatSystemPatch
 
     public const string V1_3 = "1.3";
     public const string VERSION = MyPluginInfo.PLUGIN_VERSION;
-
-    // public static Queue<string> _versions = new([VERSION, V1_2_2]);
     public enum NetworkEventSubType
     {
         RegisterUser,
@@ -57,6 +57,9 @@ internal static class ClientChatSystemPatch
         ConfigsToClient
     }
 
+    static readonly PrefabGUID _familiarUnlockBuff = PrefabGUIDs.AB_HighLordSword_SelfStun_DeadBuff;
+
+    [HarmonyBefore("gg.deca.Bloodstone")]
     [HarmonyPatch(typeof(ClientChatSystem), nameof(ClientChatSystem.OnUpdate))]
     [HarmonyPrefix]
     static void OnUpdatePrefix(ClientChatSystem __instance)
@@ -113,6 +116,18 @@ internal static class ClientChatSystemPatch
         finally
         {
             entities.Dispose();
+        }
+
+        try
+        {
+            if (LocalCharacter.HasBuff(_familiarUnlockBuff) && LocalCharacter.TryGetBuff(_familiarUnlockBuff, out Entity buffEntity))
+            {
+                buffEntity.Remove<UseCharacterHudProgressBar>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Core.Log.LogWarning($"Failed to check for familiar unlock buff! Error - {ex}");
         }
     }
     static IEnumerator SendMessageDelayRoutine(string message, string modVersion)
