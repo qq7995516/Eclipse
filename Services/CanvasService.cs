@@ -1,4 +1,5 @@
 ﻿using Bloodcraft.Resources;
+using Eclipse.Patches;
 using Eclipse.Utilities;
 using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
@@ -763,8 +764,11 @@ internal class CanvasService
 
                     if (abilityGroupEntity.TryGetComponent(out AbilityGroupState abilityGroupState) && abilityGroupState.SlotIndex == 3) // if ability found on slot 3, activate shift loop
                     {
-                        _shiftActive = true;
-                        _shiftRoutine = ShiftUpdateLoop().Start();
+                        if (_shiftRoutine == null)
+                        {
+                            _shiftRoutine = ShiftUpdateLoop().Start();
+                            _shiftActive = true;
+                        }
                     }
                 }
             }

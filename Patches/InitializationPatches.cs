@@ -96,6 +96,9 @@ internal static class InitializationPatches
         CanvasService._shiftRoutine.Stop();
         CanvasService._canvasRoutine.Stop();
 
+        CanvasService._shiftRoutine = null;
+        CanvasService._canvasRoutine = null;
+
         CanvasService._active = false;
         CanvasService._shiftActive = false;
         CanvasService._ready = false;

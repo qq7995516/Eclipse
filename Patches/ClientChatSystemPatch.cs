@@ -180,10 +180,16 @@ internal static class ClientChatSystemPatch
 
                         // Core.Log.LogWarning($"Player data - {string.Join(", ", playerData)}");
 
-                        if (CanvasService._killSwitch) CanvasService._killSwitch = false;
-                        if (!CanvasService._active) CanvasService._active = true;
+                        if (CanvasService._killSwitch)
+                        {
+                            CanvasService._killSwitch = false;
+                        }
 
-                        CanvasService._canvasRoutine = CanvasService.CanvasUpdateLoop().Start();
+                        if (CanvasService._canvasRoutine == null)
+                        {
+                            CanvasService._canvasRoutine = CanvasService.CanvasUpdateLoop().Start();
+                            CanvasService._active = true;
+                        }
 
                         break;
                     case (int)NetworkEventSubType.ConfigsToClient:

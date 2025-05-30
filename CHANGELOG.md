@@ -1,3 +1,6 @@
+`1.3.9`
+- preventing duplicate coroutine instances from being created if one is already present (TESTING)
+
 `1.3.8`
 - removing interact progress bar when unlocking familiars from buff entity on client
 - changed abbreviation for PrimaryLifeLeech to PAL
