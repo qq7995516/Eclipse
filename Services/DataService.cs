@@ -1,4 +1,5 @@
 ﻿using Stunlock.Core;
+using System.ComponentModel;
 using System.Globalization;
 using UnityEngine;
 using static Eclipse.Services.CanvasService;
@@ -8,83 +9,201 @@ internal static class DataService
 {
     public enum TargetType
     {
+        [Description("击杀")]
         Kill,
+
+        [Description("制作")]
         Craft,
+
+        [Description("采集")]
         Gather,
+
+        [Description("钓鱼")]
         Fish
     }
     public enum Profession
     {
+        [Description("附魔")]
         Enchanting,
+
+        [Description("炼金")]
         Alchemy,
+
+        [Description("草药学")]
         Harvesting,
+
+        [Description("锻造")]
         Blacksmithing,
+
+        [Description("裁缝")]
         Tailoring,
+
+        [Description("伐木")]
         Woodcutting,
+
+        [Description("采矿")]
         Mining,
+
+        [Description("钓鱼")]
         Fishing
     }
+
     public enum PlayerClass
     {
+        [Description("无")]
         None,
+
+        [Description("鲜血骑士")]
         BloodKnight,
+
+        [Description("恶魔猎手")]
         DemonHunter,
+
+        [Description("吸血鬼领主")]
         VampireLord,
+
+        [Description("暗影之刃")]
         ShadowBlade,
+
+        [Description("奥术巫师")]
         ArcaneSorcerer,
+
+        [Description("死亡法师")]
         DeathMage
     }
+
     public enum BloodType
     {
+        [Description("工人")]
         Worker,
+
+        [Description("战士")]
         Warrior,
+
+        [Description("学者")]
         Scholar,
+
+        [Description("游荡者")]
         Rogue,
+
+        [Description("变异体")]
         Mutant,
+
+        [Description("V型血")]
         VBlood,
+
+        [Description("孱弱")]
         Frailed,
+
+        [Description("传送门首领")]
         GateBoss,
+
+        [Description("德古拉血裔")]
         Draculin,
+
+        [Description("不朽者")]
         Immortal,
+
+        [Description("生物")]
         Creature,
+
+        [Description("蛮徒")]
         Brute,
+
+        [Description("腐化")]
         Corruption
     }
     public enum WeaponType
     {
+        [Description("剑")]
         Sword,
+
+        [Description("斧")]
         Axe,
+
+        [Description("锤")]
         Mace,
+
+        [Description("矛")]
         Spear,
+
+        [Description("弩")]
         Crossbow,
+
+        [Description("大剑")]
         GreatSword,
+
+        [Description("双刃")]
         Slashers,
+
+        [Description("手枪")]
         Pistols,
+
+        [Description("镰刀")]
         Reaper,
+
+        [Description("长弓")]
         Longbow,
+
+        [Description("鞭")]
         Whip,
+
+        [Description("徒手")]
         Unarmed,
+
+        [Description("鱼竿")]
         FishingPole,
+
+        [Description("双剑")]
         TwinBlades,
+
+        [Description("匕首")]
         Daggers,
+
+        [Description("爪")]
         Claws
     }
 
     public static Dictionary<WeaponStatType, float> _weaponStatValues = [];
     public enum WeaponStatType
     {
+        [Description("无")]
         None,
+
+        [Description("最大生命值")]
         MaxHealth,
+
+        [Description("移动速度")]
         MovementSpeed,
+
+        [Description("普通攻击速度")]
         PrimaryAttackSpeed,
+
+        [Description("物理吸血")]
         PhysicalLifeLeech,
+
+        [Description("法术吸血")]
         SpellLifeLeech,
+
+        [Description("普攻吸血")]
         PrimaryLifeLeech,
+
+        [Description("物理攻击力")]
         PhysicalPower,
+
+        [Description("法术强度")]
         SpellPower,
+
+        [Description("物理暴击率")]
         PhysicalCriticalStrikeChance,
+
+        [Description("物理暴击伤害")]
         PhysicalCriticalStrikeDamage,
+
+        [Description("法术暴击率")]
         SpellCriticalStrikeChance,
+
+        [Description("法术暴击伤害")]
         SpellCriticalStrikeDamage
     }
 
@@ -139,19 +258,44 @@ internal static class DataService
     public static Dictionary<BloodStatType, float> _bloodStatValues = [];
     public enum BloodStatType
     {
+        [Description("无")]
         None,
-        HealingReceived, 
-        DamageReduction, 
-        PhysicalResistance, 
-        SpellResistance, 
+
+        [Description("受到的治疗效果")]
+        HealingReceived,
+
+        [Description("伤害减免")]
+        DamageReduction,
+
+        [Description("物理抗性")]
+        PhysicalResistance,
+
+        [Description("法术抗性")]
+        SpellResistance,
+
+        [Description("资源产出")]
         ResourceYield,
+
+        [Description("降低鲜血流失率")]
         ReducedBloodDrain,
+
+        [Description("法术冷却恢复速率")]
         SpellCooldownRecoveryRate,
+
+        [Description("武器技能冷却恢复速率")]
         WeaponCooldownRecoveryRate,
+
+        [Description("终极技能冷却恢复速率")]
         UltimateCooldownRecoveryRate,
-        MinionDamage, 
-        AbilityAttackSpeed, 
-        CorruptionDamageReduction 
+
+        [Description("仆从伤害")]
+        MinionDamage,
+
+        [Description("技能攻击速度")]
+        AbilityAttackSpeed,
+
+        [Description("腐化伤害减免")]
+        CorruptionDamageReduction
     }
 
     public static readonly Dictionary<BloodStatType, string> BloodStatTypeAbbreviations = new()
@@ -189,8 +333,13 @@ internal static class DataService
     public static Dictionary<FamiliarStatType, float> _familiarStatValues = [];
     public enum FamiliarStatType
     {
+        [Description("最大生命值")]
         MaxHealth,
+
+        [Description("物理攻击力")]
         PhysicalPower,
+
+        [Description("法术强度")]
         SpellPower
     }
 
@@ -257,13 +406,13 @@ internal static class DataService
     }
     public class LegacyData(string percent, string level, string prestige, string legacyType, string bonusStats) : ExperienceData(percent, level, prestige, legacyType)
     {
-        public string LegacyType { get; set; } = ((BloodType)int.Parse(legacyType, CultureInfo.InvariantCulture)).ToString();
-        public List<string> BonusStats { get; set; } = [..Enumerable.Range(0, bonusStats.Length / 2).Select(i => ((BloodStatType)int.Parse(bonusStats.Substring(i * 2, 2), CultureInfo.InvariantCulture)).ToString())];
+        public string LegacyType { get; set; } = ((BloodType)int.Parse(legacyType, CultureInfo.InvariantCulture)).GetDescription();
+        public List<string> BonusStats { get; set; } = [.. Enumerable.Range(0, bonusStats.Length / 2).Select(i => ((BloodStatType)int.Parse(bonusStats.Substring(i * 2, 2), CultureInfo.InvariantCulture)).GetDescription())];
     }
     public class ExpertiseData(string percent, string level, string prestige, string expertiseType, string bonusStats) : ExperienceData(percent, level, prestige, expertiseType)
     {
-        public string ExpertiseType { get; set; } = ((WeaponType)int.Parse(expertiseType)).ToString();
-        public List<string> BonusStats { get; set; } = [.. Enumerable.Range(0, bonusStats.Length / 2).Select(i => ((WeaponStatType)int.Parse(bonusStats.Substring(i * 2, 2), CultureInfo.InvariantCulture)).ToString())];
+        public string ExpertiseType { get; set; } = ((WeaponType)int.Parse(expertiseType)).GetDescription();
+        public List<string> BonusStats { get; set; } = [.. Enumerable.Range(0, bonusStats.Length / 2).Select(i => ((WeaponStatType)int.Parse(bonusStats.Substring(i * 2, 2), CultureInfo.InvariantCulture)).GetDescription())];
     }
     public class QuestData(string type, string progress, string goal, string target, string isVBlood)
     {
@@ -279,7 +428,7 @@ internal static class DataService
         public int Level { get; set; } = int.TryParse(level, out int parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;
         public int Prestige { get; set; } = int.Parse(prestige, CultureInfo.InvariantCulture);
         public string FamiliarName { get; set; } = !string.IsNullOrEmpty(familiarName) ? familiarName : "Familiar";
-        public List<string> FamiliarStats { get; set; } = !string.IsNullOrEmpty(familiarStats) ? [..new List<string> { familiarStats[..4], familiarStats[4..7], familiarStats[7..] }.Select(stat => int.Parse(stat, CultureInfo.InvariantCulture).ToString())] : ["", "", ""];
+        public List<string> FamiliarStats { get; set; } = !string.IsNullOrEmpty(familiarStats) ? [.. new List<string> { familiarStats[..4], familiarStats[4..7], familiarStats[7..] }.Select(stat => int.Parse(stat, CultureInfo.InvariantCulture).ToString())] : ["", "", ""];
     }
     public class ShiftSpellData(string index)
     {
@@ -356,7 +505,7 @@ internal static class DataService
             return [];
         }
 
-        return [..serverMessage.Split(',')];
+        return [.. serverMessage.Split(',')];
     }
     public static void ParseConfigData(List<string> configData)
     {
@@ -475,19 +624,4 @@ internal static class DataService
         ShiftSpellData shiftSpellData = new(playerData[index]);
         _shiftSpellIndex = shiftSpellData.ShiftSpellIndex;
     }
-
-    /*
-    public static WeaponType GetWeaponTypeFromWeaponEntity(Entity weaponEntity)
-    {
-        if (weaponEntity == Entity.Null) return WeaponType.Unarmed;
-        string weaponCheck = weaponEntity.Read<PrefabGUID>().GetPrefabName();
-
-        return Enum.GetValues(typeof(WeaponType))
-            .Cast<WeaponType>()
-            .FirstOrDefault(type =>
-            weaponCheck.Contains(type.ToString(), StringComparison.OrdinalIgnoreCase) &&
-            !(type == WeaponType.Sword && weaponCheck.Contains("GreatSword", StringComparison.OrdinalIgnoreCase))
-            );
-    }
-    */
 }

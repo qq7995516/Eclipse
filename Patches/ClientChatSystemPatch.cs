@@ -6,6 +6,7 @@ using ProjectM.Network;
 using ProjectM.UI;
 using Stunlock.Core;
 using System.Collections;
+using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
 using Unity.Collections;
@@ -50,10 +51,16 @@ internal static class ClientChatSystemPatch
 
     public const string V1_3 = "1.3";
     public const string VERSION = MyPluginInfo.PLUGIN_VERSION;
+
     public enum NetworkEventSubType
     {
+        [Description("注册用户")]
         RegisterUser,
+
+        [Description("同步客户端进度")]
         ProgressToClient,
+
+        [Description("同步客户端配置")]
         ConfigsToClient
     }
 

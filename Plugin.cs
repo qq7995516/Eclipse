@@ -15,13 +15,6 @@ internal class Plugin : BasePlugin
     internal static Plugin Instance { get; set; }
     public static ManualLogSource LogInstance => Instance.Log;
 
-    /*
-    public static readonly List<string> DirectoryPaths =
-    [
-        Path.Combine(Paths.ConfigPath, MyPluginInfo.PLUGIN_NAME) // 0
-    ];
-    */
-
     static ConfigEntry<bool> _leveling;
     static ConfigEntry<bool> _prestige;
     static ConfigEntry<bool> _legacies;
@@ -54,12 +47,6 @@ internal class Plugin : BasePlugin
     }
     static void InitConfig()
     {
-        /*
-        foreach (string path in DirectoryPaths)
-        {
-            CreateDirectory(path);
-        }
-        */
 
         _leveling = InitConfigEntry("UIOptions", "ExperienceBar", true, "Enable/Disable the experience bar, requires both ClientCompanion/LevelingSystem to be enabled in Bloodcraft.");
         _prestige = InitConfigEntry("UIOptions", "ShowPrestige", true, "Enable/Disable showing prestige level in front of experience bar, requires both ClientCompanion/PrestigeSystem to be enabled in Bloodcraft.");
@@ -95,12 +82,5 @@ internal class Plugin : BasePlugin
         Config.Clear();
         _harmony.UnpatchSelf();
         return true;
-    }
-    static void CreateDirectory(string path)
-    {
-        if (!Directory.Exists(path))
-        {
-            Directory.CreateDirectory(path);
-        }
     }
 }
