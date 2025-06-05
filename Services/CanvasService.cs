@@ -82,7 +82,7 @@ internal class CanvasService
         "Poneti_Icon_Hammer_30",
         "Poneti_Icon_Bag",
         "Poneti_Icon_Res_93",
-        SHIFT_SPRITE, // still no idea why this just refuses to work like every other sprite after setting, something with the base material? idk
+        SHIFT_SPRITE, // 仍然不明白为什么这个精灵在设置后就是不像其他精灵一样工作，是基础材质的问题吗？不知道
         "Stunlock_Icon_Item_Jewel_Collection4",
         "Stunlock_Icon_Bag_Background_Alchemy",
         "Poneti_Icon_Alchemy_02_mortar",
@@ -147,12 +147,12 @@ internal class CanvasService
 
     static readonly Dictionary<PlayerClass, Color> _classColorHexMap = new()
     {
-        { PlayerClass.ShadowBlade, new Color(0.6f, 0.1f, 0.9f) },  // ignite purple
-        { PlayerClass.DemonHunter, new Color(1f, 0.8f, 0f) },        // static yellow
-        { PlayerClass.BloodKnight, new Color(1f, 0f, 0f) },           // leech red
-        { PlayerClass.ArcaneSorcerer, new Color(0f, 0.5f, 0.5f) },    // weaken teal
-        { PlayerClass.VampireLord, new Color(0f, 1f, 1f) },           // chill cyan
-        { PlayerClass.DeathMage, new Color(0f, 1f, 0f) }              // condemn green
+        { PlayerClass.ShadowBlade, new Color(0.6f, 0.1f, 0.9f) },  // 点燃 紫色
+        { PlayerClass.DemonHunter, new Color(1f, 0.8f, 0f) },        // 静电 黄色
+        { PlayerClass.BloodKnight, new Color(1f, 0f, 0f) },           // 汲取 红色
+        { PlayerClass.ArcaneSorcerer, new Color(0f, 0.5f, 0.5f) },    // 削弱 青色
+        { PlayerClass.VampireLord, new Color(0f, 1f, 1f) },           // 冰冷 青色
+        { PlayerClass.DeathMage, new Color(0f, 1f, 0f) }              // 谴责 绿色
     };
 
     public const string V1_3 = "1.3";
@@ -357,7 +357,7 @@ internal class CanvasService
     public static readonly Dictionary<PrefabGUID, Entity> PrefabEntityCache = [];
     public static readonly Dictionary<Entity, Dictionary<UnitStatType, float>> WeaponEntityStatCache = [];
     public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> WeaponStatCache = [];
-    // static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _blacksmithingStatCache = []; throwing in towel on this for now x_x
+    // static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> _blacksmithingStatCache = []; // 暂时放弃这个功能 x_x
     public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> OriginalWeaponStatsCache = [];
 
     public static readonly Dictionary<PrefabGUID, Dictionary<UnitStatType, float>> GrimoireStatCache = [];
@@ -442,9 +442,9 @@ internal class CanvasService
     public static Coroutine _canvasRoutine;
     public static Coroutine _shiftRoutine;
 
-    // modifying active buff/item entity sufficient, can leave prefab alone
+    // 修改激活的buff/物品实体就足够了，可以不用动预制件
     static readonly PrefabGUID _statsBuff = PrefabGUIDs.SetBonus_AllLeech_T09;
-    static readonly bool _statsBuffActive = _legacyBar || _expertiseBar; // in loop can check for if has a class for those stats
+    static readonly bool _statsBuffActive = _legacyBar || _expertiseBar; // 在循环中可以检查是否有职业来应用这些属性
 
     static readonly Dictionary<int, ModifyUnitStatBuff_DOTS> _weaponStats = [];
     static readonly Dictionary<int, ModifyUnitStatBuff_DOTS> _bloodStats = [];
@@ -452,7 +452,6 @@ internal class CanvasService
     {
         _canvasBase = canvas;
 
-        // _hudCanvas = GameObject.Find("HUDCanvas(Clone)/BottomBarCanvas").GetComponent<Canvas>();
         _bottomBarCanvas = canvas.BottomBarParent.gameObject.GetComponent<Canvas>();
         _targetInfoPanelCanvas = canvas.TargetInfoPanelParent.gameObject.GetComponent<Canvas>();
 
@@ -464,16 +463,6 @@ internal class CanvasService
         FindSprites();
         InitializeBloodButton();
 
-        /*
-        try
-        {
-            FindGameObjects(canvas.transform.root, string.Empty, true);
-        }
-        catch (Exception ex)
-        {
-            Core.Log.LogError($"Failed to find dump gameObject hierarchy: {ex}");
-        }
-        */
 
         try
         {
@@ -482,7 +471,7 @@ internal class CanvasService
         }
         catch (Exception ex)
         {
-            Core.Log.LogError($"Failed to initialize UI elements: {ex}");
+            Core.Log.LogError($"初始化UI元素失败：{ex}");
         }
     }
     static void InitializeUI()
@@ -600,7 +589,7 @@ internal class CanvasService
             }
             else
             {
-                Core.Log.LogWarning($"Profession object not found!");
+                Core.Log.LogWarning($"专业对象未找到！");
             }
         }
     }
@@ -644,8 +633,6 @@ internal class CanvasService
             gameObject.active = _active;
             _objectStates[gameObject] = _active;
         }
-
-        // Tutorial();
     }
     public static IEnumerator CanvasUpdateLoop()
     {
@@ -671,7 +658,7 @@ internal class CanvasService
                 }
                 catch (Exception e)
                 {
-                    Core.Log.LogError($"Error updating experience bar: {e}");
+                    Core.Log.LogError($"更新经验条时出错：{e}");
                 }
             }
 
@@ -684,7 +671,7 @@ internal class CanvasService
                 }
                 catch (Exception e)
                 {
-                    Core.Log.LogError($"Error updating legacy bar: {e}");
+                    Core.Log.LogError($"更新传承条时出错：{e}");
                 }
             }
 
@@ -698,7 +685,7 @@ internal class CanvasService
                 }
                 catch (Exception e)
                 {
-                    Core.Log.LogError($"Error updating expertise bar: {e}");
+                    Core.Log.LogError($"更新专精条时出错：{e}");
                 }
             }
 
@@ -713,7 +700,7 @@ internal class CanvasService
                 }
                 catch (Exception e)
                 {
-                    Core.Log.LogError($"Error updating stats buff: {e}");
+                    Core.Log.LogError($"更新属性增益时出错：{e}");
                 }
             }
 
@@ -726,7 +713,7 @@ internal class CanvasService
                 }
                 catch (Exception e)
                 {
-                    Core.Log.LogError($"Error updating familiar bar: {e}");
+                    Core.Log.LogError($"更新伙伴条时出错：{e}");
                 }
             }
 
@@ -739,7 +726,7 @@ internal class CanvasService
                 }
                 catch (Exception e)
                 {
-                    Core.Log.LogError($"Error updating quest tracker: {e}");
+                    Core.Log.LogError($"更新任务追踪器时出错：{e}");
                 }
             }
 
@@ -754,7 +741,7 @@ internal class CanvasService
                 }
                 catch (Exception e)
                 {
-                    Core.Log.LogError($"Error updating professions(1): {e}");
+                    Core.Log.LogError($"更新专业(1)时出错：{e}");
                 }
 
                 try
@@ -766,7 +753,7 @@ internal class CanvasService
                 }
                 catch (Exception e)
                 {
-                    Core.Log.LogError($"Error updating professions(2): {e}");
+                    Core.Log.LogError($"更新专业(2)时出错：{e}");
                 }
             }
 
@@ -778,7 +765,7 @@ internal class CanvasService
                 {
                     Entity abilityGroupEntity = abilityBar_Shared.CastGroup.GetEntityOnServer();
 
-                    if (abilityGroupEntity.TryGetComponent(out AbilityGroupState abilityGroupState) && abilityGroupState.SlotIndex == 3) // if ability found on slot 3, activate shift loop
+                    if (abilityGroupEntity.TryGetComponent(out AbilityGroupState abilityGroupState) && abilityGroupState.SlotIndex == 3) // 如果在3号槽位找到技能，则激活轮换循环
                     {
                         if (_shiftRoutine == null)
                         {
@@ -790,7 +777,7 @@ internal class CanvasService
             }
             catch (Exception e)
             {
-                Core.Log.LogError($"Error updating ability bar: {e}");
+                Core.Log.LogError($"更新技能栏时出错：{e}");
             }
 
             yield return _delay;
@@ -911,12 +898,6 @@ internal class CanvasService
             _cooldownTime = _shiftSpellIndex.Equals(-1) ? abilityCooldownData.Cooldown._Value : _shiftSpellIndex * COOLDOWN_FACTOR + COOLDOWN_FACTOR;
             _cooldownEndTime = Core.ServerTime.TimeOnServer + _cooldownTime;
 
-            /*
-            if (!abilityGroupEntity.Has<VBloodAbilityData>() && abilityCastEntity.TryGetComponent(out AbilityCooldownState abilityCooldownState))
-            {
-                _cooldownTime = abilityCooldownState.CurrentCooldown;
-            }
-            */
         }
     }
     static void UpdateAbilityState(Entity abilityGroupEntity, Entity abilityCastEntity)
@@ -931,8 +912,6 @@ internal class CanvasService
 
         _chargeUpTimeRemaining = (float)(_chargeUpEndTime - Core.ServerTime.TimeOnServer);
         _cooldownRemaining = (float)(_cooldownEndTime - Core.ServerTime.TimeOnServer);
-
-        // Core.Log.LogInfo($"UpdateAbilityState _cooldownRemaining - {_cooldownRemaining}");
 
         if (abilityGroupEntity.TryGetComponent(out AbilityChargesState abilityChargesState))
         {
@@ -1077,25 +1056,18 @@ internal class CanvasService
 
                     if (TryUpdateTooltipData(abilityGroupEntity, currentPrefabGUID))
                     {
-                        // Core.Log.LogWarning($"AbilityTooltipData refreshed from AbilityGroupState, updating ability data! {currentPrefabGUID}");
                         UpdateAbilityData(_abilityTooltipData, abilityGroupEntity, abilityCastEntity, currentPrefabGUID);
                     }
                     else if (_abilityTooltipData != null)
                     {
-                        // Core.Log.LogWarning($"AbilityTooltipData unchanged from AbilityGroupState, updating ability data! {currentPrefabGUID}");
                         UpdateAbilityData(_abilityTooltipData, abilityGroupEntity, abilityCastEntity, currentPrefabGUID);
                     }
                 }
 
                 if (_abilityTooltipData != null)
                 {
-                    // Core.Log.LogWarning($"AbilityTooltipData exists, updating ability state!");
                     UpdateAbilityState(abilityGroupEntity, abilityCastEntity);
                 }
-            }
-            else
-            {
-                // Core.Log.LogWarning($"AbilityBar_Shared not found!");
             }
 
             yield return _shiftDelay;
@@ -1139,7 +1111,7 @@ internal class CanvasService
 
         if (type == "Frailed" || type == "Familiar")
         {
-            levelString = "N/A";
+            levelString = "不适用";
         }
 
         if (level == maxLevel)
@@ -1172,7 +1144,7 @@ internal class CanvasService
 
             if (element.Equals(UIElement.Experience))
             {
-                header = $"{element} {IntegerToRoman(prestiges)}";
+                header = $"{element.GetDescription()} {IntegerToRoman(prestiges)}";
             }
             else if (element.Equals(UIElement.Legacy))
             {
@@ -1243,8 +1215,6 @@ internal class CanvasService
                 statTexts[i].ForceSet("");
                 statTexts[i].enabled = false;
             }
-
-            // Core.Log.LogWarning($"WeaponStats - {bonusStats[i]} - {statTexts[i].GetText()}");
         }
     }
     static void UpdateBloodStats(List<string> bonusStats, List<LocalizedText> statTexts, Func<string, string> getStatInfo)
@@ -1266,8 +1236,6 @@ internal class CanvasService
                 statTexts[i].ForceSet("");
                 statTexts[i].enabled = false;
             }
-
-            // Core.Log.LogWarning($"BloodStats - {bonusStats[i]} - {statTexts[i].GetText()}");
         }
     }
     static string GetWeaponStatInfo(string statType)
@@ -1303,16 +1271,7 @@ internal class CanvasService
                 _weaponStats.TryAdd(statModificationId, unitStatBuff);
                 return FormatWeaponStat(weaponStat, displayStatValue);
             }
-            else
-            {
-                // Core.Log.LogWarning($"GetWeaponStatInfo couldn't find - {statType}");
-            }
         }
-        else
-        {
-            // Core.Log.LogWarning($"GetWeaponStatInfo couldn't parse - {statType}");
-        }
-
         return string.Empty;
     }
     static string GetBloodStatInfo(string statType)
@@ -1341,20 +1300,9 @@ internal class CanvasService
 
                 _bloodStats.TryAdd(statModificationId, unitStatBuff);
 
-                // Core.Log.LogWarning($"GetBloodStatInfo - {statModificationId}|{_buffStats.Count}");
-
                 return displayString;
             }
-            else
-            {
-                // Core.Log.LogWarning($"GetBloodStatInfo couldn't find - {statType}");
-            }
         }
-        else
-        {
-            // Core.Log.LogWarning($"GetBloodStatInfo couldn't parse - {statType}");
-        }
-
         return "";
     }
     static void UpdateFamiliarStats(List<string> familiarStats, List<LocalizedText> statTexts)
@@ -1379,7 +1327,7 @@ internal class CanvasService
         }
     }
 
-    const string FISHING = "Go Fish!";
+    const string FISHING = "去钓鱼吧！";
     static void UpdateQuests(GameObject questObject, LocalizedText questSubHeader, Image questIcon,
         TargetType targetType, string target, int progress, int goal, bool isVBlood)
     {
@@ -1391,8 +1339,6 @@ internal class CanvasService
 
             if (targetType.Equals(TargetType.Kill))
             {
-                // int index = target.IndexOf(TRIMMER);
-                // target = index >= 0 ? target[..index] : target;
                 target = TrimToFirstWord(target);
             }
             else if (targetType.Equals(TargetType.Fish)) target = FISHING;
@@ -1424,7 +1370,7 @@ internal class CanvasService
                 case TargetType.Gather:
                     if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
                     targetPrefabGUID = LocalizationService.GetPrefabGuidFromName(target);
-                    if (target.Equals("Stone")) targetPrefabGUID = PrefabGUIDs.Item_Ingredient_Stone; // not sure don't care hard-coding for now
+                    if (target.Equals("Stone")) targetPrefabGUID = PrefabGUIDs.Item_Ingredient_Stone; // 不确定，暂时硬编码
                     managedItemData = ManagedDataRegistry.GetOrDefault<ManagedItemData>(targetPrefabGUID);
                     if (managedItemData != null && questIcon.sprite != managedItemData.Icon)
                     {
@@ -1433,7 +1379,6 @@ internal class CanvasService
                     break;
                 case TargetType.Fish:
                     if (!questIcon.gameObject.active) questIcon.gameObject.active = true;
-                    // targetPrefabGUID = LocalizationService.GetPrefabGuidFromName(target);
                     managedItemData = ManagedDataRegistry.GetOrDefault<ManagedItemData>(PrefabGUIDs.FakeItem_AnyFish);
                     if (managedItemData != null && questIcon.sprite != managedItemData.Icon)
                     {
@@ -1500,10 +1445,6 @@ internal class CanvasService
             chargeCooldownText.color = Color.white;
             chargeCooldownText.enabled = true;
 
-            // chargeUpFill = FindTargetUIObject(rectTransform, "ChargeUpFill").GetComponent<Image>();
-            // chargeUpFill.fillAmount = 0f;
-            // chargeUpFill.enabled = true;
-
             abilityEmptyIcon = FindTargetUIObject(rectTransform, "EmptyIcon");
             abilityEmptyIcon.SetActive(false);
 
@@ -1514,11 +1455,6 @@ internal class CanvasService
             TextMeshProUGUI keybindText = keybindObject.GetComponent<TextMeshProUGUI>();
             keybindText.SetText("Shift");
             keybindText.enabled = true;
-
-            //RectTransform layoutTransform = keybindImageLayout.GetComponent<RectTransform>();
-            //keybindImageObject = GameObject.Find("HUDCanvas(Clone)/BottomBarCanvas/BottomBar(Clone)/Content/Background/AbilityBar/Abilities/AbilityBarEntry_Dummy(Clone)/KeybindBackground/KeybindImageLayout/KeybindImage/");
-            //keybindImage = keybindImageObject.GetComponent<Image>();
-            //keybindImageObject.SetActive(false);
 
             _objectStates.Add(shiftSlotObject, true);
             _gameObjects.Add(UIElement.ShiftSlot, shiftSlotObject);
@@ -1532,52 +1468,42 @@ internal class CanvasService
         }
         else
         {
-            Core.Log.LogWarning("AbilityBarEntry_Dummy is null!");
+            Core.Log.LogWarning("AbilityBarEntry_Dummy 为空！");
         }
     }
     static void ConfigureQuestWindow(ref GameObject questObject, UIElement questType, Color headerColor,
         ref LocalizedText header, ref LocalizedText subHeader, ref Image questIcon)
     {
-        // Instantiate quest tooltip
         questObject = GameObject.Instantiate(_canvasBase.BottomBarParentPrefab.FakeTooltip.gameObject);
         RectTransform questTransform = questObject.GetComponent<RectTransform>();
 
-        // Prevent quest window from being destroyed on scene load and move to scene
         GameObject.DontDestroyOnLoad(questObject);
         SceneManager.MoveGameObjectToScene(questObject, SceneManager.GetSceneByName("VRisingWorld"));
 
-        // Set parent and activate quest window
         questTransform.SetParent(_bottomBarCanvas.transform, false);
         questTransform.gameObject.layer = _layer;
         questObject.SetActive(true);
 
-        // Deactivate unwanted objects in quest tooltips
         GameObject entries = FindTargetUIObject(questObject.transform, "InformationEntries");
         DeactivateChildrenExceptNamed(entries.transform, "TooltipHeader");
 
-        // Activate TooltipHeader
         GameObject tooltipHeader = FindTargetUIObject(questObject.transform, "TooltipHeader");
         tooltipHeader.SetActive(true);
 
-        // Activate Icon&Name container
         GameObject iconNameObject = FindTargetUIObject(tooltipHeader.transform, "Icon&Name");
         iconNameObject.SetActive(true);
 
-        // Deactivate LevelFrames and ReforgeCosts
         GameObject levelFrame = FindTargetUIObject(iconNameObject.transform, "LevelFrame");
         levelFrame.SetActive(false);
         GameObject reforgeCost = FindTargetUIObject(questObject.transform, "Tooltip_ReforgeCost");
         reforgeCost.SetActive(false);
 
-        // Deactivate TooltipIcon
         GameObject tooltipIcon = FindTargetUIObject(tooltipHeader.transform, "TooltipIcon");
         RectTransform tooltipIconTransform = tooltipIcon.GetComponent<RectTransform>();
 
-        // Set position relative to parent
         tooltipIconTransform.anchorMin = new Vector2(tooltipIconTransform.anchorMin.x, 0.55f);
         tooltipIconTransform.anchorMax = new Vector2(tooltipIconTransform.anchorMax.x, 0.55f);
 
-        // Set the pivot to the vertical center
         tooltipIconTransform.pivot = new Vector2(tooltipIconTransform.pivot.x, 0.55f);
 
         questIcon = tooltipIcon.GetComponent<Image>();
@@ -1598,7 +1524,6 @@ internal class CanvasService
 
         tooltipIconTransform.sizeDelta = new Vector2(tooltipIconTransform.sizeDelta.x * 0.35f, tooltipIconTransform.sizeDelta.y * 0.35f);
 
-        // Set LocalizedText for QuestHeaders
         GameObject subHeaderObject = FindTargetUIObject(iconNameObject.transform, "TooltipSubHeader");
         header = FindTargetUIObject(iconNameObject.transform, "TooltipHeader").GetComponent<LocalizedText>();
         header.Text.fontSize *= 2f;
@@ -1608,23 +1533,19 @@ internal class CanvasService
         subHeader.Text.autoSizeTextContainer = false;
         subHeader.Text.enableWordWrapping = false;
 
-        // Configure the subheader's content size fitter
         ContentSizeFitter subHeaderFitter = subHeaderObject.GetComponent<ContentSizeFitter>();
         subHeaderFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         subHeaderFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-        // Size window and set anchors
         questTransform.sizeDelta = new Vector2(questTransform.sizeDelta.x * 0.65f, questTransform.sizeDelta.y);
-        questTransform.anchorMin = new Vector2(1, _windowOffset); // Anchored to bottom-right
+        questTransform.anchorMin = new Vector2(1, _windowOffset);
         questTransform.anchorMax = new Vector2(1, _windowOffset);
         questTransform.pivot = new Vector2(1, _windowOffset);
         questTransform.anchoredPosition = new Vector2(0, _windowOffset);
 
-        // Set header text
-        header.ForceSet(questType.GetDescription() + " Quest");
-        subHeader.ForceSet("UnitName: 0/0");
+        header.ForceSet(questType.GetDescription() + "任务");
+        subHeader.ForceSet("目标: 0/0");
 
-        // Add to active objects
         _gameObjects.Add(questType, questObject);
         _objectStates.Add(questObject, true);
         _windowOffset += 0.075f;
@@ -1633,55 +1554,41 @@ internal class CanvasService
         ref LocalizedText level, ref LocalizedText header, UIElement element, Color fillColor,
         ref LocalizedText firstText, ref LocalizedText secondText, ref LocalizedText thirdText)
     {
-        // Instantiate the bar object from the prefab
         barGameObject = GameObject.Instantiate(_canvasBase.TargetInfoParent.gameObject);
-        // barGameObject = UIHelper.InstantiateGameObjectUnderAnchor(_canvasBase.TargetInfoParent.gameObject, _targetInfoPanelCanvas.transform);
-        // barGameObject = UIHelper.InstantiateGameObject(_canvasBase.TargetInfoParent.gameObject);
-        // UIHelper.SetParent(barGameObject.transform, _targetInfoPanelCanvas.transform, false);
 
-        // DontDestroyOnLoad, change scene
         GameObject.DontDestroyOnLoad(barGameObject);
         SceneManager.MoveGameObjectToScene(barGameObject, SceneManager.GetSceneByName("VRisingWorld"));
 
         RectTransform barRectTransform = barGameObject.GetComponent<RectTransform>();
-        // barRectTransform.SetParent(_bottomBarCanvas.transform, false);
         barRectTransform.SetParent(_targetInfoPanelCanvas.transform, false);
         barRectTransform.gameObject.layer = _layer;
 
-        // Set anchor and pivot to middle-upper-right
         float offsetY = BAR_HEIGHT_SPACING * _barNumber;
         float offsetX = 1f - BAR_WIDTH_SPACING;
         barRectTransform.anchorMin = new Vector2(offsetX, 0.6f - offsetY);
         barRectTransform.anchorMax = new Vector2(offsetX, 0.6f - offsetY);
         barRectTransform.pivot = new Vector2(offsetX, 0.6f - offsetY);
 
-        // Best scale found so far for different resolutions
         barRectTransform.localScale = new Vector3(0.7f, 0.7f, 1f);
 
-        // Assign fill, header, and level text components
         fill = FindTargetUIObject(barRectTransform.transform, "Fill").GetComponent<Image>();
         level = FindTargetUIObject(barRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
         header = FindTargetUIObject(barRectTransform.transform, "Name").GetComponent<LocalizedText>();
 
-        // Set initial values
         fill.fillAmount = 0f;
         fill.color = fillColor;
         level.ForceSet("0");
 
-        // Set header text
         header.ForceSet(element.GetDescription());
         header.Text.fontSize *= 1.5f;
         _horizontalBarHeaderFontSize = header.Text.fontSize;
 
-        // Set these to 0 so don't appear, deactivating instead seemed funky
         FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
         FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>().fillAmount = 0f;
 
-        // Configure informationPanels
         informationPanelObject = FindTargetUIObject(barRectTransform.transform, "InformationPanel");
         ConfigureInformationPanel(ref informationPanelObject, ref firstText, ref secondText, ref thirdText, element);
 
-        // Increment for spacing
         _barNumber++;
         barGameObject.SetActive(true);
 
@@ -1691,10 +1598,7 @@ internal class CanvasService
     static void ConfigureVerticalProgressBar(ref GameObject barGameObject, ref Image progressFill, ref Image maxFill,
         ref LocalizedText level, Profession profession)
     {
-        // Instantiate the bar object from the prefab
         barGameObject = GameObject.Instantiate(_canvasBase.TargetInfoParent.gameObject);
-        // barGameObject = UIHelper.InstantiateGameObject(_canvasBase.TargetInfoParent.gameObject);
-        // UIHelper.SetParent(barGameObject.transform, _targetInfoPanelCanvas.transform, false);
 
         GameObject.DontDestroyOnLoad(barGameObject);
         SceneManager.MoveGameObjectToScene(barGameObject, SceneManager.GetSceneByName("VRisingWorld"));
@@ -1703,53 +1607,32 @@ internal class CanvasService
         barRectTransform.SetParent(_targetInfoPanelCanvas.transform, false);
         barRectTransform.gameObject.layer = _layer;
 
-        // Define the number of professions (bars)
         int totalBars = 8;
+        float totalBarAreaWidth = 0.215f;
+        float barWidth = totalBarAreaWidth / totalBars;
 
-        // Calculate the total width and height for the bars
-        float totalBarAreaWidth = 0.215f; // previous 0.185f
-        float barWidth = totalBarAreaWidth / totalBars; // Width of each bar
+        float padding = 1f - (0.075f * 2.45f);
+        float offsetX = padding + (barWidth * _graphBarNumber / 1.4f);
 
-        // Calculate the starting X position to center the bar graph and position added bars appropriately
-        float padding = 1f - (0.075f * 2.45f); // BAR_WIDTH_SPACING previously 0.075f
-        float offsetX = padding + (barWidth * _graphBarNumber / 1.4f); // previously used 1.5f
-
-        // scale size
         Vector3 updatedScale = new(0.4f, 1f, 1f);
         barRectTransform.localScale = updatedScale;
 
-        // positioning
-        float offsetY = 0.24f; // try 0.24f if needs adjusting? 0.235f previous
+        float offsetY = 0.24f;
         barRectTransform.anchorMin = new Vector2(offsetX, offsetY);
         barRectTransform.anchorMax = new Vector2(offsetX, offsetY);
         barRectTransform.pivot = new Vector2(offsetX, offsetY);
 
-        // Assign fill and level text components
         progressFill = FindTargetUIObject(barRectTransform.transform, "Fill").GetComponent<Image>();
         progressFill.fillMethod = Image.FillMethod.Horizontal;
         progressFill.fillOrigin = 0;
-        progressFill.fillAmount = 0f; // This will be set based on profession level
+        progressFill.fillAmount = 0f;
         progressFill.color = ProfessionColors[profession];
 
-        // **Rotate the bar by 90 degrees around the Z-axis**
         barRectTransform.localRotation = Quaternion.Euler(0, 0, 90);
 
-        // Assign and adjust the level text component
         level = FindTargetUIObject(barRectTransform.transform, "LevelText").GetComponent<LocalizedText>();
 
-        // font size for later reference
-        // _fontSize = level.Text.fontSize;
-        // level.Text.fontSize *= 1.2f;
-
-        // Get text container and rotate back
-        // GameObject levelTextContainer = FindTargetUIObject(barRectTransform.transform, "LevelDiff");
-        // RectTransform levelTextContainerRectTransform = levelTextContainer.GetComponent<RectTransform>();
-        // levelTextContainerRectTransform.rotation = Quaternion.identity;
-        // levelTextContainerRectTransform.localRotation = Quaternion.Euler(0, 0, -90);
-
-        // LevelBackground scale set back
         GameObject levelBackgroundObject = FindTargetUIObject(barRectTransform.transform, "LevelBackground");
-        // GameObject highlightObject = GameObject.Instantiate(levelBackgroundObject);
 
         Image levelBackgroundImage = levelBackgroundObject.GetComponent<Image>();
         Sprite professionIcon = _professionIcons.TryGetValue(profession, out string spriteName) && Sprites.TryGetValue(spriteName, out Sprite sprite) ? sprite : levelBackgroundImage.sprite;
@@ -1758,37 +1641,18 @@ internal class CanvasService
         levelBackgroundObject.transform.localRotation = Quaternion.Euler(0, 0, -90);
         levelBackgroundObject.transform.localScale = new(0.25f, 1f, 1f);
 
-        /*
-        // add gameObject with image to use as coloring fill effect for icon
-        highlightObject.transform.SetParent(levelBackgroundObject.transform.parent, false);
-        highlightObject.transform.SetSiblingIndex(levelBackgroundObject.transform.GetSiblingIndex() - 1);
-
-        iconFill = highlightObject.GetComponent<Image>();
-        iconFill.sprite = professionIcon ?? levelBackgroundImage.sprite;
-        // highlightObject.transform.rotation = Quaternion.identity;
-        // iconFill.type = Image.Type.Filled;
-        // iconFill.fillMethod = Image.FillMethod.Vertical;
-        // iconFill.fillOrigin = 2;
-        // iconFill.fillAmount = 0.5f;
-        highlightObject?.SetActive(true);
-        */
-
-        // Hide unnecessary UI elements
         var headerObject = FindTargetUIObject(barRectTransform.transform, "Name");
         headerObject?.SetActive(false);
 
         GameObject informationPanelObject = FindTargetUIObject(barRectTransform.transform, "InformationPanel");
         informationPanelObject?.SetActive(false);
 
-        // Set these to 0 so don't appear, deactivating instead seemed funky
         FindTargetUIObject(barRectTransform.transform, "DamageTakenFill").GetComponent<Image>().fillAmount = 0f;
-        //FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>().fillAmount = 0f;
         maxFill = FindTargetUIObject(barRectTransform.transform, "AbsorbFill").GetComponent<Image>();
         maxFill.fillAmount = 0f;
         maxFill.transform.localScale = new(1f, 0.25f, 1f);
         maxFill.color = _brightGold;
 
-        // Increment GraphBarNumber for horizontal spacing within the bar graph
         _graphBarNumber++;
 
         barGameObject.SetActive(true);
@@ -1865,7 +1729,6 @@ internal class CanvasService
         if (classType.Equals(PlayerClass.None))
             return 1f;
 
-        // Check if the stat type exists in the class synergies for the current class
         if (typeof(T) == typeof(WeaponStatType) && classStatSynergy[classType].WeaponStatTypes.Contains((WeaponStatType)(object)statType))
         {
             return _classStatMultiplier;
@@ -1875,7 +1738,7 @@ internal class CanvasService
             return _classStatMultiplier;
         }
 
-        return 1f; // Return default multiplier if stat is not present in the class synergy
+        return 1f;
     }
     static string FormatWeaponStat(WeaponStatType weaponStat, float statValue)
     {
@@ -1888,7 +1751,6 @@ internal class CanvasService
         };
 
         string displayString = $"<color=#00FFFF>{WeaponStatTypeAbbreviations[weaponStat]}</color>: <color=#90EE90>{statValueString}</color>";
-        // Core.Log.LogWarning($"FormatWeaponStat - {weaponStat} - {displayString}");
         return displayString;
     }
     static string IntegerToRoman(int num)
@@ -1910,11 +1772,9 @@ internal class CanvasService
     {
         public static GameObject FindTargetUIObject(Transform root, string targetName)
         {
-            // Stack to hold the transforms to be processed
             Stack<(Transform transform, int indentLevel)> transformStack = new();
             transformStack.Push((root, 0));
 
-            // HashSet to keep track of visited transforms to avoid cyclic references
             HashSet<Transform> visited = [];
 
             Il2CppArrayBase<Transform> children = root.GetComponentsInChildren<Transform>(true);
@@ -1927,23 +1787,14 @@ internal class CanvasService
 
                 if (!visited.Add(current))
                 {
-                    // If we have already visited this transform, skip it
                     continue;
                 }
 
                 if (current.gameObject.name.Equals(targetName, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Return the transform if the name matches
                     return current.gameObject;
                 }
 
-                // Create an indentation string based on the indent level
-                //string indent = new('|', indentLevel);
-
-                // Print the current GameObject's name and some basic info
-                //Core.Log.LogInfo($"{indent}{current.gameObject.name} ({current.gameObject.scene.name})");
-
-                // Add all children to the stack
                 foreach (Transform child in transforms)
                 {
                     if (child.parent == current)
@@ -1953,25 +1804,23 @@ internal class CanvasService
                 }
             }
 
-            Core.Log.LogWarning($"GameObject with name '{targetName}' not found!");
+            Core.Log.LogWarning($"名为 '{targetName}' 的GameObject未找到！");
             return null;
         }
         public static void FindLoadedObjects<T>() where T : UnityEngine.Object
         {
             Il2CppReferenceArray<UnityEngine.Object> resources = UnityEngine.Resources.FindObjectsOfTypeAll(Il2CppType.Of<T>());
-            Core.Log.LogInfo($"Found {resources.Length} {Il2CppType.Of<T>().FullName}'s!");
+            Core.Log.LogInfo($"找到 {resources.Length} 个 '{Il2CppType.Of<T>().FullName}'！");
             foreach (UnityEngine.Object resource in resources)
             {
-                Core.Log.LogInfo($"Sprite: {resource.name}");
+                Core.Log.LogInfo($"精灵: {resource.name}");
             }
         }
         public static void DeactivateChildrenExceptNamed(Transform root, string targetName)
         {
-            // Stack to hold the transforms to be processed
             Stack<(Transform transform, int indentLevel)> transformStack = new();
             transformStack.Push((root, 0));
 
-            // HashSet to keep track of visited transforms to avoid cyclic references
             HashSet<Transform> visited = [];
 
             Il2CppArrayBase<Transform> children = root.GetComponentsInChildren<Transform>();
@@ -1983,11 +1832,9 @@ internal class CanvasService
 
                 if (!visited.Add(current))
                 {
-                    // If we have already visited this transform, skip it
                     continue;
                 }
 
-                // Add all children to the stack
                 foreach (Transform child in transforms)
                 {
                     if (child.parent == current)
@@ -2001,17 +1848,15 @@ internal class CanvasService
         }
         public static void FindGameObjects(Transform root, string filePath = "", bool includeInactive = false)
         {
-            // Stack to hold the transforms to be processed
             Stack<(Transform transform, int indentLevel)> transformStack = new();
             transformStack.Push((root, 0));
 
-            // HashSet to keep track of visited transforms to avoid cyclic references
             HashSet<Transform> visited = [];
 
             Il2CppArrayBase<Transform> children = root.GetComponentsInChildren<Transform>(includeInactive);
             List<Transform> transforms = [.. children];
 
-            Core.Log.LogWarning($"Found {transforms.Count} GameObjects!");
+            Core.Log.LogWarning($"找到 {transforms.Count} 个 GameObjects！");
 
             if (string.IsNullOrEmpty(filePath))
             {
@@ -2021,19 +1866,13 @@ internal class CanvasService
 
                     if (!visited.Add(current))
                     {
-                        // If we have already visited this transform, skip it
                         continue;
                     }
 
                     List<string> objectComponents = FindGameObjectComponents(current.gameObject);
-
-                    // Create an indentation string based on the indent level
                     string indent = new('|', indentLevel);
-
-                    // Write the current GameObject's name and some basic info to the file
                     Core.Log.LogInfo($"{indent}{current.gameObject.name} | {string.Join(",", objectComponents)} | [{current.gameObject.scene.name}]");
 
-                    // Add all children to the stack
                     foreach (Transform child in transforms)
                     {
                         if (child.parent == current)
@@ -2054,19 +1893,13 @@ internal class CanvasService
 
                 if (!visited.Add(current))
                 {
-                    // If we have already visited this transform, skip it
                     continue;
                 }
 
                 List<string> objectComponents = FindGameObjectComponents(current.gameObject);
-
-                // Create an indentation string based on the indent level
                 string indent = new('|', indentLevel);
-
-                // Write the current GameObject's name and some basic info to the file
                 writer.WriteLine($"{indent}{current.gameObject.name} | {string.Join(",", objectComponents)} | [{current.gameObject.scene.name}]");
 
-                // Add all children to the stack
                 foreach (Transform child in transforms)
                 {
                     if (child.parent == current)
@@ -2116,7 +1949,6 @@ internal class CanvasService
         int firstSpaceIndex = name.IndexOf(' ');
         int secondSpaceIndex = name.IndexOf(' ', firstSpaceIndex + 1);
 
-        // Only trim if there are at least two spaces (i.e., three words)
         if (firstSpaceIndex > 0 && secondSpaceIndex > 0)
         {
             return name[..firstSpaceIndex];
@@ -2150,4 +1982,3 @@ internal class CanvasService
         _sprites.Clear();
     }
 }
-

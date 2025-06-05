@@ -28,6 +28,7 @@ internal static class ClientChatSystemPatch
     public static bool _userRegistered = false;
     public static bool _pending = false;
 
+    // 正则表达式是逻辑的一部分，不能修改
     static readonly Regex _regexExtract = new(@"^\[(\d+)\]:");
     static readonly Regex _regexMAC = new(@";mac([^;]+)$");
 
@@ -49,9 +50,11 @@ internal static class ClientChatSystemPatch
         IsDebugEvent = false,
     };
 
+    // 版本号是逻辑的一部分，不能修改
     public const string V1_3 = "1.3";
     public const string VERSION = MyPluginInfo.PLUGIN_VERSION;
 
+    // 枚举成员名保持不变，Description特性已提供中文描述，这是正确的做法
     public enum NetworkEventSubType
     {
         [Description("注册用户")]
@@ -79,17 +82,6 @@ internal static class ClientChatSystemPatch
 
             try
             {
-                /*
-                if(_versions.TryDequeue(out string modVersion))
-                {
-                    string stringId = _localUser.GetUser().PlatformId.ToString();
-                    string message = $"{modVersion};{stringId}";
-
-                    SendMessageDelayRoutine(message, modVersion).Start();
-                    ResetPendingDelayRoutine().Start();
-                }
-                */
-
                 string stringId = LocalUser.GetUser().PlatformId.ToString();
                 string message = $"{VERSION};{stringId}";
 
@@ -97,7 +89,7 @@ internal static class ClientChatSystemPatch
             }
             catch (Exception ex)
             {
-                Core.Log.LogError($"Failed sending registration payload to server! Error - {ex}");
+                Core.Log.LogError($"向服务器发送注册负载失败！错误 - {ex}");
             }
         }
 
@@ -134,25 +126,23 @@ internal static class ClientChatSystemPatch
         }
         catch (Exception ex)
         {
-            Core.Log.LogWarning($"Failed to check for familiar unlock buff! Error - {ex}");
+            Core.Log.LogWarning($"检查使魔解锁增益时失败！错误 - {ex}");
         }
     }
     static IEnumerator SendMessageDelayRoutine(string message, string modVersion)
     {
         yield return _registrationDelay;
 
-        // if (_userRegistered) yield break;
-
         SendMessage(NetworkEventSubType.RegisterUser, message, modVersion);
     }
     static void SendMessage(NetworkEventSubType subType, string message, string modVersion)
     {
+        // "[ECLIPSE]" 是与服务器约定的协议关键字，不能修改
         string intermediateMessage = $"[ECLIPSE][{(int)subType}]:{message}";
         string messageWithMAC;
 
         messageWithMAC = modVersion switch
         {
-            // V1_2_2 => $"{intermediateMessage};mac{GenerateMACV1_2_2(intermediateMessage)}",
             _ when modVersion.StartsWith(V1_3) => $"{intermediateMessage};mac{GenerateMACV1_3(intermediateMessage)}",
             _ => string.Empty
         };
@@ -171,7 +161,7 @@ internal static class ClientChatSystemPatch
         networkEntity.Write(_networkEventType);
         networkEntity.Write(chatMessageEvent);
 
-        Core.Log.LogInfo($"Registration payload sent to server ({DateTime.Now}) - {messageWithMAC}");
+        Core.Log.LogInfo($"已向服务器发送注册负载 ({DateTime.Now}) - {messageWithMAC}");
     }
     static void HandleServerMessage(string message)
     {
@@ -184,8 +174,6 @@ internal static class ClientChatSystemPatch
                     case (int)NetworkEventSubType.ProgressToClient:
                         List<string> playerData = DataService.ParseMessageString(_regexExtract.Replace(message, ""));
                         DataService.ParsePlayerData(playerData);
-
-                        // Core.Log.LogWarning($"Player data - {string.Join(", ", playerData)}");
 
                         if (CanvasService._killSwitch)
                         {
@@ -210,12 +198,12 @@ internal static class ClientChatSystemPatch
             }
             catch (Exception ex)
             {
-                Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to handle message after parsing event type - {ex}");
+                Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] 解析事件类型后处理消息失败 - {ex}");
             }
         }
         else
         {
-            Core.Log.LogWarning($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to parse event type after MAC verification - {message}");
+            Core.Log.LogWarning($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] MAC验证后解析事件类型失败 - {message}");
         }
     }
     public static bool CheckMAC(string receivedMessage, out string originalMessage)
@@ -235,7 +223,7 @@ internal static class ClientChatSystemPatch
             }
             else
             {
-                Core.Log.LogInfo($"MAC verification failed for matched RegEx message - {receivedMessage}");
+                Core.Log.LogInfo($"匹配的正则表达式消息MAC验证失败 - {receivedMessage}");
             }
         }
 

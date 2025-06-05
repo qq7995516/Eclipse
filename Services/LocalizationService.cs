@@ -29,30 +29,6 @@ internal class LocalizationService
         public Words[] Words { get; set; }
     }
 
-    /*
-    static readonly string _language = ConfigService.LanguageLocalization;
-    static readonly Dictionary<string, string> _localizedLanguages = new()
-    {
-        {"English", "Bloodcraft.Localization.English.json"},
-        {"German", "Bloodcraft.Localization.German.json"},
-        {"French", "Bloodcraft.Localization.French.json"},
-        {"Spanish", "Bloodcraft.Localization.Spanish.json"},
-        {"Italian", "Bloodcraft.Localization.Italian.json"},
-        {"Japanese", "Bloodcraft.Localization.Japanese.json"},
-        {"Koreana", "Bloodcraft.Localization.Koreana.json"},
-        {"Portuguese", "Bloodcraft.Localization.Portuguese.json"},
-        {"Russian", "Bloodcraft.Localization.Russian.json"},
-        {"SimplifiedChinese", "Bloodcraft.Localization.SChinese.json"},
-        {"TraditionalChinese", "Bloodcraft.Localization.TChinese.json"},
-        {"Hungarian", "Bloodcraft.Localization.Hungarian.json"},
-        {"Latam", "Bloodcraft.Localization.Latam.json"},
-        {"Polish", "Bloodcraft.Localization.Polish.json"},
-        {"Thai", "Bloodcraft.Localization.Thai.json"},
-        {"Turkish", "Bloodcraft.Localization.Turkish.json"},
-        {"Vietnamese", "Bloodcraft.Localization.Vietnamese.json"},
-        {"Brazilian", "Bloodcraft.Localization.Brazilian.json"}
-    };
-    */
 
     static IReadOnlyDictionary<PrefabGUID, string> LocalizedNameKeys => _localizedNameKeys;
     static IReadOnlyDictionary<string, PrefabGUID> NameKeysToPrefabGuid => _nameKeysToPrefabGuid;

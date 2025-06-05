@@ -207,6 +207,7 @@ internal static class DataService
         SpellCriticalStrikeDamage
     }
 
+    // 缩写保持英文，因为它们是通用的游戏术语
     public static readonly Dictionary<WeaponStatType, string> WeaponStatTypeAbbreviations = new()
     {
         { WeaponStatType.MaxHealth, "HP" },
@@ -239,6 +240,7 @@ internal static class DataService
         { "SpellCriticalStrikeDamage", "SCD" }
     };
 
+    // 格式化关键字是逻辑的一部分，不能修改
     public static readonly Dictionary<WeaponStatType, string> WeaponStatFormats = new()
     {
         { WeaponStatType.MaxHealth, "integer" },
@@ -427,7 +429,7 @@ internal static class DataService
         public float Progress { get; set; } = float.Parse(percent, CultureInfo.InvariantCulture) / 100f;
         public int Level { get; set; } = int.TryParse(level, out int parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;
         public int Prestige { get; set; } = int.Parse(prestige, CultureInfo.InvariantCulture);
-        public string FamiliarName { get; set; } = !string.IsNullOrEmpty(familiarName) ? familiarName : "Familiar";
+        public string FamiliarName { get; set; } = !string.IsNullOrEmpty(familiarName) ? familiarName : "伙伴";
         public List<string> FamiliarStats { get; set; } = !string.IsNullOrEmpty(familiarStats) ? [.. new List<string> { familiarStats[..4], familiarStats[4..7], familiarStats[7..] }.Select(stat => int.Parse(stat, CultureInfo.InvariantCulture).ToString())] : ["", "", ""];
     }
     public class ShiftSpellData(string index)
@@ -520,12 +522,12 @@ internal static class DataService
                 configData[index++], // maxLegacyLevel
                 configData[index++], // maxExpertiseLevel
                 configData[index++], // maxFamiliarLevel
-                configData[index++], // maxProfessionLevel no longer used and merits getting cut but that necessitates enough other changes leaving alone for the moment
+                configData[index++], // maxProfessionLevel (不再使用，但暂时保留以避免其他修改)
                 configData[index++], // extraRecipes
                 configData[index++], // primalCost
-                string.Join(",", configData.Skip(index).Take(12)), // Combine the next 11 elements for weaponStatValues
-                string.Join(",", configData.Skip(index += 12).Take(12)), // Combine the following 11 elements for bloodStatValues
-                string.Join(",", configData.Skip(index += 12)) // Combine all remaining elements for classStatSynergies
+                string.Join(",", configData.Skip(index).Take(12)), // 合并接下来的12个元素作为 weaponStatValues
+                string.Join(",", configData.Skip(index += 12).Take(12)), // 合并再接下来的12个元素作为 bloodStatValues
+                string.Join(",", configData.Skip(index += 12)) // 合并所有剩余元素作为 classStatSynergies
             );
 
             _prestigeStatMultiplier = parsedConfigData.PrestigeStatMultiplier;
@@ -549,12 +551,12 @@ internal static class DataService
             }
             catch (Exception ex)
             {
-                Core.Log.LogWarning($"Failed to modify recipes: {ex}");
+                Core.Log.LogWarning($"修改配方失败：{ex}");
             }
         }
         catch (Exception ex)
         {
-            Core.Log.LogWarning($"Failed to parse config data: {ex}");
+            Core.Log.LogWarning($"解析配置数据失败：{ex}");
         }
     }
     public static void ParsePlayerData(List<string> playerData)

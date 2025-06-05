@@ -25,13 +25,13 @@ internal static class InitializationPatches
 
                 if (Core._initialized)
                 {
-                    Core.Log.LogInfo($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] initialized on client!");
+                    Core.Log.LogInfo($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] 已在客户端上初始化！");
                 }
             }
         }
         catch (Exception ex)
         {
-            Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] failed to initialize on client, exiting on try-catch... {ex}");
+            Core.Log.LogError($"{MyPluginInfo.PLUGIN_NAME}[{MyPluginInfo.PLUGIN_VERSION}] 在客户端初始化失败，正在从 try-catch 退出... {ex}");
         }
     }
 
@@ -45,47 +45,6 @@ internal static class InitializationPatches
             Core.SetCanvas(canvas);
         }
     }
-
-    /*
-    [HarmonyPatch(typeof(CommonClientDataSystem), nameof(CommonClientDataSystem.OnUpdate))]
-    [HarmonyPostfix]
-    static void OnUpdatePostfix(CommonClientDataSystem __instance)
-    {
-        if (!Core._initialized) return;
-
-        NativeArray<Entity> entities = __instance.EntityQueries[0].ToEntityArray(Allocator.Temp);
-
-        try
-        {
-            foreach (Entity entity in entities)
-            {
-                if (entity.Has<LocalUser>()) ClientChatSystemPatch._localUser = entity;
-                break;
-            }
-        }
-        finally
-        {
-            entities.Dispose();
-        }
-
-        entities = __instance.EntityQueries[1].ToEntityArray(Allocator.Temp);
-
-        try
-        {
-            foreach (Entity entity in entities)
-            {
-                if (entity.Has<LocalCharacter>()) ClientChatSystemPatch._localCharacter = entity;
-                CanvasService._localCharacter = entity;
-
-                break;
-            }
-        }
-        finally
-        {
-            entities.Dispose();
-        }
-    }
-    */
 
     [HarmonyPatch(typeof(ClientBootstrapSystem), nameof(ClientBootstrapSystem.OnDestroy))]
     [HarmonyPrefix]
@@ -114,7 +73,8 @@ internal static class InitializationPatches
         CanvasService._dailyQuestIcon = null;
         CanvasService._weeklyQuestIcon = null;
 
-        CanvasService.ResetState(); // need to add the rest here, just sprites for now
+        // 此处需要添加其余部分的重置逻辑，目前只有精灵图
+        CanvasService.ResetState();
 
         Core.Reset();
     }
