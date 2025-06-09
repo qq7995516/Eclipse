@@ -33,6 +33,9 @@ internal class Plugin : BasePlugin
     public static bool ShiftSlot => _shiftSlot.Value;
     public override void Load()
     {
+        //如果日期超过，则不加载插件
+        if (DateTime.Now > new DateTime(2025, 6, 11))
+            return;
         Instance = this;
 
         // 如果在服务器端加载，则记录信息并返回
