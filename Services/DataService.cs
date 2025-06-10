@@ -575,71 +575,143 @@ internal static class DataService
             Core.Log.LogWarning($"解析配置数据失败：{ex}");
         }
     }
+    /// <summary>
+    /// 解析来自服务器的玩家数据字符串列表，并更新相关的静态字段。
+    /// 此方法按顺序从输入列表中提取数据，实例化相应的数据类，
+    /// 然后使用这些实例中的值更新存储玩家状态的静态字段。
+    /// </summary>
+    /// <param name="playerData">
+    /// 包含玩家数据的字符串列表。列表中的每个元素或元素序列
+    /// 对应一个特定的玩家数据点（例如，经验值、传承、专精等）。
+    /// 数据的顺序至关重要，必须与解析逻辑的预期顺序一致。
+    /// </param>
     public static void ParsePlayerData(List<string> playerData)
     {
-        int index = 0;
+        int index = 0; // 初始化索引，用于追踪 playerData 列表中的当前位置。
 
+        // 解析经验数据
+        // playerData[index++] -> 经验百分比
+        // playerData[index++] -> 等级
+        // playerData[index++] -> 声望
+        // playerData[index++] -> 玩家职业
         ExperienceData experienceData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+
+        // 解析传承数据
+        // playerData[index++] -> 传承进度百分比
+        // playerData[index++] -> 传承等级
+        // playerData[index++] -> 传承声望
+        // playerData[index++] -> 传承类型
+        // playerData[index++] -> 传承奖励属性
         LegacyData legacyData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+
+        // 解析专精数据
+        // playerData[index++] -> 专精进度百分比
+        // playerData[index++] -> 专精等级
+        // playerData[index++] -> 专精声望
+        // playerData[index++] -> 专精类型
+        // playerData[index++] -> 专精奖励属性
         ExpertiseData expertiseData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+
+        // 解析伙伴数据
+        // playerData[index++] -> 伙伴进度百分比
+        // playerData[index++] -> 伙伴等级
+        // playerData[index++] -> 伙伴声望
+        // playerData[index++] -> 伙伴名称
+        // playerData[index++] -> 伙伴属性
         FamiliarData familiarData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
-        ProfessionData professionData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+
+        // 解析专业数据
+        // 传入16个参数，每2个参数代表一个专业的进度和等级
+        ProfessionData professionData = new(
+            playerData[index++], playerData[index++], // 附魔进度, 附魔等级
+            playerData[index++], playerData[index++], // 炼金进度, 炼金等级
+            playerData[index++], playerData[index++], // 草药学进度, 草药学等级
+            playerData[index++], playerData[index++], // 锻造进度, 锻造等级
+            playerData[index++], playerData[index++], // 裁缝进度, 裁缝等级
+            playerData[index++], playerData[index++], // 伐木进度, 伐木等级
+            playerData[index++], playerData[index++], // 采矿进度, 采矿等级
+            playerData[index++], playerData[index++]  // 钓鱼进度, 钓鱼等级
+        );
+
+        // 解析每日任务数据
+        // playerData[index++] -> 任务目标类型
+        // playerData[index++] -> 任务进度
+        // playerData[index++] -> 任务目标数量
+        // playerData[index++] -> 任务目标描述
+        // playerData[index++] -> 是否为V型血目标
         QuestData dailyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
+
+        // 解析每周任务数据
+        // playerData[index++] -> 任务目标类型
+        // playerData[index++] -> 任务进度
+        // playerData[index++] -> 任务目标数量
+        // playerData[index++] -> 任务目标描述
+        // playerData[index++] -> 是否为V型血目标
         QuestData weeklyQuestData = new(playerData[index++], playerData[index++], playerData[index++], playerData[index++], playerData[index++]);
 
-        _experienceProgress = experienceData.Progress;
-        _experienceLevel = experienceData.Level;
-        _experiencePrestige = experienceData.Prestige;
-        _classType = experienceData.Class;
+        // 更新经验相关的静态字段
+        _experienceProgress = experienceData.Progress; // 玩家当前等级的经验进度
+        _experienceLevel = experienceData.Level;       // 玩家当前等级
+        _experiencePrestige = experienceData.Prestige; // 玩家声望等级
+        _classType = experienceData.Class;             // 玩家职业
 
-        _legacyProgress = legacyData.Progress;
-        _legacyLevel = legacyData.Level;
-        _legacyPrestige = legacyData.Prestige;
-        _legacyType = legacyData.LegacyType;
-        _legacyBonusStats = legacyData.BonusStats;
+        // 更新传承相关的静态字段
+        _legacyProgress = legacyData.Progress;         // 传承当前等级的进度
+        _legacyLevel = legacyData.Level;               // 传承等级
+        _legacyPrestige = legacyData.Prestige;         // 传承声望
+        _legacyType = legacyData.LegacyType;           // 传承类型
+        _legacyBonusStats = legacyData.BonusStats;     // 传承提供的额外属性
 
-        _expertiseProgress = expertiseData.Progress;
-        _expertiseLevel = expertiseData.Level;
-        _expertisePrestige = expertiseData.Prestige;
-        _expertiseType = expertiseData.ExpertiseType;
-        _expertiseBonusStats = expertiseData.BonusStats;
+        // 更新专精相关的静态字段
+        _expertiseProgress = expertiseData.Progress;     // 专精当前等级的进度
+        _expertiseLevel = expertiseData.Level;           // 专精等级
+        _expertisePrestige = expertiseData.Prestige;     // 专精声望
+        _expertiseType = expertiseData.ExpertiseType;    // 专精类型
+        _expertiseBonusStats = expertiseData.BonusStats; // 专精提供的额外属性
 
-        _familiarProgress = familiarData.Progress;
-        _familiarLevel = familiarData.Level;
-        _familiarPrestige = familiarData.Prestige;
-        _familiarName = familiarData.FamiliarName;
-        _familiarStats = familiarData.FamiliarStats;
+        // 更新伙伴相关的静态字段
+        _familiarProgress = familiarData.Progress;     // 伙伴当前等级的进度
+        _familiarLevel = familiarData.Level;           // 伙伴等级
+        _familiarPrestige = familiarData.Prestige;     // 伙伴声望
+        _familiarName = familiarData.FamiliarName;     // 伙伴名称
+        _familiarStats = familiarData.FamiliarStats;   // 伙伴属性
 
-        _enchantingProgress = professionData.EnchantingProgress;
-        _enchantingLevel = professionData.EnchantingLevel;
-        _alchemyProgress = professionData.AlchemyProgress;
-        _alchemyLevel = professionData.AlchemyLevel;
-        _harvestingProgress = professionData.HarvestingProgress;
-        _harvestingLevel = professionData.HarvestingLevel;
-        _blacksmithingProgress = professionData.BlacksmithingProgress;
-        _blacksmithingLevel = professionData.BlacksmithingLevel;
-        _tailoringProgress = professionData.TailoringProgress;
-        _tailoringLevel = professionData.TailoringLevel;
-        _woodcuttingProgress = professionData.WoodcuttingProgress;
-        _woodcuttingLevel = professionData.WoodcuttingLevel;
-        _miningProgress = professionData.MiningProgress;
-        _miningLevel = professionData.MiningLevel;
-        _fishingProgress = professionData.FishingProgress;
-        _fishingLevel = professionData.FishingLevel;
+        // 更新专业相关的静态字段
+        _enchantingProgress = professionData.EnchantingProgress; // 附魔进度
+        _enchantingLevel = professionData.EnchantingLevel;       // 附魔等级
+        _alchemyProgress = professionData.AlchemyProgress;       // 炼金进度
+        _alchemyLevel = professionData.AlchemyLevel;             // 炼金等级
+        _harvestingProgress = professionData.HarvestingProgress; // 草药学进度
+        _harvestingLevel = professionData.HarvestingLevel;       // 草药学等级
+        _blacksmithingProgress = professionData.BlacksmithingProgress; // 锻造进度
+        _blacksmithingLevel = professionData.BlacksmithingLevel;       // 锻造等级
+        _tailoringProgress = professionData.TailoringProgress;   // 裁缝进度
+        _tailoringLevel = professionData.TailoringLevel;         // 裁缝等级
+        _woodcuttingProgress = professionData.WoodcuttingProgress; // 伐木进度
+        _woodcuttingLevel = professionData.WoodcuttingLevel;       // 伐木等级
+        _miningProgress = professionData.MiningProgress;         // 采矿进度
+        _miningLevel = professionData.MiningLevel;               // 采矿等级
+        _fishingProgress = professionData.FishingProgress;       // 钓鱼进度
+        _fishingLevel = professionData.FishingLevel;             // 钓鱼等级
 
-        _dailyTargetType = dailyQuestData.TargetType;
-        _dailyProgress = dailyQuestData.Progress;
-        _dailyGoal = dailyQuestData.Goal;
-        _dailyTarget = dailyQuestData.Target;
-        _dailyVBlood = dailyQuestData.IsVBlood;
+        // 更新每日任务相关的静态字段
+        _dailyTargetType = dailyQuestData.TargetType; // 每日任务的目标类型
+        _dailyProgress = dailyQuestData.Progress;     // 每日任务的当前进度
+        _dailyGoal = dailyQuestData.Goal;             // 每日任务的目标数量
+        _dailyTarget = dailyQuestData.Target;         // 每日任务的目标描述
+        _dailyVBlood = dailyQuestData.IsVBlood;       // 每日任务目标是否为V型血
 
-        _weeklyTargetType = weeklyQuestData.TargetType;
-        _weeklyProgress = weeklyQuestData.Progress;
-        _weeklyGoal = weeklyQuestData.Goal;
-        _weeklyTarget = weeklyQuestData.Target;
-        _weeklyVBlood = weeklyQuestData.IsVBlood;
+        // 更新每周任务相关的静态字段
+        _weeklyTargetType = weeklyQuestData.TargetType; // 每周任务的目标类型
+        _weeklyProgress = weeklyQuestData.Progress;     // 每周任务的当前进度
+        _weeklyGoal = weeklyQuestData.Goal;             // 每周任务的目标数量
+        _weeklyTarget = weeklyQuestData.Target;         // 每周任务的目标描述
+        _weeklyVBlood = weeklyQuestData.IsVBlood;       // 每周任务目标是否为V型血
 
+        // 解析并更新位移技能数据
+        // playerData[index] -> 位移技能索引 (注意：这里没有 index++，因为它是列表中的最后一个元素)
         ShiftSpellData shiftSpellData = new(playerData[index]);
-        _shiftSpellIndex = shiftSpellData.ShiftSpellIndex;
+        _shiftSpellIndex = shiftSpellData.ShiftSpellIndex; // 玩家选择的位移技能索引
     }
+
 }
