@@ -84,9 +84,9 @@ internal static class ClientChatSystemPatch
             {
                 string stringId = LocalUser.GetUser().PlatformId.ToString();
                 //旧版版本信息
-                //string message = $"{VERSION};{stringId}";
+                string message = $"{VERSION};{stringId}";
                 //新版
-                string message = $"[ECLIPSE][0]:{VERSION};{stringId}";
+                //string message = $"[ECLIPSE][0]:{VERSION};{stringId}";
                 SendMessageDelayRoutine(message, VERSION).Start();
             }
             catch (Exception ex)
