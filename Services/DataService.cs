@@ -422,8 +422,24 @@ internal static class DataService
         public int Progress { get; set; } = int.Parse(progress, CultureInfo.InvariantCulture);
         public int Goal { get; set; } = int.Parse(goal, CultureInfo.InvariantCulture);
         public string Target { get; set; } = target;
-        public bool IsVBlood { get; set; } = bool.Parse(isVBlood);
+        //public bool IsVBlood { get; set; } = bool.Parse(isVBlood);
+        // 或者更健壮的方式，考虑大小写和默认值
+        public bool IsVBlood { get; set; } = ParseChineseBoolean(isVBlood);
     }
+    /// <summary>
+    /// 可以添加一个辅助方法
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    private static bool ParseChineseBoolean(string value)
+    {
+        if (string.Equals(value, "是", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (string.Equals(value, "否", StringComparison.OrdinalIgnoreCase))
+            return false;
+        return bool.Parse(value); // 如果不是中文，尝试标准解析
+    }
+
     public class FamiliarData(string percent, string level, string prestige, string familiarName, string familiarStats)
     {
         public float Progress { get; set; } = float.Parse(percent, CultureInfo.InvariantCulture) / 100f;
